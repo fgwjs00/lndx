@@ -115,6 +115,22 @@
         <router-view />
       </main>
     </div>
+    
+    <!-- 弹窗组件 -->
+    <UserProfileModal
+      v-model:visible="showProfile"
+      @success="handleProfileSuccess"
+    />
+    
+    <AccountSettingsModal
+      v-model:visible="showSettings"
+      @success="handleSettingsSuccess"
+    />
+    
+    <ChangePasswordModal
+      v-model:visible="showChangePassword"
+      @success="handlePasswordSuccess"
+    />
   </div>
 </template>
 
@@ -131,6 +147,9 @@ import { useAuthStore } from '@/store/auth'
 import { getRoleName, getRoleColor } from '@/utils/auth'
 import { UserRole } from '@/types/auth'
 import { shouldMockAuth } from '@/utils/dev'
+import UserProfileModal from '@/components/UserProfileModal.vue'
+import AccountSettingsModal from '@/components/AccountSettingsModal.vue'
+import ChangePasswordModal from '@/components/ChangePasswordModal.vue'
 
 // 菜单项配置
 interface MenuItem {
@@ -182,6 +201,14 @@ const menuItems: MenuItem[] = [
     description: '学生报名申请管理',
     roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
     permissions: ['application:read']
+  },
+  { 
+    name: '报名登记', 
+    path: '/registration', 
+    icon: 'fas fa-edit', 
+    description: '学员报名登记表单',
+    roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
+    permissions: ['application:create']
   },
   { 
     name: '数据分析', 
@@ -254,6 +281,27 @@ const handleLogout = (): void => {
       router.push('/login')
     }
   })
+}
+
+/**
+ * 处理个人资料更新成功
+ */
+const handleProfileSuccess = (): void => {
+  console.log('个人资料更新成功')
+}
+
+/**
+ * 处理账户设置更新成功
+ */
+const handleSettingsSuccess = (): void => {
+  console.log('账户设置更新成功')
+}
+
+/**
+ * 处理密码修改成功
+ */
+const handlePasswordSuccess = (): void => {
+  console.log('密码修改成功')
 }
 
 // 组件挂载时初始化认证状态
