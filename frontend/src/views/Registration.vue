@@ -18,59 +18,7 @@
       </div>
     </div>
 
-    <!-- 进度指示器 -->
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-gray-800">报名流程</h3>
-        <div class="text-sm text-gray-500">第 {{ currentStep }} 步，共 3 步</div>
-      </div>
-      
-      <div class="flex items-center">
-        <div 
-          v-for="(step, index) in steps" 
-          :key="index"
-          class="flex items-center"
-        >
-          <div 
-            class="flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-300"
-            :class="getStepClass(index + 1)"
-          >
-            <i 
-              v-if="index + 1 < currentStep"
-              class="fas fa-check text-white"
-            ></i>
-            <span 
-              v-else
-              class="text-sm font-semibold"
-              :class="index + 1 === currentStep ? 'text-white' : 'text-gray-400'"
-            >
-              {{ index + 1 }}
-            </span>
-          </div>
-          
-          <div class="ml-3 mr-8">
-            <p 
-              class="text-sm font-medium"
-              :class="index + 1 <= currentStep ? 'text-gray-900' : 'text-gray-400'"
-            >
-              {{ step.title }}
-            </p>
-            <p 
-              class="text-xs"
-              :class="index + 1 <= currentStep ? 'text-gray-600' : 'text-gray-400'"
-            >
-              {{ step.description }}
-            </p>
-          </div>
-          
-          <div 
-            v-if="index < steps.length - 1"
-            class="flex-1 h-0.5 mx-4"
-            :class="index + 1 < currentStep ? 'bg-blue-500' : 'bg-gray-300'"
-          ></div>
-        </div>
-      </div>
-    </div>
+
 
     <!-- 表单内容 -->
     <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
@@ -83,11 +31,22 @@
           @finish="handleSubmit"
           @finish-failed="handleSubmitFailed"
         >
-          <!-- 第一步：基本信息 -->
-          <div v-show="currentStep === 1" class="step-content">
-            <div class="step-header mb-8">
-              <h2 class="text-2xl font-bold text-gray-900 mb-2">基本信息</h2>
-              <p class="text-gray-600">请填写您的基本个人信息</p>
+          <!-- 身份证读卡器 -->
+          <div class="mb-8">
+            <IdCardReader 
+              @dataRead="handleIdCardDataRead"
+              @error="handleReaderError"
+            />
+          </div>
+
+          <!-- 基本信息 -->
+          <div class="mb-8">
+            <div class="mb-6">
+              <h2 class="text-xl font-bold text-gray-900 mb-2 flex items-center">
+                <i class="fas fa-user text-blue-500 mr-3"></i>
+                基本信息
+              </h2>
+              <p class="text-gray-600">请填写您的基本个人信息，可使用身份证读卡器快速录入</p>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -174,10 +133,13 @@
             </div>
           </div>
 
-          <!-- 第二步：学籍信息 -->
-          <div v-show="currentStep === 2" class="step-content">
-            <div class="step-header mb-8">
-              <h2 class="text-2xl font-bold text-gray-900 mb-2">学籍信息</h2>
+          <!-- 学籍信息 -->
+          <div class="mb-8">
+            <div class="mb-6">
+              <h2 class="text-xl font-bold text-gray-900 mb-2 flex items-center">
+                <i class="fas fa-graduation-cap text-green-500 mr-3"></i>
+                学籍信息
+              </h2>
               <p class="text-gray-600">请填写学籍相关信息</p>
             </div>
             
@@ -242,10 +204,13 @@
             </div>
           </div>
 
-          <!-- 第三步：联系信息 -->
-          <div v-show="currentStep === 3" class="step-content">
-            <div class="step-header mb-8">
-              <h2 class="text-2xl font-bold text-gray-900 mb-2">联系信息</h2>
+          <!-- 联系信息 -->
+          <div class="mb-8">
+            <div class="mb-6">
+              <h2 class="text-xl font-bold text-gray-900 mb-2 flex items-center">
+                <i class="fas fa-address-book text-purple-500 mr-3"></i>
+                联系信息
+              </h2>
               <p class="text-gray-600">请填写联系方式和其他信息</p>
             </div>
             
@@ -325,41 +290,19 @@
           </div>
 
           <!-- 操作按钮 -->
-          <div class="flex justify-between mt-8 pt-6 border-t border-gray-200">
-            <a-button
-              v-if="currentStep > 1"
-              size="large"
-              @click="prevStep"
-              class="px-8"
-            >
-              <i class="fas fa-arrow-left mr-2"></i>
-              上一步
-            </a-button>
-            
-            <div class="flex space-x-4 ml-auto">
-              <a-button size="large" @click="handleReset" class="px-8">
+          <div class="flex justify-end mt-8 pt-6 border-t border-gray-200">
+            <div class="flex space-x-8">
+              <a-button size="large" @click="handleReset" class="px-12">
                 <i class="fas fa-undo mr-2"></i>
                 重置表单
               </a-button>
               
               <a-button
-                v-if="currentStep < 3"
-                type="primary"
-                size="large"
-                @click="nextStep"
-                class="px-8"
-              >
-                下一步
-                <i class="fas fa-arrow-right ml-2"></i>
-              </a-button>
-              
-              <a-button
-                v-if="currentStep === 3"
                 type="primary"
                 size="large"
                 html-type="submit"
                 :loading="submitting"
-                class="px-8"
+                class="px-12"
               >
                 <i class="fas fa-paper-plane mr-2"></i>
                 {{ submitting ? '提交中...' : '提交报名' }}
@@ -384,24 +327,17 @@ import { useAuthStore } from '@/store/auth'
 import { getRoleName } from '@/utils/auth'
 import dayjs, { type Dayjs } from 'dayjs'
 import ApplicationService from '@/api/application'
-import type { StudentInfo } from '@/types'
+import type { StudentInfo, IdCardData } from '@/types'
+import IdCardReader from '@/components/IdCardReader.vue'
 
 const authStore = useAuthStore()
 const formRef = ref()
-const currentStep = ref<number>(1)
 const submitting = ref<boolean>(false)
 const coursesLoading = ref<boolean>(false)
 const fileList = ref<any[]>([])
 
-// 步骤配置
-const steps = [
-  { title: '基本信息', description: '填写个人基本信息' },
-  { title: '学籍信息', description: '填写学籍相关信息' },
-  { title: '联系信息', description: '填写联系方式' }
-]
-
 // 表单数据
-const formData = reactive<Partial<StudentInfo>>({
+const formData = reactive<Partial<StudentInfo> & { birthDate: string | Dayjs }>({
   name: '',
   gender: '男',
   birthDate: '',
@@ -590,36 +526,7 @@ const formRules = {
   ]
 }
 
-/**
- * 获取步骤样式
- */
-const getStepClass = (step: number): string => {
-  if (step < currentStep.value) {
-    return 'bg-blue-500 border-blue-500'
-  } else if (step === currentStep.value) {
-    return 'bg-blue-500 border-blue-500'
-  } else {
-    return 'bg-gray-200 border-gray-300'
-  }
-}
 
-/**
- * 下一步
- */
-const nextStep = (): void => {
-  if (currentStep.value < 3) {
-    currentStep.value += 1
-  }
-}
-
-/**
- * 上一步
- */
-const prevStep = (): void => {
-  if (currentStep.value > 1) {
-    currentStep.value -= 1
-  }
-}
 
 /**
  * 禁用日期（不能选择未来日期）
@@ -700,7 +607,6 @@ const handleSubmit = async (): Promise<void> => {
     if (response.code === 200) {
       message.success('报名提交成功，请等待审核')
       handleReset()
-      currentStep.value = 1
     } else {
       message.error(response.message || '报名提交失败')
     }
@@ -747,7 +653,70 @@ const handleReset = (): void => {
     photo: '',
     remarks: ''
   })
-  currentStep.value = 1
+}
+
+/**
+ * 处理身份证读卡器数据读取
+ */
+const handleIdCardDataRead = (idCardData: IdCardData): void => {
+  // 自动填充指定字段
+  formData.name = idCardData.name || ''                    // 姓名
+  
+  // 性别处理 - 增强兼容性
+  if (idCardData.sex) {
+    const gender = idCardData.sex === '1' ? '男' : idCardData.sex === '2' ? '女' : idCardData.sex
+    formData.gender = (gender === '男' || gender === '女') ? gender : '男'
+  }
+  
+  // 民族处理
+  formData.ethnicity = idCardData.nation || ''
+  
+  // 身份证号
+  formData.idNumber = idCardData.certNo || ''
+  
+  // 住址
+  formData.familyAddress = idCardData.address || ''
+  
+  // 出生年月处理
+  if (idCardData.birth) {
+    const birthDate = formatIdCardDate(idCardData.birth)
+    if (birthDate) {
+      formData.birthDate = dayjs(birthDate)
+    }
+  }
+  
+  // 身份证头像照片
+  if (idCardData.base64Data) {
+    formData.photo = `data:image/jpeg;base64,${idCardData.base64Data}`
+  }
+  
+  // 显示填充完成的消息
+  message.success('身份证信息已填充完成')
+}
+
+
+
+
+
+/**
+ * 处理身份证读卡器错误
+ */
+const handleReaderError = (error: string): void => {
+  message.error(`读卡器错误: ${error}`)
+}
+
+/**
+ * 格式化身份证日期
+ */
+const formatIdCardDate = (dateStr: string): string => {
+  if (!dateStr) return ''
+  
+  // 身份证日期格式通常是YYYYMMDD
+  if (dateStr.length === 8) {
+    return `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`
+  }
+  
+  return dateStr
 }
 
 /**

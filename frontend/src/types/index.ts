@@ -242,3 +242,43 @@ export interface RolePermission {
 }
 
 // 所有类型已通过 export interface 和 export type 直接导出 
+
+// 身份证读卡器相关类型定义
+export interface IdCardData {
+  name: string                    // 姓名
+  sex: string                     // 性别
+  nation: string                  // 民族
+  birth: string                   // 出生日期
+  address: string                 // 住址
+  certNo: string                  // 身份证号码
+  department: string              // 签发机关
+  effectData: string              // 有效期开始
+  expire: string                  // 有效期结束
+  UID?: string                    // 身份证物理ID
+  base64Data?: string             // 身份证头像base64
+  imageFront?: string             // 身份证正面照片base64
+  imageBack?: string              // 身份证反面照片base64
+}
+
+export interface IdCardReaderMessage {
+  fun: string                     // 功能名称
+  rCode: string                   // 返回码
+  errMsg: string                  // 错误信息
+  [key: string]: any              // 其他动态字段
+}
+
+export interface IdCardReaderConfig {
+  host: string                    // WebSocket地址
+  autoConnect: boolean            // 是否自动连接
+  reconnectInterval: number       // 重连间隔（毫秒）
+  maxReconnectAttempts: number    // 最大重连次数
+}
+
+export interface IdCardReaderState {
+  connected: boolean              // 连接状态
+  reading: boolean                // 读卡状态
+  autoReading: boolean            // 自动读卡状态
+  deviceInfo: string              // 设备信息
+  lastError: string               // 最后错误信息
+  reconnectAttempts: number       // 重连尝试次数
+} 

@@ -29,6 +29,14 @@
             <i class="fas fa-user text-blue-500 mr-3"></i>
             基本信息
           </h3>
+
+          <!-- 身份证读卡器 -->
+          <div class="mb-6">
+            <IdCardReader 
+              @dataRead="handleIdCardDataRead"
+              @error="handleReaderError"
+            />
+          </div>
           
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- 姓名 -->
@@ -301,8 +309,8 @@
         </div>
 
         <!-- 提交按钮 -->
-        <div class="flex justify-center space-x-4">
-          <a-button size="large" @click="handleReset">
+        <div class="flex justify-center space-x-8">
+          <a-button size="large" @click="handleReset" class="px-12">
             <i class="fas fa-undo mr-2"></i>
             重置表单
           </a-button>
@@ -312,6 +320,7 @@
             size="large" 
             html-type="submit"
             :loading="submitting"
+            class="px-12"
           >
             <i class="fas fa-paper-plane mr-2"></i>
             {{ submitting ? '提交中...' : '提交报名' }}
@@ -332,13 +341,14 @@ import { ref, reactive, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import dayjs, { type Dayjs } from 'dayjs'
 import ApplicationService from '@/api/application'
-import type { StudentInfo } from '@/types'
+import type { StudentInfo, IdCardData } from '@/types'
+import IdCardReader from './IdCardReader.vue'
 
 // 表单引用
 const formRef = ref()
 
 // 表单数据
-const formData = reactive<Partial<StudentInfo>>({
+const formData = reactive<Partial<StudentInfo> & { birthDate: string | Dayjs }>({
   name: '',
   gender: '男',
   birthDate: '',
@@ -685,6 +695,68 @@ const loadAvailableCourses = async (): Promise<void> => {
   } finally {
     coursesLoading.value = false
   }
+}
+
+/**
+ * 处理身份证读卡器数据读取
+ */
+const handleIdCardDataRead = (idCardData: IdCardData): void => {
+  // 自动填充指定字段
+  formData.name = idCardData.name || ''                    // 姓名
+  
+  // 性别处理 - 增强兼容性
+  if (idCardData.sex) {
+    const gender = idCardData.sex === '1' ? '男' : idCardData.sex === '2' ? '女' : idCardData.sex
+    formData.gender = (gender === '男' || gender === '女') ? gender : '男'
+  }
+  
+  // 民族处理
+  formData.ethnicity = idCardData.nation || ''
+  
+  // 身份证号
+  formData.idNumber = idCardData.certNo || ''
+  
+  // 住址
+  formData.familyAddress = idCardData.address || ''
+  
+  // 出生年月处理
+  if (idCardData.birth) {
+    const birthDate = formatIdCardDate(idCardData.birth)
+    if (birthDate) {
+      formData.birthDate = dayjs(birthDate)
+    }
+  }
+  
+  // 身份证头像照片
+  if (idCardData.base64Data) {
+    formData.photo = `data:image/jpeg;base64,${idCardData.base64Data}`
+  }
+  
+  // 显示填充完成的消息
+  message.success('身份证信息已填充完成')
+}
+
+
+
+/**
+ * 处理身份证读卡器错误
+ */
+const handleReaderError = (error: string): void => {
+  message.error(`读卡器错误: ${error}`)
+}
+
+/**
+ * 格式化身份证日期
+ */
+const formatIdCardDate = (dateStr: string): string => {
+  if (!dateStr) return ''
+  
+  // 身份证日期格式通常是YYYYMMDD
+  if (dateStr.length === 8) {
+    return `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`
+  }
+  
+  return dateStr
 }
 
 /**
