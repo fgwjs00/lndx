@@ -8,13 +8,6 @@
           <p class="text-orange-100">管理学生报名申请、审核流程和报名统计</p>
         </div>
         <div class="flex items-center space-x-4">
-          <button 
-            @click="showApplicationForm = true"
-            class="bg-white/20 hover:bg-white/30 text-white px-6 py-2 rounded-lg flex items-center transition-colors"
-          >
-            <i class="fas fa-plus mr-2"></i>
-            新增报名
-          </button>
           <div class="text-6xl opacity-20">
             📝
           </div>
@@ -75,7 +68,7 @@
     
     <!-- 操作区域 -->
     <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
         <!-- 搜索框 -->
         <div class="relative flex-1 max-w-md">
           <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
@@ -88,23 +81,66 @@
         </div>
         
         <!-- 筛选和操作按钮 -->
-        <div class="flex items-center space-x-4">
-          <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
-            <option value="">所有状态</option>
-            <option value="pending">待审核</option>
-            <option value="approved">已批准</option>
-            <option value="rejected">已拒绝</option>
-          </select>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+          <!-- 筛选区域 -->
+          <div class="flex flex-col sm:flex-row gap-3">
+            <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 min-w-0">
+              <option value="">所有状态</option>
+              <option value="pending">待审核</option>
+              <option value="approved">已批准</option>
+              <option value="rejected">已拒绝</option>
+            </select>
+            
+            <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 min-w-0">
+              <option value="">所有课程</option>
+              <option value="math">高等数学</option>
+              <option value="english">英语文学</option>
+              <option value="computer">计算机科学</option>
+            </select>
+          </div>
           
-          <button class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg flex items-center transition-colors">
-            <i class="fas fa-check mr-2"></i>
-            批量审核
-          </button>
+          <!-- 操作按钮 -->
+          <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <button class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0">
+              <i class="fas fa-check mr-2"></i>
+              <span class="whitespace-nowrap">批量审核</span>
+            </button>
+            
+            <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0">
+              <i class="fas fa-download mr-2"></i>
+              <span class="whitespace-nowrap">导出数据</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 批量操作区域 -->
+      <div class="mt-6 pt-6 border-t border-gray-200">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div class="flex items-center gap-4">
+            <label class="flex items-center">
+              <input type="checkbox" class="rounded mr-2">
+              <span class="text-sm text-gray-600">全选</span>
+            </label>
+            <span class="text-sm text-gray-500">已选择 0 个申请</span>
+          </div>
           
-          <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center transition-colors">
-            <i class="fas fa-download mr-2"></i>
-            导出数据
-          </button>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center justify-center transition-colors text-sm">
+              <i class="fas fa-check mr-2"></i>
+              <span class="whitespace-nowrap">批量批准</span>
+            </button>
+            
+            <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center justify-center transition-colors text-sm">
+              <i class="fas fa-times mr-2"></i>
+              <span class="whitespace-nowrap">批量拒绝</span>
+            </button>
+            
+            <button class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center justify-center transition-colors text-sm">
+              <i class="fas fa-envelope mr-2"></i>
+              <span class="whitespace-nowrap">发送通知</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -156,26 +192,38 @@
                 </span>
               </td>
               <td class="py-4 px-6">
-                <div class="flex space-x-2">
+                <div class="flex items-center gap-3">
                   <button 
                     v-if="application.status === 'pending'"
-                    class="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors" 
+                    class="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors flex items-center justify-center min-w-0" 
                     title="批准"
                   >
-                    <i class="fas fa-check"></i>
+                    <i class="fas fa-check text-sm"></i>
                   </button>
                   <button 
                     v-if="application.status === 'pending'"
-                    class="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors" 
+                    class="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center min-w-0" 
                     title="拒绝"
                   >
-                    <i class="fas fa-times"></i>
+                    <i class="fas fa-times text-sm"></i>
                   </button>
-                  <button class="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors" title="查看详情">
-                    <i class="fas fa-eye"></i>
+                  <button 
+                    class="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors flex items-center justify-center min-w-0" 
+                    title="查看详情"
+                  >
+                    <i class="fas fa-eye text-sm"></i>
                   </button>
-                  <button class="p-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 transition-colors" title="编辑">
-                    <i class="fas fa-edit"></i>
+                  <button 
+                    class="p-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 transition-colors flex items-center justify-center min-w-0" 
+                    title="编辑"
+                  >
+                    <i class="fas fa-edit text-sm"></i>
+                  </button>
+                  <button 
+                    class="p-2 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors flex items-center justify-center min-w-0" 
+                    title="发送通知"
+                  >
+                    <i class="fas fa-envelope text-sm"></i>
                   </button>
                 </div>
               </td>
@@ -210,17 +258,6 @@
         </div>
       </div>
     </div>
-
-    <!-- 报名表单弹窗 -->
-    <a-modal
-      v-model:open="showApplicationForm"
-      title="新增报名申请"
-      :width="1200"
-      :footer="null"
-      :destroy-on-close="true"
-    >
-      <ApplicationForm @success="handleApplicationSuccess" />
-    </a-modal>
   </div>
 </template>
 
@@ -231,7 +268,6 @@
  * @description 学生报名申请的审核和管理
  */
 import { ref, computed, onMounted } from 'vue'
-import ApplicationForm from '@/components/ApplicationForm.vue'
 
 // 报名申请数据类型定义
 interface Application {
@@ -247,7 +283,6 @@ interface Application {
 
 // 响应式数据
 const searchQuery = ref<string>('')
-const showApplicationForm = ref<boolean>(false)
 const applications = ref<Application[]>([
   {
     id: 1,
@@ -343,16 +378,6 @@ const getStatusText = (status: string): string => {
     default:
       return '未知'
   }
-}
-
-/**
- * 处理报名成功事件
- */
-const handleApplicationSuccess = (): void => {
-  showApplicationForm.value = false
-  // 刷新报名列表
-  // TODO: 实际项目中应该重新获取数据
-  console.log('报名申请提交成功')
 }
 
 /**

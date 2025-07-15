@@ -17,17 +17,29 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
       <!-- 基础设置 -->
       <div class="bg-white rounded-2xl shadow-lg p-6">
-        <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-          <i class="fas fa-cog text-gray-600 mr-3"></i>
-          基础设置
-        </h3>
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-semibold text-gray-800 flex items-center">
+            <i class="fas fa-cog text-gray-600 mr-3"></i>
+            基础设置
+          </h3>
+          <div class="flex gap-2">
+            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+              <i class="fas fa-save mr-1"></i>
+              保存
+            </button>
+            <button class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+              <i class="fas fa-undo mr-1"></i>
+              重置
+            </button>
+          </div>
+        </div>
         <div class="flex flex-col gap-4">
           <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
             <div>
               <p class="font-medium text-gray-800">系统名称</p>
               <p class="text-sm text-gray-500">学生报名及档案管理系统</p>
             </div>
-            <button class="text-blue-600 hover:text-blue-800 transition-colors">
+            <button class="text-blue-600 hover:text-blue-800 transition-colors p-2 rounded-lg hover:bg-blue-50">
               <i class="fas fa-edit"></i>
             </button>
           </div>
@@ -37,7 +49,7 @@
               <p class="font-medium text-gray-800">系统版本</p>
               <p class="text-sm text-gray-500">v1.0.0</p>
             </div>
-            <span class="text-sm text-green-600 font-medium">最新版本</span>
+            <span class="text-sm text-green-600 font-medium bg-green-100 px-3 py-1 rounded-full">最新版本</span>
           </div>
           
           <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
@@ -45,7 +57,7 @@
               <p class="font-medium text-gray-800">系统语言</p>
               <p class="text-sm text-gray-500">简体中文</p>
             </div>
-            <select class="px-3 py-1 border border-gray-300 rounded text-sm">
+            <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0">
               <option value="zh-CN">简体中文</option>
               <option value="en-US">English</option>
             </select>
@@ -56,7 +68,7 @@
               <p class="font-medium text-gray-800">时区设置</p>
               <p class="text-sm text-gray-500">UTC+8 (北京时间)</p>
             </div>
-            <select class="px-3 py-1 border border-gray-300 rounded text-sm">
+            <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0">
               <option value="Asia/Shanghai">UTC+8 (北京时间)</option>
               <option value="UTC">UTC (世界标准时间)</option>
             </select>
@@ -66,18 +78,30 @@
       
       <!-- 安全设置 -->
       <div class="bg-white rounded-2xl shadow-lg p-6">
-        <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-          <i class="fas fa-shield-alt text-red-600 mr-3"></i>
-          安全设置
-        </h3>
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-semibold text-gray-800 flex items-center">
+            <i class="fas fa-shield-alt text-red-600 mr-3"></i>
+            安全设置
+          </h3>
+          <div class="flex gap-2">
+            <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+              <i class="fas fa-save mr-1"></i>
+              保存
+            </button>
+            <button class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+              <i class="fas fa-undo mr-1"></i>
+              重置
+            </button>
+          </div>
+        </div>
         <div class="flex flex-col gap-4">
           <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
             <div>
               <p class="font-medium text-gray-800">密码策略</p>
               <p class="text-sm text-gray-500">最少8位，包含字母和数字</p>
             </div>
-            <div class="flex items-center">
-              <input type="checkbox" checked class="rounded mr-2">
+            <div class="flex items-center gap-2">
+              <input type="checkbox" checked class="rounded">
               <span class="text-sm text-green-600 font-medium">已启用</span>
             </div>
           </div>
@@ -87,8 +111,8 @@
               <p class="font-medium text-gray-800">登录失败锁定</p>
               <p class="text-sm text-gray-500">连续失败5次后锁定30分钟</p>
             </div>
-            <div class="flex items-center">
-              <input type="checkbox" checked class="rounded mr-2">
+            <div class="flex items-center gap-2">
+              <input type="checkbox" checked class="rounded">
               <span class="text-sm text-green-600 font-medium">已启用</span>
             </div>
           </div>
@@ -98,21 +122,23 @@
               <p class="font-medium text-gray-800">会话超时</p>
               <p class="text-sm text-gray-500">2小时无操作自动退出</p>
             </div>
-            <select class="px-3 py-1 border border-gray-300 rounded text-sm">
-              <option value="3600">1小时</option>
-              <option value="7200" selected>2小时</option>
-              <option value="14400">4小时</option>
-            </select>
+            <div class="flex items-center gap-2">
+              <input type="checkbox" checked class="rounded">
+              <span class="text-sm text-green-600 font-medium">已启用</span>
+            </div>
           </div>
           
           <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
             <div>
               <p class="font-medium text-gray-800">IP白名单</p>
-              <p class="text-sm text-gray-500">限制管理员登录IP</p>
+              <p class="text-sm text-gray-500">限制登录IP地址</p>
             </div>
-            <div class="flex items-center">
-              <input type="checkbox" class="rounded mr-2">
-              <span class="text-sm text-gray-600 font-medium">未启用</span>
+            <div class="flex items-center gap-2">
+              <input type="checkbox" class="rounded">
+              <span class="text-sm text-gray-500">已禁用</span>
+              <button class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50">
+                <i class="fas fa-cog text-sm"></i>
+              </button>
             </div>
           </div>
         </div>

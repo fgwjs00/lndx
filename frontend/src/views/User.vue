@@ -132,44 +132,49 @@
         </nav>
       </div>
 
-      <!-- 操作栏 -->
-      <div class="p-6 border-b border-gray-200">
-        <div class="flex items-center justify-between">
-          <h3 class="text-xl font-semibold text-gray-800">
-            {{ getTabTitle() }}
-          </h3>
-          <div class="flex items-center space-x-4">
-            <div class="relative">
-              <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-              <input
-                v-model="searchQuery"
-                type="text"
-                :placeholder="getSearchPlaceholder()"
-                class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+      <!-- 操作区域 -->
+      <div class="p-6">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+          <!-- 搜索框 -->
+          <div class="relative flex-1 max-w-md">
+            <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <input
+              type="text"
+              placeholder="搜索用户姓名或手机号..."
+              class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              v-model="searchQuery"
+            />
+          </div>
+          
+          <!-- 筛选和操作按钮 -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+            <!-- 筛选区域 -->
+            <div class="flex flex-col sm:flex-row gap-3">
+              <select 
+                v-model="selectedStatus" 
+                class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
+              >
+                <option value="">所有状态</option>
+                <option value="active">正常</option>
+                <option value="inactive">禁用</option>
+              </select>
             </div>
             
-            <select 
-              v-model="selectedStatus" 
-              class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">所有状态</option>
-              <option value="active">正常</option>
-              <option value="inactive">禁用</option>
-            </select>
-            
-            <button 
-              @click="showUserForm = true"
-              class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center transition-colors"
-            >
-              <i class="fas fa-plus mr-2"></i>
-              {{ getAddButtonText() }}
-            </button>
-            
-            <button class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg flex items-center transition-colors">
-              <i class="fas fa-download mr-2"></i>
-              导出数据
-            </button>
+            <!-- 操作按钮 -->
+            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <button 
+                @click="showUserForm = true"
+                class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0"
+              >
+                <i class="fas fa-plus mr-2"></i>
+                <span class="whitespace-nowrap">{{ getAddButtonText() }}</span>
+              </button>
+              
+              <button class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0">
+                <i class="fas fa-download mr-2"></i>
+                <span class="whitespace-nowrap">导出数据</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -227,35 +232,36 @@
               <td class="py-4 px-6 text-gray-600">{{ user.createTime }}</td>
               <td class="py-4 px-6 text-gray-600">{{ user.lastLoginTime || '从未登录' }}</td>
               <td class="py-4 px-6">
-                <div class="flex space-x-2">
+                <div class="flex items-center gap-3">
                   <button 
                     @click="editUser(user)"
-                    class="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                    class="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors flex items-center justify-center min-w-0"
                     title="编辑用户"
                   >
-                    <i class="fas fa-edit"></i>
+                    <i class="fas fa-edit text-sm"></i>
                   </button>
                   <button 
                     @click="resetPassword(user)"
-                    class="p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200 transition-colors"
+                    class="p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200 transition-colors flex items-center justify-center min-w-0"
                     title="重置密码"
                   >
-                    <i class="fas fa-key"></i>
+                    <i class="fas fa-key text-sm"></i>
                   </button>
                   <button 
                     @click="toggleUserStatus(user)"
-                    class="p-2 rounded-lg transition-colors"
+                    class="p-2 rounded-lg transition-colors flex items-center justify-center min-w-0"
                     :class="user.status === 'active' ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-600 hover:bg-green-200'"
                     :title="user.status === 'active' ? '禁用用户' : '启用用户'"
                   >
-                    <i :class="user.status === 'active' ? 'fas fa-ban' : 'fas fa-check'"></i>
+                    <i :class="user.status === 'active' ? 'fas fa-ban' : 'fas fa-check'" class="text-sm"></i>
                   </button>
                   <button 
+                    v-if="user.id !== authStore.user?.id"
                     @click="deleteUser(user)"
-                    class="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                    class="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center min-w-0"
                     title="删除用户"
                   >
-                    <i class="fas fa-trash"></i>
+                    <i class="fas fa-trash text-sm"></i>
                   </button>
                 </div>
               </td>
@@ -315,8 +321,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import UserForm from '@/components/UserForm.vue'
+import { useAuthStore } from '@/store/auth'
 
 // 响应式数据
+const authStore = useAuthStore()
 const activeTab = ref<'all' | 'admin' | 'teacher' | 'student'>('all')
 const searchQuery = ref<string>('')
 const selectedStatus = ref<string>('')
