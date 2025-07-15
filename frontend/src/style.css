@@ -1,0 +1,110 @@
+/**
+ * 全局样式配置
+ * 学生报名及档案管理系统 - 全局样式
+ */
+
+/* Tailwind CSS 基础样式 */
+@import "tailwindcss";
+
+/* 重置样式 */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html, body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    font-size: 14px;
+    line-height: 1.5715;
+    color: rgba(0, 0, 0, 0.85);
+    background-color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+  #app {
+    min-height: 100vh;
+    width: 100%;
+}
+}
+
+/* 自定义组件样式 */
+@layer components {
+  /* 滚动条样式 */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+
+  /* 页面容器样式 */
+  .page-container {
+    @apply p-6 bg-gray-50 min-h-screen;
+  }
+
+  .page-content {
+    @apply bg-white p-6 rounded-lg shadow-sm;
+  }
+
+  /* 统计卡片样式 */
+  .stat-card {
+    @apply bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200;
+}
+
+  .stat-icon {
+    @apply w-12 h-12 rounded-lg flex items-center justify-center text-2xl text-white mr-4;
+}
+
+  .stat-icon.students {
+    @apply bg-gradient-to-br from-blue-500 to-purple-600;
+  }
+
+  .stat-icon.courses {
+    @apply bg-gradient-to-br from-pink-500 to-red-500;
+  }
+
+  .stat-icon.applications {
+    @apply bg-gradient-to-br from-blue-400 to-cyan-400;
+}
+
+  .stat-icon.pending {
+    @apply bg-gradient-to-br from-green-400 to-emerald-400;
+}
+}
+
+/* 工具类 */
+@layer utilities {
+  .clearfix::after {
+    content: '';
+    display: table;
+    clear: both;
+}
+
+  /* 响应式辅助类 */
+  @media (max-width: 576px) {
+    .mobile-hidden {
+      display: none !important;
+  }
+  }
+
+  @media (min-width: 577px) {
+    .mobile-only {
+      display: none !important;
+    }
+  }
+}

@@ -1,0 +1,202 @@
+# 学生报名及档案管理系统 - Cursor Rules
+
+## 项目概述
+这是一个基于Vue 3 + TypeScript + Ant Design Vue + Tailwind CSS的学生报名及档案管理系统，采用现代化前端技术栈。
+
+## 技术栈
+- 前端框架：Vue 3 + Composition API + TypeScript
+- UI组件库：Ant Design Vue 4.x
+- CSS框架：Tailwind CSS 4.x
+- 路由管理：Vue Router 4.x
+- 构建工具：Vite 7.x
+- 包管理器：pnpm
+- 开发语言：TypeScript
+
+## 代码规范
+
+### 文件命名
+- Vue组件：使用PascalCase (如：StudentManagement.vue)
+- TypeScript文件：使用camelCase (如：userService.ts)
+- 文件夹：使用kebab-case (如：user-management)
+- 常量：使用UPPER_SNAKE_CASE (如：API_BASE_URL)
+
+### Vue组件结构
+```vue
+<template>
+  <!-- 使用Tailwind CSS类进行样式设计 -->
+  <div class="page-container">
+    <!-- 模板内容 -->
+  </div>
+</template>
+
+<script setup lang="ts">
+/**
+ * 组件描述
+ * @component ComponentName
+ * @description 组件功能说明
+ */
+import { ref, computed } from 'vue'
+
+// 类型定义
+interface ComponentProps {
+  title: string
+  count?: number
+}
+
+// 响应式数据
+const data = ref<string>('')
+
+// 计算属性
+const computedValue = computed<string>(() => {
+  // 计算逻辑
+  return data.value
+})
+
+// 方法
+const handleClick = (): void => {
+  // 处理逻辑
+}
+</script>
+```
+
+### TypeScript代码规范
+- 始终使用TypeScript，禁止使用JavaScript
+- 所有函数必须有明确的参数类型和返回值类型
+- 使用interface定义对象类型
+- 使用type定义联合类型和基础类型别名
+- 使用JSDoc注释配合TypeScript类型
+- 优先使用const断言和as const
+- 使用泛型提高代码复用性
+
+### Tailwind CSS规范
+- 优先使用Tailwind CSS工具类
+- 避免编写自定义CSS，除非必要
+- 使用@apply指令组合常用样式
+- 遵循移动优先的响应式设计原则
+- 使用Tailwind的设计系统（颜色、间距、字体等）
+- 自定义主题配置在tailwind.config.js中
+
+### 注释规范
+- 所有组件必须包含@component和@description
+- 所有函数必须有JSDoc注释和TypeScript类型
+- 复杂逻辑必须添加内联注释
+- 使用中文注释
+
+## UI/UX规范
+
+### 组件使用
+- 优先使用Ant Design Vue组件
+- 使用Tailwind CSS进行样式定制
+- 保持组件API的一致性
+- 使用a-前缀的antd组件
+
+### 布局规范
+- 使用Tailwind的Grid和Flexbox系统
+- 页面容器：page-container类
+- 内容区域：page-content类
+- 响应式断点：sm, md, lg, xl, 2xl
+- 间距系统：使用Tailwind的spacing scale
+
+### 颜色规范
+- 主色调：使用Tailwind的blue色系
+- 成功色：green-500
+- 警告色：yellow-500
+- 错误色：red-500
+- 文本色：gray-800 (主要), gray-600 (次要), gray-400 (辅助)
+
+## 项目结构
+```
+frontend/src/
+├── views/          # 页面组件 (TypeScript)
+├── components/     # 业务组件 (TypeScript)
+├── router/         # 路由配置 (TypeScript)
+├── store/          # 状态管理 (TypeScript)
+├── api/            # 接口请求 (TypeScript)
+├── assets/         # 静态资源
+├── utils/          # 工具函数 (TypeScript)
+├── types/          # TypeScript类型定义
+├── main.ts         # 入口文件
+└── shims-vue.d.ts  # Vue类型声明
+```
+
+## API规范
+- 接口函数命名：getStudentList, createStudent, updateStudent, deleteStudent
+- 统一响应格式：{ code: number, message: string, data: T }
+- 分页格式：{ list: T[], total: number, page: number, pageSize: number }
+- 使用TypeScript接口定义API响应类型
+
+## 权限规范
+- 角色：admin(管理员), teacher(老师), student(学生)
+- 路由权限：meta.roles数组
+- 组件权限：v-if="hasPermission('permission:action')"
+- 类型安全的权限检查
+
+## 性能要求
+- 使用路由懒加载
+- 大组件使用defineAsyncComponent
+- 首屏加载时间 < 2秒
+- 页面切换时间 < 500ms
+- 利用Tailwind的JIT模式优化CSS大小
+
+## 文档更新规则
+- 每次代码变更后必须更新对应日期的变更日志 (docs/changelogs/YYYY/MM/YYYY-MM-DD.md)
+- 版本发布时必须创建版本记录 (docs/releases/vX.Y.Z.md)
+- 新增功能时必须更新README.md
+- 使用中文编写文档和注释
+- 保持TypeScript类型定义的文档同步
+- 定期整理和归档过期文档到docs/archives/目录
+- 保持文档结构的清晰性和可维护性
+
+### 文档结构说明
+```
+docs/
+├── CHANGELOG.md        # 主索引文件
+├── README.md          # 文档管理说明
+├── RULES.md           # 项目开发规范
+├── changelogs/        # 按日期分类的变更日志
+│   └── YYYY/MM/YYYY-MM-DD.md
+├── releases/          # 版本发布记录
+│   └── vX.Y.Z.md
+└── archives/          # 归档文档
+    └── old-changelog.md
+```
+
+## 禁止事项
+- 禁止使用JavaScript文件，必须使用TypeScript
+- 禁止使用console.log在生产环境
+- 禁止硬编码配置信息
+- 禁止忽略TypeScript错误
+- 禁止不写注释的复杂逻辑
+- 禁止使用npm或yarn，统一使用pnpm
+- 禁止编写大量自定义CSS，优先使用Tailwind
+
+## 代码质量要求
+- 所有函数必须有TypeScript类型和JSDoc注释
+- 所有组件必须有props类型定义
+- 所有异步操作必须有错误处理
+- 所有用户输入必须验证
+- 所有接口调用必须有loading状态
+- 通过TypeScript严格模式检查
+
+## AI辅助编程指导
+- 生成代码时优先使用Vue 3 Composition API + TypeScript
+- 使用Tailwind CSS而非自定义样式
+- 使用Ant Design Vue组件而非自定义组件
+- 生成的代码必须包含完整的TypeScript类型定义
+- 生成的代码必须包含完整的JSDoc注释
+- 遵循项目的命名规范和文件结构
+- 生成代码时考虑响应式设计和用户体验
+- 始终包含错误处理和loading状态
+- 使用中文注释和文档
+- 每次代码变更后提醒更新对应日期的变更日志
+- 版本发布时协助创建版本记录文档
+- 遵循新的文档管理结构和规范
+
+## 特殊说明
+- 这是一个学生报名及档案管理系统
+- 主要功能包括：学生管理、课程管理、报名管理、数据分析等
+- 用户角色分为管理员、老师、学生三种
+- 界面风格现代化，注重用户体验
+- 支持响应式设计，适配多种设备
+- 使用TypeScript确保代码质量和类型安全
+- 使用Tailwind CSS实现一致的设计系统 
