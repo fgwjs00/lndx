@@ -107,6 +107,7 @@ export const mockLogin = async (phone: string, password: string): Promise<any> =
         'student:update',
         'course:*',
         'application:*',
+        'attendance:manage',
         'analysis:read'
       ]
     } else if (user.role === 'student') {

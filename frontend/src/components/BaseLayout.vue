@@ -76,8 +76,8 @@
                 <div>
                   <p class="text-sm font-medium text-gray-900">{{ authStore.userName || '用户' }}</p>
                   <p class="text-xs text-gray-500">
-                    <a-tag :color="getRoleColor(authStore.userRole)" size="small">
-                      {{ getRoleName(authStore.userRole) }}
+                    <a-tag :color="getRoleColor(authStore.userRole || UserRole.STUDENT)" size="small">
+                      {{ getRoleName(authStore.userRole || UserRole.STUDENT) }}
                     </a-tag>
                   </p>
                 </div>
@@ -209,6 +209,14 @@ const menuItems: MenuItem[] = [
     description: '学员报名登记表单',
     roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
     permissions: ['application:create']
+  },
+  { 
+    name: '学员签到', 
+    path: '/attendance', 
+    icon: 'fas fa-user-check', 
+    description: '基于人脸识别的学员签到管理',
+    roles: [UserRole.ADMIN, UserRole.TEACHER],
+    permissions: ['attendance:manage']
   },
   { 
     name: '数据分析', 

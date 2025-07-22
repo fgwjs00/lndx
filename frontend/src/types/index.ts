@@ -74,18 +74,96 @@ export interface StudentInfo {
 // 课程状态类型
 export type CourseStatus = 'active' | 'pending' | 'completed' | 'cancelled'
 
+// 课程分类类型
+export type CourseCategory = 'music' | 'instrument' | 'art' | 'literature' | 'practical' | 'comprehensive'
+
+// 课程级别类型
+export type CourseLevel = 'beginner' | 'intermediate' | 'advanced' | 'grade1' | 'grade2' | 'grade3' | 'foundation' | 'improvement' | 'senior'
+
+// 时间段类型
+export interface TimeSlot {
+  dayOfWeek: 1 | 2 | 3 | 4 | 5 | 6 | 7  // 1-7 对应周一到周日
+  startTime: string                       // 格式: "08:30"
+  endTime: string                         // 格式: "10:30"
+  period: 'morning' | 'afternoon' | 'evening' // 时段
+}
+
+// 年龄限制类型
+export interface AgeRestriction {
+  enabled: boolean         // 是否启用年龄限制
+  minAge?: number         // 最小年龄（可选）
+  maxAge?: number         // 最大年龄（可选）
+  description?: string    // 年龄限制说明
+}
+
+// 签到状态类型
+export type AttendanceStatus = 'present' | 'absent' | 'late' | 'leave'
+
+// 签到方式类型
+export type AttendanceMethod = 'face_recognition' | 'manual' | 'qr_code' | 'card'
+
+// 签到记录类型
+export interface AttendanceRecord {
+  id: number
+  studentId: number         // 学员ID
+  studentName: string       // 学员姓名
+  courseId: number          // 课程ID
+  courseName: string        // 课程名称
+  classDate: string         // 上课日期
+  classTime: string         // 上课时间
+  status: AttendanceStatus  // 签到状态
+  method: AttendanceMethod  // 签到方式
+  checkInTime?: string      // 签到时间
+  faceConfidence?: number   // 人脸识别置信度
+  location?: string         // 签到地点
+  remarks?: string          // 备注
+  createdAt: string
+  updatedAt: string
+}
+
+// 课程签到会话类型
+export interface AttendanceSession {
+  id: number
+  courseId: number          // 课程ID
+  courseName: string        // 课程名称
+  teacher: string           // 授课教师
+  classDate: string         // 上课日期
+  startTime: string         // 开始时间
+  endTime: string           // 结束时间
+  location: string          // 上课地点
+  totalStudents: number     // 应到人数
+  presentCount: number      // 实到人数
+  absentCount: number       // 缺席人数
+  lateCount: number         // 迟到人数
+  leaveCount: number        // 请假人数
+  status: 'pending' | 'active' | 'completed' // 签到状态
+  createdAt: string
+  updatedAt: string
+}
+
+// 人脸识别结果类型
+export interface FaceRecognitionResult {
+  success: boolean
+  confidence: number        // 识别置信度
+  studentId?: number        // 识别出的学员ID
+  studentName?: string      // 学员姓名
+  error?: string           // 错误信息
+}
+
 // 课程信息类型
 export interface Course {
   id: number
   name: string             // 课程名称
   courseId: string         // 课程编号
   description: string      // 课程描述
+  category: CourseCategory // 课程分类
+  level: CourseLevel       // 课程级别
   teacher: string          // 授课教师
   teacherId?: number       // 教师ID
   credits: number          // 学分
   capacity: number         // 容量
   enrolled: number         // 已报名人数
-  schedule: string         // 上课时间
+  timeSlots: TimeSlot[]    // 上课时间段（支持多个时间段）
   location: string         // 上课地点
   startDate: string        // 开课日期
   endDate: string          // 结课日期
@@ -93,6 +171,8 @@ export interface Course {
   fee: number             // 课程费用
   requirements?: string    // 报名要求
   materials?: string       // 教材信息
+  semester: string         // 学期（如：2024秋季）
+  ageRestriction: AgeRestriction // 年龄限制
   createdAt: string
   updatedAt: string
 }

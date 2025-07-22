@@ -98,6 +98,18 @@ const routes: RouteRecordRaw[] = [
         }
       },
       {
+        path: 'attendance',
+        name: 'Attendance',
+        component: () => import('@/views/Attendance.vue'),
+        meta: { 
+          title: '学员签到',
+          requiresAuth: true,
+          roles: [UserRole.ADMIN, UserRole.TEACHER],
+          permissions: ['attendance:manage'],
+          icon: 'fas fa-user-check'
+        }
+      },
+      {
         path: 'analysis',
         name: 'Analysis',
         component: () => import('@/views/Analysis.vue'),
