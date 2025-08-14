@@ -69,7 +69,7 @@
     <!-- 操作区域 -->
     <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
       <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-        <!-- 搜索框 -->
+        <!-- 搜索-->
         <div class="relative flex-1 max-w-md">
           <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
           <input
@@ -82,7 +82,7 @@
         
         <!-- 筛选和操作按钮 -->
         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
-          <!-- 筛选区域 -->
+          <!-- 筛选区-->
           <div class="flex flex-col sm:flex-row gap-3">
             <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 min-w-0">
               <option value="">所有状态</option>
@@ -236,7 +236,7 @@
       <div class="p-6 border-t border-gray-200">
         <div class="flex items-center justify-between">
           <div class="text-sm text-gray-500">
-            显示 1-10 条，共 {{ applications.length }} 条记录
+            显示 1-10 条，共{{ applications.length }} 条记录
           </div>
           <div class="flex items-center space-x-2">
             <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors">
@@ -281,12 +281,12 @@ interface Application {
   status: 'pending' | 'approved' | 'rejected'
 }
 
-// 响应式数据
+// 响应式数组
 const searchQuery = ref<string>('')
 const applications = ref<Application[]>([
   {
     id: 1,
-    studentName: '李小明',
+    studentName: '李学生',
     studentId: '20231001',
     applicationId: 'APP001',
     courseName: '高等数学',
@@ -296,7 +296,7 @@ const applications = ref<Application[]>([
   },
   {
     id: 2,
-    studentName: '张婷婷',
+    studentName: '张婷',
     studentId: '20231002',
     applicationId: 'APP002',
     courseName: '英语文学',
@@ -306,7 +306,7 @@ const applications = ref<Application[]>([
   },
   {
     id: 3,
-    studentName: '王浩然',
+    studentName: '王浩',
     studentId: '20231003',
     applicationId: 'APP003',
     courseName: '计算机科学',
@@ -316,7 +316,7 @@ const applications = ref<Application[]>([
   },
   {
     id: 4,
-    studentName: '赵思思',
+    studentName: '赵思',
     studentId: '20231004',
     applicationId: 'APP004',
     courseName: '物理实验',
@@ -326,7 +326,7 @@ const applications = ref<Application[]>([
   },
   {
     id: 5,
-    studentName: '刘子轩',
+    studentName: '刘子',
     studentId: '20231005',
     applicationId: 'APP005',
     courseName: '艺术设计',

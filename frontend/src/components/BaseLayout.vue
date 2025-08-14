@@ -167,14 +167,14 @@ const menuItems: MenuItem[] = [
     path: '/dashboard', 
     icon: 'fas fa-home', 
     description: '系统概览和数据统计',
-    roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT]
+    roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN, UserRole.TEACHER, UserRole.STUDENT]
   },
   { 
     name: '学生管理', 
     path: '/student', 
     icon: 'fas fa-user-graduate', 
     description: '学生信息管理',
-    roles: [UserRole.ADMIN, UserRole.TEACHER],
+    roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN, UserRole.TEACHER],
     permissions: ['student:read']
   },
 
@@ -183,7 +183,7 @@ const menuItems: MenuItem[] = [
     path: '/user', 
     icon: 'fas fa-users', 
     description: '用户账户管理',
-    roles: [UserRole.ADMIN],
+    roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN],
     permissions: ['user:read']
   },
   { 
@@ -191,7 +191,7 @@ const menuItems: MenuItem[] = [
     path: '/course', 
     icon: 'fas fa-book', 
     description: '课程信息管理',
-    roles: [UserRole.ADMIN, UserRole.TEACHER],
+    roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN, UserRole.TEACHER],
     permissions: ['course:read']
   },
   { 
@@ -199,7 +199,7 @@ const menuItems: MenuItem[] = [
     path: '/application', 
     icon: 'fas fa-file-alt', 
     description: '学生报名申请管理',
-    roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
+    roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN, UserRole.TEACHER, UserRole.STUDENT],
     permissions: ['application:read']
   },
   { 
@@ -207,7 +207,7 @@ const menuItems: MenuItem[] = [
     path: '/registration', 
     icon: 'fas fa-edit', 
     description: '学员报名登记表单',
-    roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
+    roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN, UserRole.TEACHER, UserRole.STUDENT],
     permissions: ['application:create']
   },
   { 
@@ -215,7 +215,7 @@ const menuItems: MenuItem[] = [
     path: '/attendance', 
     icon: 'fas fa-user-check', 
     description: '基于人脸识别的学员签到管理',
-    roles: [UserRole.ADMIN, UserRole.TEACHER],
+    roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN, UserRole.TEACHER],
     permissions: ['attendance:manage']
   },
   { 
@@ -223,7 +223,7 @@ const menuItems: MenuItem[] = [
     path: '/analysis', 
     icon: 'fas fa-chart-bar', 
     description: '数据统计与分析',
-    roles: [UserRole.ADMIN, UserRole.TEACHER],
+    roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN, UserRole.TEACHER],
     permissions: ['analysis:read']
   },
   { 
@@ -231,15 +231,23 @@ const menuItems: MenuItem[] = [
     path: '/logs', 
     icon: 'fas fa-file-alt', 
     description: '系统操作日志',
-    roles: [UserRole.ADMIN],
+    roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN],
     permissions: ['logs:read']
+  },
+  { 
+    name: '角色权限', 
+    path: '/role-management', 
+    icon: 'fas fa-user-shield', 
+    description: '角色权限管理',
+    roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN],
+    permissions: ['system:*']
   },
   { 
     name: '系统设置', 
     path: '/setting', 
     icon: 'fas fa-cog', 
     description: '系统配置与设置',
-    roles: [UserRole.ADMIN],
+    roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN, UserRole.TEACHER, UserRole.STUDENT],
     permissions: ['setting:read']
   }
 ]
@@ -266,13 +274,13 @@ const isDevMode = computed<boolean>(() => shouldMockAuth())
 // 当前页面标题
 const currentPageTitle = computed<string>(() => {
   const currentItem = menuItems.find(item => route.path.includes(item.path))
-  return currentItem?.name || '学生报名及档案管理系统'
+  return currentItem?.name || '学生报名及档案管理'
 })
 
 // 当前页面描述
 const currentPageDescription = computed<string>(() => {
   const currentItem = menuItems.find(item => route.path.includes(item.path))
-  return currentItem?.description || '欢迎使用学生报名及档案管理系统'
+  return currentItem?.description || '欢迎使用学生报名及档案管理'
 })
 
 /**

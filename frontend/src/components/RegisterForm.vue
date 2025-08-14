@@ -268,7 +268,7 @@
         <a-form-item name="agreement" class="agreement-item">
           <a-checkbox v-model:checked="formData.agreement" :disabled="loading" class="agreement-checkbox">
             <span class="agreement-text">
-              我已阅读并同意
+                我已阅读并同意
               <a-button type="link" size="small" @click="showAgreement = true" class="agreement-link">
                 《用户协议》
               </a-button>
@@ -316,19 +316,19 @@
     >
       <div class="agreement-content">
         <h3>1. 服务条款</h3>
-        <p>欢迎使用学生报名及档案管理系统。在使用本系统之前，请仔细阅读本协议。</p>
+        <p>欢迎使用学生报名及档案管理系统。在使用本系统之前，请仔细阅读本协议</p>
         
         <h3>2. 用户责任</h3>
-        <p>用户应对其账户信息的真实性、准确性和完整性负责。</p>
+        <p>用户应对其账户信息的真实性、准确性和完整性负责</p>
         
         <h3>3. 隐私保护</h3>
-        <p>我们承诺保护用户的个人信息安全，不会未经授权向第三方披露。</p>
+        <p>我们承诺保护用户的个人信息安全，不会未经授权向第三方披露</p>
         
         <h3>4. 服务限制</h3>
-        <p>用户不得利用本系统进行任何违法或不当行为。</p>
+        <p>用户不得利用本系统进行任何违法或不当行为</p>
         
         <h3>5. 免责声明</h3>
-        <p>本系统按"现状"提供服务，不承担任何明示或暗示的保证责任。</p>
+        <p>本系统按"现状"提供服务，不承担任何明示或暗示的保证责任</p>
       </div>
     </a-modal>
 
@@ -342,19 +342,19 @@
     >
       <div class="agreement-content">
         <h3>1. 信息收集</h3>
-        <p>我们收集您提供的个人信息，包括但不限于姓名、邮箱、手机号等。</p>
+        <p>我们收集您提供的个人信息，包括但不限于姓名、邮箱、手机号等</p>
         
         <h3>2. 信息使用</h3>
-        <p>我们使用您的信息来提供服务、改进系统功能和保障系统安全。</p>
+        <p>我们使用您的信息来提供服务、改进系统功能和保障系统安全</p>
         
         <h3>3. 信息共享</h3>
-        <p>除法律要求外，我们不会与第三方共享您的个人信息。</p>
+        <p>除法律要求外，我们不会与第三方共享您的个人信息</p>
         
         <h3>4. 信息安全</h3>
-        <p>我们采取适当的技术和管理措施来保护您的个人信息安全。</p>
+        <p>我们采取适当的技术和管理措施来保护您的个人信息安全</p>
         
         <h3>5. 用户权利</h3>
-        <p>您有权访问、更正、删除您的个人信息。</p>
+        <p>您有权访问、更正、删除您的个人信息</p>
       </div>
     </a-modal>
   </div>
@@ -364,7 +364,7 @@
 /**
  * 注册表单组件
  * @component RegisterForm
- * @description 学生注册表单，包含手机号验证和短信验证码功能
+ * @description 学生注册表单，包含手机号验证、短信验证码和用户协议功能
  */
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { message } from 'ant-design-vue'
@@ -439,7 +439,7 @@ const smsCodeDisabled = computed(() => {
 const smsCodeButtonText = computed(() => {
   if (smsCodeSending.value) return '发送中'
   if (smsCodeCountdown.value > 0) return `${smsCodeCountdown.value}s`
-  return '获取验证码'
+    return '获取验证码'
 })
 
 const passwordStrengthClass = computed(() => {

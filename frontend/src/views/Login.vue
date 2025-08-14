@@ -9,7 +9,7 @@
             <i class="fas fa-graduation-cap text-white text-2xl"></i>
           </div>
           <h1 class="text-2xl font-bold text-gray-800">学籍管理系统</h1>
-          <p class="text-gray-500 mt-2">请登录您的账户</p>
+          <p class="text-gray-500 mt-2">请登录您的账号</p>
         </div>
 
         <!-- 登录表单 -->
@@ -20,7 +20,7 @@
           layout="vertical"
           class="space-y-4"
         >
-          <!-- 手机号 -->
+          <!-- 手机号-->
           <a-form-item name="phone" label="手机号">
             <a-input
               v-model:value="formData.phone"
@@ -28,7 +28,7 @@
               placeholder="请输入手机号"
               :prefix="h(PhoneOutlined)"
               :disabled="loading"
-              maxlength="11"
+              :maxlength="11"
             />
           </a-form-item>
 
@@ -43,7 +43,7 @@
             />
           </a-form-item>
 
-          <!-- 验证码 -->
+          <!-- 验证码-->
           <!-- <a-form-item name="captcha" label="验证码" v-if="captchaImage">
             <div class="flex gap-2">
               <a-input
@@ -111,7 +111,7 @@
           </p>
         </div>
 
-        <!-- 开发模式提示 -->
+        <!-- 开发模式提�?-->
         <div v-if="shouldSkipCaptcha()" class="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
           <p class="text-xs text-green-700 text-center font-medium mb-2">
             <i class="fas fa-code mr-1"></i>
@@ -258,6 +258,7 @@ const refreshCaptcha = (): void => {
  * 处理登录
  */
 const handleLogin = async (values: LoginRequest): Promise<void> => {
+  console.log('🚀 开始登录流程', values)
   try {
     loading.value = true
 
@@ -269,33 +270,48 @@ const handleLogin = async (values: LoginRequest): Promise<void> => {
         phone: values.phone,
         password: values.password
       }
+      console.log('📝 开发模式登录数据:', loginData)
     } else {
       // 生产模式添加验证码ID
       loginData = {
         ...values,
         captchaId: captchaId.value
       }
+      console.log('📝 生产模式登录数据:', loginData)
     }
 
+    console.log('🔄 调用 authStore.login...')
     const success = await authStore.login(loginData)
+    console.log('✅ 登录结果:', success)
     
     if (success) {
       // 登录成功，跳转到首页
       const redirect = router.currentRoute.value.query.redirect as string
-      await router.push(redirect || '/')
+      const targetRoute = redirect || '/dashboard'
+      console.log('🔀 准备跳转到:', targetRoute)
+      try {
+        await router.push(targetRoute)
+        console.log('✅ 跳转完成')
+      } catch (error) {
+        console.error('❌ 跳转失败:', error)
+        // 如果跳转失败，尝试跳转到首页
+        await router.push('/')
+      }
     } else {
+      console.log('❌ 登录失败，刷新验证码')
       // 登录失败，刷新验证码（非开发模式）
       if (!shouldSkipCaptcha()) {
         refreshCaptcha()
       }
     }
   } catch (error) {
-    console.error('登录失败:', error)
+    console.error('❌ 登录异常:', error)
     if (!shouldSkipCaptcha()) {
       refreshCaptcha()
     }
   } finally {
     loading.value = false
+    console.log('🏁 登录流程结束')
   }
 }
 

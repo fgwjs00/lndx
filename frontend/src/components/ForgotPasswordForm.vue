@@ -216,7 +216,7 @@
         </div>
         <div class="help-item">
           <i class="fas fa-clock"></i>
-          <span>短信验证码有效期为5分钟</span>
+          <span>短信验证码有效期5分钟</span>
         </div>
         <div class="help-item">
           <i class="fas fa-key"></i>
@@ -956,7 +956,7 @@ onUnmounted(() => {
   }
 }
 
-/* 滚动条样式 */
+  /* 滚动条样式 */
 .forgot-password-container::-webkit-scrollbar {
   width: 8px;
 }

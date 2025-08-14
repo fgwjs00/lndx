@@ -284,10 +284,10 @@
                 <div class="flex flex-wrap gap-2">
                   <button 
                     type="button"
-                    @click="setAgeRestriction(null, 65, '舞蹈、体操等高强度运动课程')"
+                    @click="setAgeRestriction(null, 45, '舞蹈、体操等高强度运动课程')"
                     class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs hover:bg-blue-200 transition-colors"
                   >
-                    65岁以下（舞蹈类）
+                    45岁以下（舞蹈类）
                   </button>
                   <button 
                     type="button"

@@ -3,11 +3,12 @@
  * @module types/auth
  */
 
-// 用户角色枚举
+// 用户角色枚举 - 四级权限系统
 export enum UserRole {
-  ADMIN = 'admin',
-  TEACHER = 'teacher',
-  STUDENT = 'student'
+  SUPER_ADMIN = 'super_admin',    // 超级管理员 - 公司拥有，最高权限
+  SCHOOL_ADMIN = 'school_admin',  // 学校管理员 - 学校管理，可配置本校权限
+  TEACHER = 'teacher',            // 教师 - 教学相关权限
+  STUDENT = 'student'             // 学生 - 基础权限
 }
 
 // 用户状态枚举
@@ -82,7 +83,8 @@ export interface Permission {
 
 // 角色权限配置
 export interface RolePermissions {
-  [UserRole.ADMIN]: string[]
+  [UserRole.SUPER_ADMIN]: string[]
+  [UserRole.SCHOOL_ADMIN]: string[]
   [UserRole.TEACHER]: string[]
   [UserRole.STUDENT]: string[]
 }
@@ -104,7 +106,7 @@ export interface ResetPasswordRequest {
   captcha: string
 }
 
-// 通过验证码重置密码请求
+// 通过验证码重置密码请求数据
 export interface ResetPasswordWithCodeRequest {
   phone: string
   smsCode: string
@@ -127,7 +129,7 @@ export interface ChangePasswordRequest {
   confirmPassword: string
 }
 
-// 验证码响应
+// 验证码响应数据
 export interface CaptchaResponse {
   captchaId: string
   captchaImage: string
@@ -146,14 +148,14 @@ export interface UpdateProfileRequest {
   department?: string
 }
 
-// 短信验证码请求
+// 短信验证码请求数据
 export interface SmsCodeRequest {
   phone: string
   type: 'register' | 'reset' | 'login'
   captcha: string
 }
 
-// 短信验证码验证
+// 短信验证码验证请求数据
 export interface SmsCodeVerifyRequest {
   phone: string
   code: string

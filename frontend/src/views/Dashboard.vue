@@ -51,7 +51,7 @@
       </div>
     </div>
     
-    <!-- 图表和最近报名记录 -->
+    <!-- 图表和最近报名记录-->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
       <!-- 图表区域 -->
       <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6">
@@ -77,17 +77,16 @@
         </div>
       </div>
       
-      <!-- 最近报名记录 -->
+      <!-- 最近报名记录-->
       <div class="bg-white rounded-2xl shadow-lg p-6">
         <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
           <i class="fas fa-list text-blue-500 mr-3"></i>
-          最近报名记录
-        </h3>
+          最近报名记录        </h3>
         <div class="flex flex-col gap-4">
           <div class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
             <img src="https://randomuser.me/api/portraits/men/1.jpg" alt="学生头像" class="w-10 h-10 rounded-full mr-3">
             <div class="flex-1">
-              <p class="font-medium text-gray-800">李小明</p>
+              <p class="font-medium text-gray-800">李晓明</p>
               <p class="text-sm text-gray-500">高等数学</p>
             </div>
             <span class="px-2 py-1 bg-green-100 text-green-600 rounded-full text-xs font-medium">已批准</span>
@@ -96,7 +95,7 @@
           <div class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
             <img src="https://randomuser.me/api/portraits/women/2.jpg" alt="学生头像" class="w-10 h-10 rounded-full mr-3">
             <div class="flex-1">
-              <p class="font-medium text-gray-800">张婷婷</p>
+              <p class="font-medium text-gray-800">张婷</p>
               <p class="text-sm text-gray-500">英语文学</p>
             </div>
             <span class="px-2 py-1 bg-yellow-100 text-yellow-600 rounded-full text-xs font-medium">待审核</span>
@@ -105,7 +104,7 @@
           <div class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
             <img src="https://randomuser.me/api/portraits/men/3.jpg" alt="学生头像" class="w-10 h-10 rounded-full mr-3">
             <div class="flex-1">
-              <p class="font-medium text-gray-800">王浩然</p>
+              <p class="font-medium text-gray-800">王浩</p>
               <p class="text-sm text-gray-500">计算机科学</p>
             </div>
             <span class="px-2 py-1 bg-green-100 text-green-600 rounded-full text-xs font-medium">已批准</span>
@@ -114,7 +113,7 @@
           <div class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
             <img src="https://randomuser.me/api/portraits/women/4.jpg" alt="学生头像" class="w-10 h-10 rounded-full mr-3">
             <div class="flex-1">
-              <p class="font-medium text-gray-800">赵思思</p>
+              <p class="font-medium text-gray-800">赵思</p>
               <p class="text-sm text-gray-500">物理实验</p>
             </div>
             <span class="px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs font-medium">已拒绝</span>
@@ -123,7 +122,7 @@
           <div class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
             <img src="https://randomuser.me/api/portraits/men/5.jpg" alt="学生头像" class="w-10 h-10 rounded-full mr-3">
             <div class="flex-1">
-              <p class="font-medium text-gray-800">刘子轩</p>
+                <p class="font-medium text-gray-800">刘子</p>
               <p class="text-sm text-gray-500">艺术设计</p>
             </div>
             <span class="px-2 py-1 bg-green-100 text-green-600 rounded-full text-xs font-medium">已批准</span>
@@ -141,17 +140,16 @@
         </h3>
         <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full flex items-center transition-colors">
           <i class="fas fa-plus mr-2"></i>
-          添加新学生
-        </button>
+          添加新学生        </button>
       </div>
       
-      <!-- 搜索栏 -->
+      <!-- 搜索-->
       <div class="mb-6">
         <div class="relative max-w-md">
           <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
           <input
             type="text"
-            placeholder="搜索学生姓名或学号..."
+            placeholder="搜索学生姓名或学号.."
             class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
@@ -173,7 +171,7 @@
           <tbody>
             <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
               <td class="py-4 px-6 text-gray-800">20231001</td>
-              <td class="py-4 px-6 text-gray-800 font-medium">陈雨桐</td>
+              <td class="py-4 px-6 text-gray-800 font-medium">陈雨</td>
               <td class="py-4 px-6 text-gray-600">计算机科学</td>
               <td class="py-4 px-6 text-gray-600">CS2023A</td>
               <td class="py-4 px-6 text-gray-600">138****1234</td>
@@ -191,7 +189,7 @@
             
             <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
               <td class="py-4 px-6 text-gray-800">20231002</td>
-              <td class="py-4 px-6 text-gray-800 font-medium">杨天宇</td>
+              <td class="py-4 px-6 text-gray-800 font-medium">杨天</td>
               <td class="py-4 px-6 text-gray-600">电子信息工程</td>
               <td class="py-4 px-6 text-gray-600">EE2023B</td>
               <td class="py-4 px-6 text-gray-600">139****5678</td>
@@ -209,7 +207,7 @@
             
             <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
               <td class="py-4 px-6 text-gray-800">20231003</td>
-              <td class="py-4 px-6 text-gray-800 font-medium">周欣然</td>
+              <td class="py-4 px-6 text-gray-800 font-medium">周欣</td>
               <td class="py-4 px-6 text-gray-600">工商管理</td>
               <td class="py-4 px-6 text-gray-600">BA2023C</td>
               <td class="py-4 px-6 text-gray-600">137****9012</td>
@@ -227,7 +225,7 @@
             
             <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
               <td class="py-4 px-6 text-gray-800">20231004</td>
-              <td class="py-4 px-6 text-gray-800 font-medium">吴宇航</td>
+              <td class="py-4 px-6 text-gray-800 font-medium">吴宇</td>
               <td class="py-4 px-6 text-gray-600">机械工程</td>
               <td class="py-4 px-6 text-gray-600">ME2023D</td>
               <td class="py-4 px-6 text-gray-600">136****3456</td>
@@ -253,7 +251,7 @@
 /**
  * 控制面板页面
  * @component Dashboard
- * @description 显示系统概览、统计数据和最近活动
+ * @description 显示系统概览、统计数据和最近活动  
  */
 import { ref, onMounted } from 'vue'
 

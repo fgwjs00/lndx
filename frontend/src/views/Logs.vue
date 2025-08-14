@@ -176,7 +176,7 @@
       <div class="p-6 border-t border-gray-200">
         <div class="flex items-center justify-between">
           <div class="text-sm text-gray-500">
-            显示 1-20 条，共 {{ filteredLogs.length }} 条记录
+            显示 1-20 条，共{{ filteredLogs.length }} 条记录
           </div>
           <div class="flex items-center space-x-2">
             <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors">
@@ -277,7 +277,7 @@ const logs = ref<Log[]>([
     module: 'student',
     user: '李老师',
     action: '学生管理',
-    details: '更新学生信息: 陈雨桐',
+    details: '更新学生信息: 陈雨',
     ip: '192.168.1.150'
   },
   {
@@ -297,7 +297,7 @@ const logs = ref<Log[]>([
     module: 'system',
     user: '系统',
     action: '系统监控',
-    details: 'CPU使用率超过80%',
+    details: 'CPU使用率超50%',
     ip: '127.0.0.1'
   },
   {
@@ -364,7 +364,7 @@ const securityLogs = computed<Log[]>(() => {
 })
 
 /**
- * 获取级别样式类
+ * 获取级别样式
  */
 const getLevelClass = (level: string): string => {
   switch (level) {

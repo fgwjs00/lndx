@@ -12,7 +12,7 @@
           <div class="text-right">
             <p class="text-purple-100 text-sm">当前登录：</p>
             <p class="text-white font-semibold">{{ authStore.userName }}</p>
-            <p class="text-purple-200 text-xs">{{ getRoleName(authStore.userRole) }}</p>
+            <p class="text-purple-200 text-xs">{{ getRoleName(authStore.userRole || UserRole.STUDENT) }}</p>
           </div>
         </div>
       </div>
@@ -130,6 +130,77 @@
                   :options="healthStatusOptions"
                 />
               </a-form-item>
+              <!-- 联系电话 -->
+              <a-form-item label="联系电话" name="contactPhone" required>
+                <a-input
+                  v-model:value="formData.contactPhone"
+                  placeholder="请输入本人联系电话"
+                  size="large"
+                  :maxlength="11"
+                />
+              </a-form-item>
+              <!-- 身份证地址 -->
+              <a-form-item label="身份证地址" name="idCardAddress" required>
+                <a-textarea
+                  v-model:value="formData.idCardAddress"
+                  placeholder="请输入身份证上的地址"
+                  :rows="2"
+                  :maxlength="100"
+                  show-count
+                />
+              </a-form-item>
+
+              <!-- 身份证正面照片 -->
+              <a-form-item label="身份证正面" name="idCardFront">
+                <a-upload
+                  v-model:file-list="idCardFrontFileList"
+                  :before-upload="(file) => handleIdCardUpload(file, 'front')"
+                  :show-upload-list="false"
+                  accept="image/*"
+                  class="id-card-uploader"
+                >
+                  <div class="id-card-upload-area">
+                    <img 
+                      v-if="formData.idCardFront" 
+                      :src="formData.idCardFront" 
+                      alt="身份证正面" 
+                      class="id-card-image" 
+                      @click.stop="previewIdCard('front')"
+                    />
+                    <div v-else class="id-card-placeholder">
+                      <i class="fas fa-id-card text-3xl text-gray-400 mb-2"></i>
+                      <p class="text-gray-600 font-medium">身份证正面</p>
+                      <p class="text-xs text-gray-400">点击上传或使用读卡器</p>
+                    </div>
+                  </div>
+                </a-upload>
+              </a-form-item>
+
+              <!-- 身份证反面照片 -->
+              <a-form-item label="身份证反面" name="idCardBack">
+                <a-upload
+                  v-model:file-list="idCardBackFileList"
+                  :before-upload="(file) => handleIdCardUpload(file, 'back')"
+                  :show-upload-list="false"
+                  accept="image/*"
+                  class="id-card-uploader"
+                >
+                  <div class="id-card-upload-area">
+                    <img 
+                      v-if="formData.idCardBack" 
+                      :src="formData.idCardBack" 
+                      alt="身份证反面" 
+                      class="id-card-image" 
+                      @click.stop="previewIdCard('back')"
+                    />
+                    <div v-else class="id-card-placeholder">
+                      <i class="fas fa-id-card text-3xl text-gray-400 mb-2"></i>
+                      <p class="text-gray-600 font-medium">身份证反面</p>
+                      <p class="text-xs text-gray-400">点击上传或使用读卡器</p>
+                    </div>
+                  </div>
+                </a-upload>
+              </a-form-item>
             </div>
           </div>
 
@@ -215,27 +286,6 @@
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <!-- 家庭住址 -->
-              <a-form-item label="家庭住址" name="familyAddress" required>
-                <a-textarea
-                  v-model:value="formData.familyAddress"
-                  placeholder="请输入详细家庭住址"
-                  :rows="3"
-                  :maxlength="200"
-                  show-count
-                />
-              </a-form-item>
-
-              <!-- 联系电话 -->
-              <a-form-item label="联系电话" name="familyPhone" required>
-                <a-input
-                  v-model:value="formData.familyPhone"
-                  placeholder="请输入联系电话"
-                  size="large"
-                  :maxlength="11"
-                />
-              </a-form-item>
-
               <!-- 紧急联系人 -->
               <a-form-item label="紧急联系人" name="emergencyContact" required>
                 <a-input
@@ -253,6 +303,17 @@
                   placeholder="请输入紧急联系电话"
                   size="large"
                   :maxlength="11"
+                />
+              </a-form-item>
+
+              <!-- 现居住地址 -->
+              <a-form-item label="现居住地址" name="familyAddress" required>
+                <a-textarea
+                  v-model:value="formData.familyAddress"
+                  placeholder="请输入详细现居住地址"
+                  :rows="3"
+                  :maxlength="200"
+                  show-count
                 />
               </a-form-item>
 
@@ -312,6 +373,25 @@
         </a-form>
       </div>
     </div>
+
+    <!-- 身份证照片预览模态框 -->
+    <a-modal
+      :open="previewVisible"
+      :title="previewTitle"
+      :footer="null"
+      @cancel="handlePreviewCancel"
+      centered
+      width="600px"
+      class="id-card-preview-modal"
+    >
+      <div class="preview-image-container">
+        <img 
+          :src="previewImage" 
+          :alt="previewTitle"
+          class="preview-image"
+        />
+      </div>
+    </a-modal>
   </div>
 </template>
 
@@ -325,6 +405,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import { useAuthStore } from '@/store/auth'
 import { getRoleName } from '@/utils/auth'
+import { UserRole } from '@/types/auth'
 import dayjs, { type Dayjs } from 'dayjs'
 import ApplicationService from '@/api/application'
 import type { StudentInfo, IdCardData } from '@/types'
@@ -335,9 +416,20 @@ const formRef = ref()
 const submitting = ref<boolean>(false)
 const coursesLoading = ref<boolean>(false)
 const fileList = ref<any[]>([])
+const idCardFrontFileList = ref<any[]>([])
+const idCardBackFileList = ref<any[]>([])
+const previewVisible = ref<boolean>(false)
+const previewImage = ref<string>('')
+const previewTitle = ref<string>('')
 
 // 表单数据
-const formData = reactive<Partial<StudentInfo> & { birthDate: string | Dayjs }>({
+const formData = reactive<Partial<StudentInfo> & { 
+  birthDate: string | Dayjs
+  idCardAddress: string
+  contactPhone: string
+  idCardFront: string
+  idCardBack: string
+}>({
   name: '',
   gender: '男',
   birthDate: '',
@@ -346,6 +438,10 @@ const formData = reactive<Partial<StudentInfo> & { birthDate: string | Dayjs }>(
   educationLevel: '',
   politicalStatus: '',
   idNumber: '',
+  idCardAddress: '',
+  contactPhone: '',
+  idCardFront: '',
+  idCardBack: '',
   isRetired: false,
   retirementCategory: '',
   major: '',
@@ -353,7 +449,6 @@ const formData = reactive<Partial<StudentInfo> & { birthDate: string | Dayjs }>(
   studentId: '',
   agreementSigned: false,
   familyAddress: '',
-  familyPhone: '',
   emergencyContact: '',
   emergencyPhone: '',
   photo: '',
@@ -509,12 +604,8 @@ const formRules = {
     { required: true, message: '请选择是否签订超龄协议', trigger: 'change' }
   ],
   familyAddress: [
-    { required: true, message: '请输入家庭住址', trigger: 'blur' },
+    { required: true, message: '请输入现居住地址', trigger: 'blur' },
     { min: 5, max: 200, message: '地址长度在5-200个字符', trigger: 'blur' }
-  ],
-  familyPhone: [
-    { required: true, message: '请输入联系电话', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
   ],
   emergencyContact: [
     { required: true, message: '请输入紧急联系人', trigger: 'blur' },
@@ -522,6 +613,14 @@ const formRules = {
   ],
   emergencyPhone: [
     { required: true, message: '请输入紧急联系电话', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
+  ],
+  idCardAddress: [
+    { required: true, message: '请输入身份证地址', trigger: 'blur' },
+    { min: 5, max: 100, message: '地址长度在5-100个字符', trigger: 'blur' }
+  ],
+  contactPhone: [
+    { required: true, message: '请输入联系电话', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
   ]
 }
@@ -585,6 +684,68 @@ const handlePhotoUpload = async (file: File): Promise<boolean> => {
 }
 
 /**
+ * 处理身份证照片上传
+ */
+const handleIdCardUpload = async (file: File, type: 'front' | 'back'): Promise<boolean> => {
+  // 验证文件类型
+  if (!file.type.startsWith('image/')) {
+    message.error('只能上传图片文件')
+    return false
+  }
+
+  // 验证文件大小
+  if (file.size > 5 * 1024 * 1024) {
+    message.error('图片大小不能超过5MB')
+    return false
+  }
+
+  try {
+    // 暂时使用本地预览
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const result = e.target?.result as string
+      if (type === 'front') {
+        formData.idCardFront = result
+      } else {
+        formData.idCardBack = result
+      }
+    }
+    reader.readAsDataURL(file)
+    
+    message.success(`身份证${type === 'front' ? '正面' : '反面'}上传成功`)
+  } catch (error) {
+    console.error('身份证照片上传失败:', error)
+    message.error('身份证照片上传失败')
+  }
+
+  return false // 阻止默认上传行为
+}
+
+/**
+ * 预览身份证照片
+ */
+const previewIdCard = (type: 'front' | 'back'): void => {
+  if (type === 'front' && formData.idCardFront) {
+    previewImage.value = formData.idCardFront
+    previewTitle.value = '身份证正面'
+    previewVisible.value = true
+  } else if (type === 'back' && formData.idCardBack) {
+    previewImage.value = formData.idCardBack
+    previewTitle.value = '身份证反面'
+    previewVisible.value = true
+  }
+}
+
+/**
+ * 关闭预览
+ */
+const handlePreviewCancel = (): void => {
+  previewVisible.value = false
+  previewImage.value = ''
+  previewTitle.value = ''
+}
+
+/**
  * 处理表单提交
  */
 const handleSubmit = async (): Promise<void> => {
@@ -640,6 +801,10 @@ const handleReset = (): void => {
     educationLevel: '',
     politicalStatus: '',
     idNumber: '',
+    idCardAddress: '',
+    contactPhone: '',
+    idCardFront: '',
+    idCardBack: '',
     isRetired: false,
     retirementCategory: '',
     major: '',
@@ -647,7 +812,6 @@ const handleReset = (): void => {
     studentId: '',
     agreementSigned: false,
     familyAddress: '',
-    familyPhone: '',
     emergencyContact: '',
     emergencyPhone: '',
     photo: '',
@@ -674,8 +838,13 @@ const handleIdCardDataRead = (idCardData: IdCardData): void => {
   // 身份证号
   formData.idNumber = idCardData.certNo || ''
   
-  // 住址
-  formData.familyAddress = idCardData.address || ''
+  // 身份证地址
+  formData.idCardAddress = idCardData.address || ''
+  
+  // 现居住地址（可以同时填充为身份证地址）
+  if (!formData.familyAddress) {
+    formData.familyAddress = idCardData.address || ''
+  }
   
   // 出生年月处理
   if (idCardData.birth) {
@@ -685,9 +854,22 @@ const handleIdCardDataRead = (idCardData: IdCardData): void => {
     }
   }
   
-  // 身份证头像照片
+  // 身份证头像照片（从身份证芯片读取的头像）
   if (idCardData.base64Data) {
     formData.photo = `data:image/jpeg;base64,${idCardData.base64Data}`
+  }
+  
+  // 身份证正面完整照片（如果读卡器支持拍照功能）
+  if (idCardData.imageFront) {
+    formData.idCardFront = `data:image/jpeg;base64,${idCardData.imageFront}`
+  } else if (idCardData.base64Data && !formData.idCardFront) {
+    // 如果没有完整正面照片，但有头像，且用户还没有上传正面照片，可以提示用户
+    console.log('读卡器获取到头像，建议手动上传完整的身份证正面照片')
+  }
+  
+  // 身份证反面完整照片（如果读卡器支持拍照功能）
+  if (idCardData.imageBack) {
+    formData.idCardBack = `data:image/jpeg;base64,${idCardData.imageBack}`
   }
   
   // 显示填充完成的消息
@@ -843,5 +1025,62 @@ onMounted((): void => {
 :deep(.ant-upload) {
   width: 120px;
   height: 120px;
+}
+
+.id-card-uploader :deep(.ant-upload) {
+  width: 200px;
+  height: 120px;
+}
+
+.id-card-upload-area {
+  width: 200px;
+  height: 120px;
+  border: 2px dashed #d9d9d9;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+  background: #fafafa;
+}
+
+.id-card-upload-area:hover {
+  border-color: #1890ff;
+  background: #f0f8ff;
+}
+
+.id-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.id-card-placeholder {
+  text-align: center;
+  padding: 10px;
+}
+
+.id-card-image {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.id-card-image:hover {
+  transform: scale(1.05);
+}
+
+.id-card-preview-modal .preview-image-container {
+  text-align: center;
+  padding: 20px;
+}
+
+.id-card-preview-modal .preview-image {
+  max-width: 100%;
+  max-height: 500px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 </style> 

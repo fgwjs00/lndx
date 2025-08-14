@@ -31,9 +31,12 @@ export const useAuthStore = defineStore('auth', () => {
   const error = ref<string | null>(null)
 
   // 计算属性
-  const isAdmin = computed<boolean>(() => user.value?.role === 'admin')
+  const isSuperAdmin = computed<boolean>(() => user.value?.role === 'super_admin')
+  const isSchoolAdmin = computed<boolean>(() => user.value?.role === 'school_admin')
   const isTeacher = computed<boolean>(() => user.value?.role === 'teacher')
   const isStudent = computed<boolean>(() => user.value?.role === 'student')
+  // 向后兼容：isAdmin 等同于 isSuperAdmin
+  const isAdmin = computed<boolean>(() => user.value?.role === 'super_admin')
   const userRole = computed<UserRole | null>(() => user.value?.role || null)
   const userName = computed<string>(() => user.value?.realName || user.value?.phone || '')
   const userAvatar = computed<string>(() => user.value?.avatar || '')
@@ -78,6 +81,7 @@ export const useAuthStore = defineStore('auth', () => {
    * @param loginData 登录数据
    */
   const login = async (loginData: LoginRequest): Promise<boolean> => {
+    console.log('🔐 AuthStore.login 开始', loginData)
     try {
       loading.value = true
       error.value = null
@@ -86,14 +90,21 @@ export const useAuthStore = defineStore('auth', () => {
 
       // 开发模式下使用模拟登录
       if (shouldMockAuth()) {
+        console.log('🧪 使用模拟登录')
         response = await mockLogin(loginData.phone, loginData.password)
+        console.log('🧪 模拟登录响应:', response)
       } else {
+        console.log('🌐 使用真实API登录')
         response = await AuthService.login(loginData)
+        console.log('🌐 API登录响应:', response)
       }
       
       if (response.code === 200) {
         const { token: newToken, refreshToken: newRefreshToken, user: userInfo } = response.data
         const userPermissions = response.data.permissions || []
+        
+        console.log('👤 用户信息:', userInfo)
+        console.log('🔑 权限列表:', userPermissions)
         
         // 更新状态
         token.value = newToken
@@ -108,19 +119,23 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.setItem('user', JSON.stringify(userInfo))
         localStorage.setItem('permissions', JSON.stringify(userPermissions))
 
+        console.log('✅ 登录成功，状态已更新')
         message.success('登录成功')
         return true
       } else {
+        console.log('❌ 登录失败:', response.message)
         error.value = response.message || '登录失败'
         message.error(error.value)
         return false
       }
     } catch (err: any) {
+      console.error('❌ 登录异常:', err)
       error.value = err.message || '登录失败'
       message.error(error.value)
       return false
     } finally {
       loading.value = false
+      console.log('🔚 AuthStore.login 结束')
     }
   }
 
@@ -325,7 +340,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
-   * 检查是否可以访问路由
+    * 检查是否可以访问路由
    * @param requiredRoles 需要的角色
    * @param requiredPermissions 需要的权限
    */
@@ -352,6 +367,8 @@ export const useAuthStore = defineStore('auth', () => {
     error,
     
     // 计算属性
+    isSuperAdmin,
+    isSchoolAdmin,
     isAdmin,
     isTeacher,
     isStudent,

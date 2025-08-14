@@ -268,7 +268,7 @@ const rules = {
   ],
   initialPassword: [
     { required: true, message: '请输入初始密码', trigger: 'blur' },
-    { min: 8, message: '密码长度至少8位', trigger: 'blur' }
+    { min: 8, message: '密码长度至少8个字符', trigger: 'blur' }
   ]
 }
 

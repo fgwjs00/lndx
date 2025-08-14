@@ -32,17 +32,17 @@ export const shouldMockAuth = (): boolean => {
 }
 
 /**
- * 模拟用户数据
+ * 模拟用户数据 - 四级权限系统
  */
 export const mockUsers = [
   {
     id: '1',
     phone: '13800138000',
     password: '123456',
-    realName: '系统管理员',
-    email: 'admin@example.com',
-    role: 'admin',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin',
+    realName: '超级管理员',
+    email: 'superadmin@company.com',
+    role: 'super_admin',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=superadmin',
     status: 'active',
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z'
@@ -51,10 +51,10 @@ export const mockUsers = [
     id: '2',
     phone: '13800138001',
     password: '123456',
-    realName: '张老师',
-    email: 'teacher@example.com',
-    role: 'teacher',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=teacher',
+    realName: '学校管理员',
+    email: 'schooladmin@school.com',
+    role: 'school_admin',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=schooladmin',
     status: 'active',
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z'
@@ -63,8 +63,20 @@ export const mockUsers = [
     id: '3',
     phone: '13800138002',
     password: '123456',
+    realName: '张老师',
+    email: 'teacher@school.com',
+    role: 'teacher',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=teacher',
+    status: 'active',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z'
+  },
+  {
+    id: '4',
+    phone: '13800138003',
+    password: '123456',
     realName: '李学生',
-    email: 'student@example.com',
+    email: 'student@school.com',
     role: 'student',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=student',
     status: 'active',
@@ -86,9 +98,9 @@ export const mockLogin = async (phone: string, password: string): Promise<any> =
   const user = mockUsers.find(u => u.phone === phone && u.password === password)
   
   if (user) {
-    // 根据角色分配权限
+    // 根据角色分配权限 - 四级权限系统
     let permissions: string[] = []
-    if (user.role === 'admin') {
+    if (user.role === 'super_admin') {
       permissions = [
         'system:*',
         'student:*',
@@ -98,7 +110,21 @@ export const mockLogin = async (phone: string, password: string): Promise<any> =
         'application:*',
         'analysis:*',
         'logs:*',
-        'setting:*'
+        'setting:*',
+        'school:*'
+      ]
+    } else if (user.role === 'school_admin') {
+      permissions = [
+        'user:read',
+        'user:create',
+        'user:update',
+        'student:*',
+        'teacher:*',
+        'course:*',
+        'application:*',
+        'analysis:read',
+        'setting:read',
+        'setting:update'
       ]
     } else if (user.role === 'teacher') {
       permissions = [
@@ -114,7 +140,9 @@ export const mockLogin = async (phone: string, password: string): Promise<any> =
       permissions = [
         'application:read',
         'application:create',
-        'course:read'
+        'course:read',
+        'profile:read',
+        'profile:update'
       ]
     }
 

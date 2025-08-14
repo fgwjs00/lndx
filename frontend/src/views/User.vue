@@ -78,8 +78,8 @@
     
     <!-- 分页签和操作区域 -->
     <div class="bg-white rounded-2xl shadow-lg mb-8">
-      <!-- 分页签 -->
-      <div class="border-b border-gray-200">
+      <!-- 分页标签 - 根据用户角色显示不同的标签-->
+      <div class="border-b border-gray-200" v-if="authStore.isAdmin">
         <nav class="flex space-x-8 px-6">
           <button
             @click="activeTab = 'all'"
@@ -103,7 +103,7 @@
             ]"
           >
             <i class="fas fa-user-shield mr-2"></i>
-            管理员 ({{ adminUsers.length }})
+            管理员({{ adminUsers.length }})
           </button>
           <button
             @click="activeTab = 'teacher'"
@@ -131,16 +131,42 @@
           </button>
         </nav>
       </div>
+      
+      <!-- 教师角色的简化标签-->
+      <div class="border-b border-gray-200" v-else-if="authStore.isTeacher">
+        <nav class="flex space-x-8 px-6">
+          <button
+            @click="activeTab = 'student'"
+            :class="[
+              'py-4 px-1 border-b-2 font-medium text-sm transition-colors',
+              activeTab === 'student' 
+                ? 'border-blue-500 text-blue-600' 
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            ]"
+          >
+            <i class="fas fa-user-graduate mr-2"></i>
+            我的学生 ({{ studentUsers.length }})
+          </button>
+        </nav>
+      </div>
+      
+      <!-- 学生角色不显示用户管理-->
+      <div class="border-b border-gray-200" v-else>
+        <div class="px-6 py-4 text-center text-gray-500">
+          <i class="fas fa-lock text-2xl mb-2"></i>
+          <p>您没有权限访问用户管理功能</p>
+        </div>
+      </div>
 
-      <!-- 操作区域 -->
-      <div class="p-6">
+      <!-- 操作区域 - 只对管理员和教师显示 -->
+      <div class="p-6" v-if="authStore.isAdmin || authStore.isTeacher">
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-          <!-- 搜索框 -->
+          <!-- 搜索框-->
           <div class="relative flex-1 max-w-md">
             <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
             <input
               type="text"
-              placeholder="搜索用户姓名或手机号..."
+              :placeholder="getSearchPlaceholder()"
               class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               v-model="searchQuery"
             />
@@ -148,7 +174,7 @@
           
           <!-- 筛选和操作按钮 -->
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
-            <!-- 筛选区域 -->
+            <!-- 筛选区域-->
             <div class="flex flex-col sm:flex-row gap-3">
               <select 
                 v-model="selectedStatus" 
@@ -160,9 +186,10 @@
               </select>
             </div>
             
-            <!-- 操作按钮 -->
+            <!-- 操作按钮 - 根据角色显示不同按钮 -->
             <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <button 
+                v-if="canAddUser"
                 @click="showUserForm = true"
                 class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0"
               >
@@ -170,7 +197,11 @@
                 <span class="whitespace-nowrap">{{ getAddButtonText() }}</span>
               </button>
               
-              <button class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0">
+              <button 
+                v-if="canExportData"
+                @click="exportUserData"
+                class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0"
+              >
                 <i class="fas fa-download mr-2"></i>
                 <span class="whitespace-nowrap">导出数据</span>
               </button>
@@ -274,12 +305,10 @@
       <div class="p-6 border-t border-gray-200">
         <div class="flex items-center justify-between">
           <div class="text-sm text-gray-500">
-            显示 1-10 条，共 {{ currentTabUsers.length }} 条记录
-          </div>
+            显示 1-10 条，共{{ currentTabUsers.length }} 条记录          </div>
           <div class="flex items-center space-x-2">
             <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors">
-              上一页
-            </button>
+              上一页            </button>
             <button class="px-3 py-1 bg-blue-500 text-white rounded">
               1
             </button>
@@ -287,8 +316,7 @@
               2
             </button>
             <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors">
-              下一页
-            </button>
+              下一页            </button>
           </div>
         </div>
       </div>
@@ -323,7 +351,7 @@ import { message } from 'ant-design-vue'
 import UserForm from '@/components/UserForm.vue'
 import { useAuthStore } from '@/store/auth'
 
-// 响应式数据
+  // 响应式数据
 const authStore = useAuthStore()
 const activeTab = ref<'all' | 'admin' | 'teacher' | 'student'>('all')
 const searchQuery = ref<string>('')
@@ -398,6 +426,15 @@ const adminUsers = computed(() => users.value.filter(user => user.role === 'admi
 const currentTabUsers = computed(() => {
   let filteredUsers = users.value
 
+  // 根据用户角色限制可见数据
+  if (authStore.isTeacher && !authStore.isAdmin) {
+    // 教师只能看到学生
+    filteredUsers = filteredUsers.filter(user => user.role === 'student')
+  } else if (authStore.isStudent) {
+    // 学生不能看到任何用户数据
+    return []
+  }
+
   // 按分页签过滤
   if (activeTab.value !== 'all') {
     filteredUsers = filteredUsers.filter(user => user.role === activeTab.value)
@@ -419,6 +456,15 @@ const currentTabUsers = computed(() => {
   }
 
   return filteredUsers
+})
+
+// 权限计算属性
+const canAddUser = computed(() => {
+  return authStore.isAdmin || (authStore.isTeacher && activeTab.value === 'student')
+})
+
+const canExportData = computed(() => {
+  return authStore.isAdmin || authStore.isTeacher
 })
 
 // 方法
@@ -497,7 +543,7 @@ const toggleUserStatus = (user: any): void => {
   const userIndex = users.value.findIndex(u => u.id === user.id)
   if (userIndex !== -1) {
     users.value[userIndex].status = newStatus
-    message.success(`已${action}用户 ${user.realName}`)
+    message.success(`${action}用户 ${user.realName}`)
   }
 }
 
@@ -515,6 +561,41 @@ const handleUserSuccess = (): void => {
   showUserForm.value = false
   editingUser.value = null
   message.success('用户操作成功')
+}
+
+const exportUserData = (): void => {
+  const data = currentTabUsers.value
+  if (data.length === 0) {
+      message.warning('暂无数据可导出')
+    return
+  }
+  
+  // 构造CSV数据
+  const headers = ['姓名', '手机号', '角色', '状态', '注册时间', '最后登录']
+  const csvContent = [
+    headers.join(','),
+    ...data.map(user => [
+      user.realName,
+      user.phone,
+      getRoleText(user.role),
+      getStatusText(user.status),
+      user.createTime,
+      user.lastLoginTime || '从未登录'
+    ].join(','))
+  ].join('\n')
+  
+  // 创建下载链接
+  const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+  link.setAttribute('href', url)
+  link.setAttribute('download', `用户数据_${new Date().toISOString().split('T')[0]}.csv`)
+  link.style.visibility = 'hidden'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  
+  message.success('用户数据导出成功')
 }
 
 // 生命周期

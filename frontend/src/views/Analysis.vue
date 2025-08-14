@@ -22,7 +22,7 @@
           </div>
           <div>
             <h3 class="text-2xl font-bold text-gray-800">95.2%</h3>
-            <p class="text-gray-500 text-sm">报名成功率</p>
+            <p class="text-gray-500 text-sm">报名成功�?/p>
           </div>
         </div>
       </div>
@@ -163,7 +163,7 @@
         </div>
       </div>
       
-      <!-- 系统状态 -->
+      <!-- 系统状态-->
       <div class="bg-white rounded-2xl shadow-lg p-6">
         <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
           <i class="fas fa-server text-purple-500 mr-3"></i>
@@ -184,7 +184,7 @@
           </div>
           <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
             <span class="text-gray-600">系统运行时间</span>
-            <span class="font-bold text-gray-800">7天12小时</span>
+            <span class="font-bold text-gray-800">72小时</span>
           </div>
         </div>
       </div>
@@ -208,7 +208,7 @@ interface PopularCourse {
   rate: number
 }
 
-// 响应式数据
+// 响应式数组
 const popularCourses = ref<PopularCourse[]>([
   { id: 1, name: '高等数学', students: 456, rate: 95 },
   { id: 2, name: '计算机程序设计', students: 389, rate: 87 },

@@ -22,7 +22,7 @@ import type {
 } from '@/types/auth'
 
 /**
- * 认证API服务类
+ * 认证API服务
  */
 export class AuthService {
   /**
@@ -221,7 +221,7 @@ export class AuthService {
   }
 
   /**
-   * 删除教师（管理员功能）
+  * 删除教师（管理员功能）  
    * @param id 教师ID
    * @returns 操作结果
    */
@@ -230,7 +230,7 @@ export class AuthService {
   }
 
   /**
-   * 重置教师密码（管理员功能）
+  * 重置教师密码（管理员功能）
    * @param id 教师ID
    * @param newPassword 新密码
    * @returns 操作结果

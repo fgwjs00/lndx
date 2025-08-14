@@ -239,7 +239,7 @@
       <div class="p-6 border-t border-gray-200">
         <div class="flex items-center justify-between">
           <div class="text-sm text-gray-500">
-            显示 1-10 条，共 {{ students.length }} 条记录
+            显示 1-10 条，共{{ students.length }} 条记录
           </div>
           <div class="flex items-center space-x-2">
             <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors">
@@ -290,7 +290,7 @@ const searchQuery = ref<string>('')
 const students = ref<Student[]>([
   {
     id: 1,
-    name: '陈雨桐',
+    name: '陈雨',
     studentId: '20231001',
     email: 'chenyutong@example.com',
     major: '计算机科学',
@@ -301,7 +301,7 @@ const students = ref<Student[]>([
   },
   {
     id: 2,
-    name: '杨天宇',
+    name: '杨天',
     studentId: '20231002',
     email: 'yangtianyu@example.com',
     major: '电子信息工程',
@@ -312,7 +312,7 @@ const students = ref<Student[]>([
   },
   {
     id: 3,
-    name: '周欣然',
+    name: '周欣',
     studentId: '20231003',
     email: 'zhouxinran@example.com',
     major: '工商管理',
@@ -323,7 +323,7 @@ const students = ref<Student[]>([
   },
   {
     id: 4,
-    name: '吴宇航',
+    name: '吴宇',
     studentId: '20231004',
     email: 'wuyuhang@example.com',
     major: '机械工程',

@@ -13,9 +13,9 @@
       </div>
     </div>
     
-    <!-- 设置分类 -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-      <!-- 基础设置 -->
+    <!-- 设置分类 - 根据用户角色显示不同设置 -->
+    <div v-if="authStore.isAdmin" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <!-- 基础设置 - 仅管理员可见 -->
       <div class="bg-white rounded-2xl shadow-lg p-6">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-xl font-semibold text-gray-800 flex items-center">
@@ -98,7 +98,7 @@
           <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
             <div>
               <p class="font-medium text-gray-800">密码策略</p>
-              <p class="text-sm text-gray-500">最少8位，包含字母和数字</p>
+              <p class="text-sm text-gray-500">至少6位，包含字母和数字</p>
             </div>
             <div class="flex items-center gap-2">
               <input type="checkbox" checked class="rounded">
@@ -158,7 +158,7 @@
             </div>
             <div class="flex items-center">
               <input type="checkbox" checked class="rounded mr-2">
-              <span class="text-sm text-green-600 font-medium">已启用</span>
+                <span class="text-sm text-green-600 font-medium">已启用</span>
             </div>
           </div>
           
@@ -197,16 +197,114 @@
         </div>
       </div>
     </div>
+
+    <!-- 教师和学生的个人设置 -->
+    <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <!-- 个人偏好设置 -->
+      <div class="bg-white rounded-2xl shadow-lg p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-semibold text-gray-800 flex items-center">
+            <i class="fas fa-user-cog text-blue-600 mr-3"></i>
+            个人偏好
+          </h3>
+          <div class="flex gap-2">
+            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+              <i class="fas fa-save mr-1"></i>
+              保存
+            </button>
+          </div>
+        </div>
+        <div class="flex flex-col gap-4">
+          <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <div>
+              <p class="font-medium text-gray-800">界面语言</p>
+              <p class="text-sm text-gray-500">选择您偏好的界面语言</p>
+            </div>
+            <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0">
+              <option value="zh-CN">简体中文</option>
+              <option value="en-US">English</option>
+            </select>
+          </div>
+          
+          <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <div>
+              <p class="font-medium text-gray-800">时区设置</p>
+              <p class="text-sm text-gray-500">设置您所在的时区</p>
+            </div>
+            <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0">
+              <option value="Asia/Shanghai">UTC+8 (北京时间)</option>
+              <option value="UTC">UTC (世界标准时间)</option>
+            </select>
+          </div>
+          
+          <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <div>
+              <p class="font-medium text-gray-800">邮件通知</p>
+              <p class="text-sm text-gray-500">接收系统邮件通知</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="checkbox" checked class="rounded">
+              <span class="text-sm text-green-600 font-medium">已启用</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 安全设置 -->
+      <div class="bg-white rounded-2xl shadow-lg p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-semibold text-gray-800 flex items-center">
+            <i class="fas fa-shield-alt text-green-600 mr-3"></i>
+            安全设置
+          </h3>
+        </div>
+        <div class="flex flex-col gap-4">
+          <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <div>
+              <p class="font-medium text-gray-800">修改密码</p>
+              <p class="text-sm text-gray-500">定期更换密码以确保账户安全</p>
+            </div>
+            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+              修改密码
+            </button>
+          </div>
+          
+          <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <div>
+              <p class="font-medium text-gray-800">登录记录</p>
+              <p class="text-sm text-gray-500">查看最近的登录记录</p>
+            </div>
+            <button class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+              查看记录
+            </button>
+          </div>
+          
+          <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <div>
+              <p class="font-medium text-gray-800">双因素认证</p>
+              <p class="text-sm text-gray-500">增强账户安全</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="checkbox" class="rounded">
+              <span class="text-sm text-gray-500">未启用</span>
+              <button class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50">
+                <i class="fas fa-cog text-sm"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     
-    <!-- 邮件设置 -->
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+    <!-- 邮件设置 - 仅管理员可见 -->
+    <div v-if="authStore.isAdmin" class="bg-white rounded-2xl shadow-lg p-6 mb-8">
       <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
         <i class="fas fa-envelope text-blue-600 mr-3"></i>
         邮件设置
       </h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">SMTP服务器</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2">SMTP服务</label>
           <input 
             type="text" 
             placeholder="smtp.example.com"
@@ -233,7 +331,7 @@
           <label class="block text-sm font-medium text-gray-700 mb-2">密码</label>
           <input 
             type="password" 
-            placeholder="••••••••"
+            placeholder="•••••••"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -251,15 +349,15 @@
       </div>
     </div>
     
-    <!-- 短信设置 -->
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+    <!-- 短信设置 - 仅管理员可见 -->
+    <div v-if="authStore.isAdmin" class="bg-white rounded-2xl shadow-lg p-6 mb-8">
       <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
         <i class="fas fa-sms text-green-600 mr-3"></i>
         短信设置
       </h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">短信服务商</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2">短信服务</label>
           <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option value="aliyun">阿里云短信</option>
             <option value="tencent">腾讯云短信</option>
@@ -294,18 +392,17 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center">
               <input type="checkbox" checked class="rounded mr-2">
-              <label class="text-sm text-gray-700">启用短信验证码</label>
+              <label class="text-sm text-gray-700">启用短信验证</label>
             </div>
             <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
-              发送测试短信
-            </button>
+              发送测试短信            </button>
           </div>
         </div>
       </div>
     </div>
     
-    <!-- 系统维护 -->
-    <div class="bg-white rounded-2xl shadow-lg p-6">
+    <!-- 系统维护 - 仅管理员可见 -->
+    <div v-if="authStore.isAdmin" class="bg-white rounded-2xl shadow-lg p-6">
       <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
         <i class="fas fa-tools text-orange-600 mr-3"></i>
         系统维护
@@ -363,9 +460,12 @@
 /**
  * 系统设置页面
  * @component Setting
- * @description 系统配置和管理设置
- */
+ * @description 系统配置和管理设置   */
 import { onMounted } from 'vue'
+import { useAuthStore } from '@/store/auth'
+
+// 认证状态
+const authStore = useAuthStore()
 
 /**
  * 组件挂载时初始化数据
@@ -375,7 +475,7 @@ onMounted((): void => {
 })
 
 /**
- * 备份数据库
+ * 备份数据
  */
 const backupDatabase = () => {
   alert('数据库备份功能待实现')

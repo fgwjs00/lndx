@@ -14,7 +14,7 @@ import type {
 } from '@/types'
 
 /**
- * 报名申请API服务类
+ * 报名申请API服务
  */
 export class ApplicationService {
   /**

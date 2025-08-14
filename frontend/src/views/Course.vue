@@ -1,19 +1,19 @@
 <template>
-    <div class="course-management">
-      <!-- 页面头部 -->
-      <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-8 text-white mb-8 shadow-lg">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-3xl font-bold mb-2">课程管理</h1>
+  <div class="course-management">
+    <!-- 页面头部 -->
+    <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-8 text-white mb-8 shadow-lg">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold mb-2">课程管理</h1>
             <p class="text-purple-100">府谷县老年大学课程管理系统</p>
-          </div>
-          <div class="text-6xl opacity-20">
-            📚
-          </div>
+        </div>
+        <div class="text-6xl opacity-20">
+          📚
         </div>
       </div>
+    </div>
   
-      <!-- 视图切换选项卡 -->
+      <!-- 视图切换选项-->
       <div class="bg-white rounded-2xl shadow-lg mb-8 overflow-hidden">
         <div class="border-b border-gray-200">
           <nav class="-mb-px flex">
@@ -22,8 +22,7 @@
               :class="activeView === 'schedule' ? 'border-purple-500 text-purple-600 bg-purple-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
               class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors"
             >
-              📅 课程表视图
-            </button>
+              📅 课程表视图            </button>
             <button
               @click="activeView = 'list'"
               :class="activeView === 'list' ? 'border-purple-500 text-purple-600 bg-purple-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
@@ -39,53 +38,53 @@
               📊 统计分析
             </button>
           </nav>
+      </div>
+    </div>
+    
+    <!-- 统计卡片 -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
+        <div class="flex items-center">
+          <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+            <i class="fas fa-book text-purple-600 text-xl"></i>
+          </div>
+          <div>
+              <h3 class="text-2xl font-bold text-gray-800">{{ courses.length }}</h3>
+            <p class="text-gray-500 text-sm">总课程数</p>
+          </div>
         </div>
       </div>
       
-      <!-- 统计卡片 -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
-          <div class="flex items-center">
-            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-              <i class="fas fa-book text-purple-600 text-xl"></i>
-            </div>
-            <div>
-              <h3 class="text-2xl font-bold text-gray-800">{{ courses.length }}</h3>
-              <p class="text-gray-500 text-sm">总课程数</p>
-            </div>
+      <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
+        <div class="flex items-center">
+          <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+            <i class="fas fa-play text-green-600 text-xl"></i>
           </div>
-        </div>
-        
-        <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
-          <div class="flex items-center">
-            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
-              <i class="fas fa-play text-green-600 text-xl"></i>
-            </div>
-            <div>
+          <div>
               <h3 class="text-2xl font-bold text-gray-800">{{ activeCourses }}</h3>
-              <p class="text-gray-500 text-sm">进行中</p>
-            </div>
+            <p class="text-gray-500 text-sm">进行中</p>
           </div>
         </div>
-        
-        <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
-          <div class="flex items-center">
-            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+      </div>
+      
+      <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
+        <div class="flex items-center">
+          <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
               <i class="fas fa-users text-blue-600 text-xl"></i>
-            </div>
-            <div>
+          </div>
+          <div>
               <h3 class="text-2xl font-bold text-gray-800">{{ totalEnrolled }}</h3>
               <p class="text-gray-500 text-sm">总报名数</p>
-            </div>
           </div>
         </div>
-        
-        <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
-          <div class="flex items-center">
+      </div>
+      
+      <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
+        <div class="flex items-center">
             <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-4">
               <i class="fas fa-chalkboard-teacher text-red-600 text-xl"></i>
-            </div>
-            <div>
+          </div>
+          <div>
               <h3 class="text-2xl font-bold text-gray-800">{{ uniqueTeachers }}</h3>
               <p class="text-gray-500 text-sm">授课教师</p>
             </div>
@@ -93,7 +92,7 @@
         </div>
       </div>
   
-      <!-- 课程表视图 -->
+      <!-- 课程表视图-->
       <div v-if="activeView === 'schedule'" class="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
         <div class="p-6 border-b border-gray-200">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -103,18 +102,18 @@
                 v-model="selectedCategory" 
                 class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
-                <option value="">所有分类</option>
-                <option value="music">音乐类</option>
-                <option value="instrument">器乐类</option>
-                <option value="art">艺术类</option>
-                <option value="literature">文学类</option>
-                <option value="practical">实用技能</option>
-                <option value="comprehensive">综合类</option>
+                  <option value="">所有分类</option>
+                <option value="music">音乐</option>
+                <option value="instrument">器乐</option>
+                <option value="art">艺术</option>
+                <option value="literature">文学</option>
+                <option value="practical">实用技术</option>
+                <option value="comprehensive">综合</option>
               </select>
-            </div>
-          </div>
         </div>
-        
+      </div>
+    </div>
+    
         <div class="overflow-x-auto">
           <table class="w-full">
             <thead class="bg-gray-50">
@@ -148,8 +147,7 @@
                   </div>
                   <div v-if="!getCoursesForTimeSlot(day, timeSlot.period).length" 
                        class="h-16 flex items-center justify-center text-gray-300 text-xs">
-                    无课程
-                  </div>
+                    无课                  </div>
                 </td>
               </tr>
             </tbody>
@@ -159,47 +157,47 @@
   
       <!-- 课程列表视图 -->
       <div v-if="activeView === 'list'">
-        <!-- 搜索和筛选区域 -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-            <!-- 搜索框 -->
-            <div class="relative flex-1 max-w-md">
-              <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-              <input
-                type="text"
+        <!-- 搜索和筛选区-->
+    <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+      <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+        <!-- 搜索-->
+        <div class="relative flex-1 max-w-md">
+          <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <input
+            type="text"
                 placeholder="搜索课程名称、教师或编号..."
-                class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                v-model="searchQuery"
-              />
-            </div>
-            
-            <!-- 筛选和操作按钮 -->
-            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
-              <!-- 筛选区域 -->
-              <div class="flex flex-col sm:flex-row gap-3">
+            class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            v-model="searchQuery"
+          />
+        </div>
+        
+        <!-- 筛选和操作按钮 -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+          <!-- 筛选区-->
+          <div class="flex flex-col sm:flex-row gap-3">
                 <select 
                   v-model="selectedCategory"
                   class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 min-w-0"
                 >
                   <option value="">所有分类</option>
-                  <option value="music">音乐类</option>
-                  <option value="instrument">器乐类</option>
-                  <option value="art">艺术类</option>
-                  <option value="literature">文学类</option>
-                  <option value="practical">实用技能</option>
-                  <option value="comprehensive">综合类</option>
+                  <option value="music">音乐</option>
+                  <option value="instrument">器乐</option>
+                  <option value="art">艺术</option>
+                  <option value="literature">文学</option>
+                  <option value="practical">实用技术</option>
+                  <option value="comprehensive">综合</option>
                 </select>
                 
                 <select 
                   v-model="selectedStatus"
                   class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 min-w-0"
                 >
-                  <option value="">所有状态</option>
-                  <option value="active">进行中</option>
-                  <option value="pending">待开课</option>
-                  <option value="completed">已结课</option>
-                </select>
-                
+              <option value="">所有状态</option>
+              <option value="active">进行中</option>
+              <option value="pending">待开课</option>
+              <option value="completed">已结课</option>
+            </select>
+            
                 <select 
                   v-model="selectedLevel"
                   class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 min-w-0"
@@ -208,77 +206,77 @@
                   <option value="grade1">一年级</option>
                   <option value="grade2">二年级</option>
                   <option value="grade3">三年级</option>
-                  <option value="foundation">基础班</option>
-                  <option value="improvement">提高班</option>
-                  <option value="senior">高级班</option>
-                </select>
-              </div>
-              
-                          <!-- 操作按钮 -->
-            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <option value="foundation">基础</option>
+                  <option value="improvement">提高</option>
+                  <option value="senior">高级</option>
+            </select>
+          </div>
+          
+          <!-- 操作按钮 -->
+          <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <button 
                 @click="showAddCourse"
                 class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0"
               >
-                <i class="fas fa-plus mr-2"></i>
-                <span class="whitespace-nowrap">添加课程</span>
-              </button>
-              
+              <i class="fas fa-plus mr-2"></i>
+              <span class="whitespace-nowrap">添加课程</span>
+            </button>
+            
               <button 
                 @click="handleBatchImport"
                 class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0"
               >
-                <i class="fas fa-upload mr-2"></i>
-                <span class="whitespace-nowrap">批量导入</span>
-              </button>
-              
+              <i class="fas fa-upload mr-2"></i>
+              <span class="whitespace-nowrap">批量导入</span>
+            </button>
+            
               <button 
                 @click="handleExportSchedule"
                 class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0"
               >
-                <i class="fas fa-download mr-2"></i>
+              <i class="fas fa-download mr-2"></i>
                 <span class="whitespace-nowrap">导出课表</span>
-              </button>
-            </div>
-            </div>
+            </button>
           </div>
         </div>
-  
-        <!-- 课程列表 -->
-        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-          <div class="p-6 border-b border-gray-200">
-            <h3 class="text-xl font-semibold text-gray-800">课程列表</h3>
-          </div>
-          
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="text-left py-4 px-6 text-gray-600 font-semibold">课程信息</th>
+      </div>
+    </div>
+    
+    <!-- 课程列表 -->
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+      <div class="p-6 border-b border-gray-200">
+        <h3 class="text-xl font-semibold text-gray-800">课程列表</h3>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="text-left py-4 px-6 text-gray-600 font-semibold">课程信息</th>
                   <th class="text-left py-4 px-6 text-gray-600 font-semibold">分类</th>
                   <th class="text-left py-4 px-6 text-gray-600 font-semibold">级别</th>
-                  <th class="text-left py-4 px-6 text-gray-600 font-semibold">任课教师</th>
-                  <th class="text-left py-4 px-6 text-gray-600 font-semibold">上课时间</th>
+              <th class="text-left py-4 px-6 text-gray-600 font-semibold">任课教师</th>
+              <th class="text-left py-4 px-6 text-gray-600 font-semibold">上课时间</th>
                   <th class="text-left py-4 px-6 text-gray-600 font-semibold">报名情况</th>
                   <th class="text-left py-4 px-6 text-gray-600 font-semibold">年龄限制</th>
-                  <th class="text-left py-4 px-6 text-gray-600 font-semibold">状态</th>
-                  <th class="text-left py-4 px-6 text-gray-600 font-semibold">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="course in filteredCourses" :key="course.id" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                  <td class="py-4 px-6">
-                    <div class="flex items-center">
+              <th class="text-left py-4 px-6 text-gray-600 font-semibold">状态</th>
+              <th class="text-left py-4 px-6 text-gray-600 font-semibold">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="course in filteredCourses" :key="course.id" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+              <td class="py-4 px-6">
+                <div class="flex items-center">
                       <div class="w-10 h-10 rounded-lg flex items-center justify-center mr-3"
                            :class="getCategoryColor(course.category)">
                         <i :class="getCategoryIcon(course.category)" class="text-white"></i>
-                      </div>
-                      <div>
-                        <p class="font-medium text-gray-800">{{ course.name }}</p>
+                  </div>
+                  <div>
+                    <p class="font-medium text-gray-800">{{ course.name }}</p>
                         <p class="text-sm text-gray-500 font-mono">{{ course.courseId }}</p>
-                      </div>
-                    </div>
-                  </td>
+                  </div>
+                </div>
+              </td>
                   <td class="py-4 px-6">
                     <span class="px-2 py-1 rounded-full text-xs font-medium"
                           :class="getCategoryColor(course.category, 'light')">
@@ -290,7 +288,7 @@
                       {{ getLevelText(course.level) }}
                     </span>
                   </td>
-                  <td class="py-4 px-6 text-gray-600">{{ course.teacher }}</td>
+              <td class="py-4 px-6 text-gray-600">{{ course.teacher }}</td>
                   <td class="py-4 px-6 text-gray-600">
                     <div v-for="timeSlot in course.timeSlots" :key="`${timeSlot.dayOfWeek}-${timeSlot.startTime}`" 
                          class="text-sm">
@@ -310,59 +308,58 @@
                     <span v-if="course.ageRestriction.enabled" class="text-orange-600 text-xs bg-orange-50 px-2 py-1 rounded-lg">
                       {{ formatAgeRestriction(course.ageRestriction) }}
                     </span>
-                    <span v-else class="text-gray-400 text-xs">无限制</span>
+                    <span v-else class="text-gray-400 text-xs">不限年龄</span>
                   </td>
-                  <td class="py-4 px-6">
-                    <span 
-                      :class="getStatusClass(course.status)"
-                      class="px-3 py-1 rounded-full text-xs font-medium"
-                    >
-                      {{ getStatusText(course.status) }}
-                    </span>
-                  </td>
-                                  <td class="py-4 px-6">
-                  <div class="flex items-center gap-3">
-                    <button 
+              <td class="py-4 px-6">
+                <span 
+                  :class="getStatusClass(course.status)"
+                  class="px-3 py-1 rounded-full text-xs font-medium"
+                >
+                  {{ getStatusText(course.status) }}
+                </span>
+              </td>
+              <td class="py-4 px-6">
+                <div class="flex items-center gap-3">
+                  <button 
                       @click="editCourse(course)"
-                      class="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors flex items-center justify-center min-w-0" 
-                      title="编辑"
-                    >
-                      <i class="fas fa-edit text-sm"></i>
-                    </button>
-                    <button 
-                      class="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors flex items-center justify-center min-w-0" 
-                      title="查看详情"
+                    class="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors flex items-center justify-center min-w-0" 
+                    title="编辑"
+                  >
+                    <i class="fas fa-edit text-sm"></i>
+                  </button>
+                  <button 
+                    class="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors flex items-center justify-center min-w-0" 
+                    title="查看详情"
                       @click="showCourseDetail(course)"
-                    >
-                      <i class="fas fa-eye text-sm"></i>
-                    </button>
-                    <button 
+                  >
+                    <i class="fas fa-eye text-sm"></i>
+                  </button>
+                  <button 
                       @click="showStudentList(course)"
-                      class="p-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 transition-colors flex items-center justify-center min-w-0" 
+                    class="p-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 transition-colors flex items-center justify-center min-w-0" 
                       title="学员名单"
-                    >
-                      <i class="fas fa-users text-sm"></i>
-                    </button>
-                    <button 
+                  >
+                    <i class="fas fa-users text-sm"></i>
+                  </button>
+                  <button 
                       @click="deleteCourse(course)"
-                      class="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center min-w-0" 
-                      title="删除"
-                    >
-                      <i class="fas fa-trash text-sm"></i>
-                    </button>
-                  </div>
-                </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          
-          <!-- 分页 -->
-          <div class="p-6 border-t border-gray-200">
-            <div class="flex items-center justify-between">
-              <div class="text-sm text-gray-500">
-                显示 1-{{ Math.min(10, filteredCourses.length) }} 条，共 {{ filteredCourses.length }} 条记录
-              </div>
+                    class="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center min-w-0" 
+                    title="删除"
+                  >
+                    <i class="fas fa-trash text-sm"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- 分页 -->
+      <div class="p-6 border-t border-gray-200">
+        <div class="flex items-center justify-between">
+          <div class="text-sm text-gray-500">
+                显示 1-{{ Math.min(10, filteredCourses.length) }} 条，共{{ filteredCourses.length }} 条记录              </div>
             </div>
           </div>
         </div>
@@ -382,7 +379,7 @@
                 </div>
                 <div>
                   <h3 class="text-lg font-semibold text-gray-800">{{ category.name }}</h3>
-                  <p class="text-sm text-gray-500">{{ category.count }} 门课程</p>
+                  <p class="text-sm text-gray-500">{{ category.count }} 门课</p>
                 </div>
               </div>
               <div class="text-right">
@@ -398,7 +395,7 @@
           </div>
         </div>
   
-        <!-- 教师工作量统计 -->
+        <!-- 教师工作量统计-->
         <div class="bg-white rounded-2xl shadow-lg p-6">
           <h3 class="text-xl font-semibold text-gray-800 mb-6">教师工作量统计</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -407,11 +404,11 @@
               <div class="flex items-center justify-between">
                 <div>
                   <h4 class="font-medium text-gray-800">{{ teacher.name }}</h4>
-                  <p class="text-sm text-gray-600">{{ teacher.courses }} 门课程</p>
+                  <p class="text-sm text-gray-600">{{ teacher.courses }} 门课</p>
                 </div>
                 <div class="text-right">
                   <div class="text-lg font-semibold text-purple-600">{{ teacher.students }}</div>
-                  <div class="text-xs text-gray-500">学员数</div>
+                  <div class="text-xs text-gray-500">学员</div>
                 </div>
               </div>
             </div>
@@ -481,27 +478,27 @@
               <h4 class="font-semibold text-gray-800 mb-3">基本信息</h4>
               <div class="space-y-2 text-sm">
                 <div class="flex justify-between">
-                  <span class="text-gray-600">课程分类：</span>
+                  <span class="text-gray-600">课程分类</span>
                   <span class="font-medium">{{ getCategoryText(selectedCourse.category) }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-600">课程级别：</span>
+                  <span class="text-gray-600">课程级别</span>
                   <span class="font-medium">{{ getLevelText(selectedCourse.level) }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-600">任课教师：</span>
+                  <span class="text-gray-600">任课教师</span>
                   <span class="font-medium">{{ selectedCourse.teacher }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-600">课程费用：</span>
-                  <span class="font-medium">{{ selectedCourse.fee }}元/学期</span>
+                  <span class="text-gray-600">课程费用</span>
+                  <span class="font-medium">{{ selectedCourse.fee }}学期</span>
                 </div>
                               <div class="flex justify-between">
-                <span class="text-gray-600">上课地点：</span>
+                <span class="text-gray-600">上课地点</span>
                 <span class="font-medium">{{ selectedCourse.location }}</span>
               </div>
               <div v-if="selectedCourse.ageRestriction.enabled" class="flex justify-between">
-                <span class="text-gray-600">年龄限制：</span>
+                <span class="text-gray-600">年龄限制</span>
                 <span class="font-medium text-orange-600">
                   {{ formatAgeRestriction(selectedCourse.ageRestriction) }}
                 </span>
@@ -526,23 +523,23 @@
           <div>
             <h4 class="font-semibold text-gray-800 mb-3">课程简介</h4>
             <p class="text-gray-600 text-sm leading-relaxed">{{ selectedCourse.description }}</p>
-          </div>
-        </div>
-      </a-modal>
+      </div>
     </div>
-  </template>
-  
-  <script setup lang="ts">
-  /**
-   * 课程管理页面
-   * @component Course
+      </a-modal>
+  </div>
+</template>
+
+<script setup lang="ts">
+/**
+ * 课程管理页面
+ * @component Course
    * @description 府谷县老年大学课程管理系统，支持课程表视图、列表视图和统计分析
-   */
-  import { ref, computed, onMounted } from 'vue'
+ */
+import { ref, computed, onMounted } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import type { Course, CourseCategory, CourseLevel, TimeSlot } from '@/types/index'
 import CourseForm from '@/components/CourseForm.vue'
-  
+
   // 响应式数据
   const activeView = ref<'schedule' | 'list' | 'statistics'>('schedule')
   const searchQuery = ref<string>('')
@@ -569,11 +566,11 @@ const editingCourse = ref<Course | null>(null)
   ]
   
   // 课程数据（根据实际课程表）
-const courses = ref<Course[]>([
+  const courses = ref<Course[]>([
   // 音乐类课程
-  {
-    id: 1, name: '二人台', courseId: 'MUS001', description: '传统二人台表演艺术',
-    category: 'music', level: 'intermediate', teacher: '刘爱兰', teacherId: 1, credits: 2,
+    {
+    id: 1, name: '二人台表演艺术', courseId: 'MUS001', description: '传统二人台表演艺术',
+    category: 'music', level: 'intermediate', teacher: '刘爱华', teacherId: 1, credits: 2,
     capacity: 30, enrolled: 25, location: '音乐教室1', fee: 200, semester: '2024秋季',
     timeSlots: [{ dayOfWeek: 1, startTime: '08:30', endTime: '10:30', period: 'morning' }],
     startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
@@ -582,7 +579,7 @@ const courses = ref<Course[]>([
   },
   {
     id: 2, name: '声乐一年级', courseId: 'MUS002', description: '基础声乐技巧训练',
-    category: 'music', level: 'grade1', teacher: '杨秀清', teacherId: 2, credits: 2,
+    category: 'music', level: 'grade1', teacher: '杨秀英', teacherId: 2, credits: 2,
     capacity: 35, enrolled: 32, location: '音乐教室2', fee: 180, semester: '2024秋季',
     timeSlots: [{ dayOfWeek: 1, startTime: '15:00', endTime: '17:00', period: 'afternoon' }],
     startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
@@ -591,7 +588,7 @@ const courses = ref<Course[]>([
   },
   {
     id: 3, name: '声乐三年级', courseId: 'MUS003', description: '高级声乐技巧与表演',
-    category: 'music', level: 'grade3', teacher: '孟丽萍', teacherId: 3, credits: 3,
+    category: 'music', level: 'grade3', teacher: '孟丽', teacherId: 3, credits: 3,
     capacity: 28, enrolled: 26, location: '音乐教室1', fee: 220, semester: '2024秋季',
     timeSlots: [{ dayOfWeek: 3, startTime: '08:30', endTime: '10:30', period: 'morning' }],
     startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
@@ -600,9 +597,9 @@ const courses = ref<Course[]>([
   },
 
   // 器乐类课程
-  {
+    {
     id: 4, name: '葫芦丝三年级', courseId: 'INS001', description: '葫芦丝高级演奏技巧',
-    category: 'instrument', level: 'grade3', teacher: '刘爱义', teacherId: 4, credits: 2,
+    category: 'instrument', level: 'grade3', teacher: '刘爱华', teacherId: 4, credits: 2,
     capacity: 25, enrolled: 23, location: '器乐教室1', fee: 200, semester: '2024秋季',
     timeSlots: [{ dayOfWeek: 1, startTime: '08:30', endTime: '10:30', period: 'morning' }],
     startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
@@ -620,7 +617,7 @@ const courses = ref<Course[]>([
   },
   {
     id: 6, name: '电子琴一年级', courseId: 'INS003', description: '电子琴基础演奏',
-    category: 'instrument', level: 'grade1', teacher: '王清如', teacherId: 6, credits: 2,
+    category: 'instrument', level: 'grade1', teacher: '王清', teacherId: 6, credits: 2,
     capacity: 30, enrolled: 28, location: '电子琴教室', fee: 200, semester: '2024秋季',
     timeSlots: [{ dayOfWeek: 1, startTime: '15:00', endTime: '17:00', period: 'afternoon' }],
     startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
@@ -629,9 +626,9 @@ const courses = ref<Course[]>([
   },
 
   // 艺术类课程
-  {
-    id: 7, name: '书法创作班', courseId: 'ART001', description: '书法创作技巧与鉴赏',
-    category: 'art', level: 'senior', teacher: '闫国金', teacherId: 7, credits: 2,
+    {
+    id: 7, name: '书法创作', courseId: 'ART001', description: '书法创作技巧与鉴赏',
+    category: 'art', level: 'senior', teacher: '闫国', teacherId: 7, credits: 2,
     capacity: 25, enrolled: 22, location: '书法教室1', fee: 180, semester: '2024秋季',
     timeSlots: [{ dayOfWeek: 1, startTime: '08:30', endTime: '10:30', period: 'morning' }],
     startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
@@ -640,7 +637,7 @@ const courses = ref<Course[]>([
   },
   {
     id: 8, name: '绘画基础三年级', courseId: 'ART002', description: '绘画基础技法训练',
-    category: 'art', level: 'grade3', teacher: '王艺卓', teacherId: 8, credits: 2,
+    category: 'art', level: 'grade3', teacher: '王艺', teacherId: 8, credits: 2,
     capacity: 20, enrolled: 17, location: '美术教室1', fee: 200, semester: '2024秋季',
     timeSlots: [{ dayOfWeek: 2, startTime: '15:00', endTime: '17:00', period: 'afternoon' }],
     startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
@@ -649,9 +646,9 @@ const courses = ref<Course[]>([
   },
 
   // 文学类课程
-  {
+    {
     id: 9, name: '朗诵与主持基础二年级', courseId: 'LIT001', description: '朗诵技巧与主持艺术',
-    category: 'literature', level: 'grade2', teacher: '刘玉琼', teacherId: 9, credits: 2,
+    category: 'literature', level: 'grade2', teacher: '刘玉', teacherId: 9, credits: 2,
     capacity: 30, enrolled: 28, location: '朗诵教室', fee: 160, semester: '2024秋季',
     timeSlots: [{ dayOfWeek: 1, startTime: '08:30', endTime: '10:30', period: 'morning' }],
     startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
@@ -660,7 +657,7 @@ const courses = ref<Course[]>([
   },
   {
     id: 10, name: '诗词鉴赏与写作', courseId: 'LIT002', description: '古典诗词鉴赏与创作',
-    category: 'literature', level: 'intermediate', teacher: '马来宝', teacherId: 10, credits: 2,
+    category: 'literature', level: 'intermediate', teacher: '马丽', teacherId: 10, credits: 2,
     capacity: 25, enrolled: 23, location: '文学教室', fee: 150, semester: '2024秋季',
     timeSlots: [{ dayOfWeek: 2, startTime: '08:30', endTime: '10:30', period: 'morning' }],
     startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
@@ -671,7 +668,7 @@ const courses = ref<Course[]>([
   // 实用技能类课程
   {
     id: 11, name: '计算机应用', courseId: 'PRA001', description: '计算机基础操作与应用',
-    category: 'practical', level: 'beginner', teacher: '付玉梅', teacherId: 11, credits: 2,
+    category: 'practical', level: 'beginner', teacher: '付玉', teacherId: 11, credits: 2,
     capacity: 35, enrolled: 32, location: '机房1', fee: 180, semester: '2024秋季',
     timeSlots: [
       { dayOfWeek: 2, startTime: '15:00', endTime: '17:00', period: 'afternoon' },
@@ -683,9 +680,9 @@ const courses = ref<Course[]>([
   },
 
   // 综合类课程
-  {
+    {
     id: 12, name: '老干部合唱团', courseId: 'COM001', description: '合唱艺术与团队协作',
-    category: 'comprehensive', level: 'intermediate', teacher: '高建英', teacherId: 12, credits: 2,
+    category: 'comprehensive', level: 'intermediate', teacher: '高建', teacherId: 12, credits: 2,
     capacity: 50, enrolled: 45, location: '大礼堂', fee: 120, semester: '2024秋季',
     timeSlots: [{ dayOfWeek: 2, startTime: '15:00', endTime: '17:00', period: 'afternoon' }],
     startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
@@ -694,9 +691,9 @@ const courses = ref<Course[]>([
   },
 
   // 新增示例：有年龄限制的舞蹈课程
-  {
+    {
     id: 13, name: '民族舞蹈', courseId: 'DAN001', description: '民族舞蹈基础训练与表演',
-    category: 'music', level: 'intermediate', teacher: '李舞蹈', teacherId: 13, credits: 2,
+    category: 'music', level: 'intermediate', teacher: '李舞', teacherId: 13, credits: 2,
     capacity: 25, enrolled: 20, location: '舞蹈教室', fee: 250, semester: '2024秋季',
     timeSlots: [{ dayOfWeek: 3, startTime: '15:00', endTime: '17:00', period: 'afternoon' }],
     startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
@@ -704,12 +701,12 @@ const courses = ref<Course[]>([
       enabled: true, 
       minAge: undefined, 
       maxAge: 65, 
-      description: '舞蹈课程需要一定的身体协调性和体力，建议65岁以下学员报名' 
+      description: '舞蹈课程需要一定的身体协调性和体力，建议55岁以上学员报名' 
     },
     createdAt: '2024-08-15', updatedAt: '2024-08-15'
   }
 ])
-  
+
   // 计算属性
   const filteredCourses = computed<Course[]>(() => {
     let result = courses.value
@@ -753,12 +750,12 @@ const courses = ref<Course[]>([
   // 分类统计
   const categoryStats = computed(() => {
     const categories = [
-      { key: 'music' as CourseCategory, name: '音乐类' },
-      { key: 'instrument' as CourseCategory, name: '器乐类' },
-      { key: 'art' as CourseCategory, name: '艺术类' },
-      { key: 'literature' as CourseCategory, name: '文学类' },
+      { key: 'music' as CourseCategory, name: '音乐' },
+      { key: 'instrument' as CourseCategory, name: '器乐' },
+      { key: 'art' as CourseCategory, name: '艺术' },
+      { key: 'literature' as CourseCategory, name: '文学' },
       { key: 'practical' as CourseCategory, name: '实用技能' },
-      { key: 'comprehensive' as CourseCategory, name: '综合类' }
+      { key: 'comprehensive' as CourseCategory, name: '综合' }
     ]
   
     return categories.map(category => {
@@ -819,12 +816,12 @@ const courses = ref<Course[]>([
   
   const getCategoryText = (category: CourseCategory): string => {
     const texts = {
-      music: '音乐类',
-      instrument: '器乐类',
-      art: '艺术类',
-      literature: '文学类',
+        music: '音乐',
+      instrument: '器乐',
+      art: '艺术',
+      literature: '文学',
       practical: '实用技能',
-      comprehensive: '综合类'
+      comprehensive: '综合'
     }
     return texts[category] || '未知'
   }
@@ -837,9 +834,9 @@ const courses = ref<Course[]>([
       grade1: '一年级',
       grade2: '二年级',
       grade3: '三年级',
-      foundation: '基础班',
-      improvement: '提高班',
-      senior: '高级班'
+      foundation: '基础',
+      improvement: '提高',
+      senior: '高级'
     }
     return texts[level] || '未知'
   }
@@ -858,31 +855,31 @@ const courses = ref<Course[]>([
     return periods[period as keyof typeof periods] || '未知'
   }
   
-  const getStatusClass = (status: string): string => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-600'
-      case 'pending':
-        return 'bg-blue-100 text-blue-600'
-      case 'completed':
-        return 'bg-gray-100 text-gray-600'
-      default:
-        return 'bg-gray-100 text-gray-600'
-    }
+const getStatusClass = (status: string): string => {
+  switch (status) {
+    case 'active':
+      return 'bg-green-100 text-green-600'
+    case 'pending':
+      return 'bg-blue-100 text-blue-600'
+    case 'completed':
+      return 'bg-gray-100 text-gray-600'
+    default:
+      return 'bg-gray-100 text-gray-600'
   }
-  
-  const getStatusText = (status: string): string => {
-    switch (status) {
-      case 'active':
-        return '进行中'
-      case 'pending':
-        return '待开课'
-      case 'completed':
-        return '已结课'
-      default:
-        return '未知'
-    }
+}
+
+const getStatusText = (status: string): string => {
+  switch (status) {
+    case 'active':
+      return '进行中'
+    case 'pending':
+      return '待开课'
+    case 'completed':
+      return '已结课'
+    default:
+      return '未知'
   }
+}
   
   const getCoursesForTimeSlot = (dayOfWeek: number, period: string): Course[] => {
     return filteredCourses.value.filter(course =>
@@ -1051,17 +1048,17 @@ const generateCourseScheduleCSV = (): string => {
   
   return '\uFEFF' + rows.join('\n') // 添加BOM以支持中文
 }
-  
-  /**
-   * 组件挂载时初始化数据
-   */
-  onMounted((): void => {
-    console.log('Course 组件已挂载，加载了', courses.value.length, '门课程')
-  })
-  </script>
-  
-  <style scoped>
-  .course-management {
+
+/**
+ * 组件挂载时初始化数据
+ */
+onMounted((): void => {
+  console.log('Course 组件已挂载，加载', courses.value.length, '门课程')
+})
+</script>
+
+<style scoped>
+.course-management {
     padding: 1rem;
   }
   
@@ -1069,5 +1066,5 @@ const generateCourseScheduleCSV = (): string => {
     .course-management {
       padding: 0;
     }
-  }
-  </style>
+}
+</style> 

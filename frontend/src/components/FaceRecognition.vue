@@ -8,7 +8,7 @@
             人脸识别签到
           </h3>
           <div class="flex items-center gap-2">
-            <span class="text-sm text-gray-500">识别状态:</span>
+            <span class="text-sm text-gray-500">识别状态</span>
             <span 
               :class="getStatusClass(recognitionStatus)"
               class="px-2 py-1 rounded-full text-xs font-medium"
@@ -183,7 +183,7 @@
   const props = defineProps<Props>()
   const emit = defineEmits<Emits>()
   
-  // 响应式数据
+    // 响应式数据
   const videoRef = ref<HTMLVideoElement>()
   const canvasRef = ref<HTMLCanvasElement>()
   const cameraActive = ref<boolean>(false)
@@ -261,7 +261,7 @@
         faceDetected.value = detected
         
         if (detected) {
-          // 模拟人脸框位置
+          // 模拟人脸框位
           faceBoxStyle.value = {
             left: '30%',
             top: '25%',
@@ -319,7 +319,7 @@
       await new Promise(resolve => setTimeout(resolve, 2000))
       
       // 模拟识别结果
-      const success = Math.random() > 0.2 // 80%成功率
+      const success = Math.random() > 0.2 // 80%成功
       
       if (success) {
         const mockStudents = [
@@ -376,7 +376,7 @@
         confidence: recognitionResult.value.confidence
       })
       
-      message.success('签到成功！')
+      message.success('签到成功')
       
       // 重置状态
       setTimeout(() => {
@@ -406,7 +406,7 @@
     const texts = {
       idle: '待机',
       detecting: '检测中',
-      processing: '识别中',
+        processing: '识别中',
       success: '成功',
       error: '失败'
     }

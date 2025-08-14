@@ -5,10 +5,10 @@
 import type { UserRole } from '@/types/auth'
 
 /**
- * 默认角色权限配置
+ * 默认角色权限配置 - 四级权限系统
  */
 export const DEFAULT_PERMISSIONS: Record<UserRole, string[]> = {
-  admin: [
+  super_admin: [
     'system:*',
     'user:*',
     'student:*',
@@ -17,7 +17,20 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, string[]> = {
     'application:*',
     'analysis:*',
     'setting:*',
-    'logs:*'
+    'logs:*',
+    'school:*'
+  ],
+  school_admin: [
+    'user:read',
+    'user:create',
+    'user:update',
+    'student:*',
+    'teacher:*',
+    'course:*',
+    'application:*',
+    'analysis:read',
+    'setting:read',
+    'setting:update'
   ],
   teacher: [
     'student:read',
@@ -28,7 +41,8 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, string[]> = {
     'course:update',
     'application:read',
     'application:approve',
-    'analysis:read'
+    'analysis:read',
+    'attendance:manage'
   ],
   student: [
     'profile:read',
@@ -43,7 +57,8 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, string[]> = {
  * 角色显示名称映射
  */
 export const ROLE_NAMES: Record<UserRole, string> = {
-  admin: '管理员',
+  super_admin: '超级管理员',
+  school_admin: '学校管理员',
   teacher: '教师',
   student: '学生'
 }
@@ -52,7 +67,8 @@ export const ROLE_NAMES: Record<UserRole, string> = {
  * 角色颜色映射
  */
 export const ROLE_COLORS: Record<UserRole, string> = {
-  admin: 'red',
+  super_admin: 'red',
+  school_admin: 'orange',
   teacher: 'blue',
   student: 'green'
 }
@@ -175,7 +191,7 @@ export const getRoleName = (role: UserRole): string => {
 /**
  * 获取用户角色颜色
  * @param role 用户角色
- * @returns 颜色值
+ * @returns 颜色
  */
 export const getRoleColor = (role: UserRole): string => {
   return ROLE_COLORS[role] || 'default'
@@ -259,7 +275,7 @@ export const validateEmail = (email: string): boolean => {
 export const validateRealName = (name: string): boolean => {
   if (!name) return false
   
-  // 中文姓名验证：2-10个字符，支持中文、英文字母
+  // 中文姓名验证 - 2-10个字符，支持中文、英文字母
   const nameRegex = /^[\u4e00-\u9fa5a-zA-Z\s]{2,10}$/
   return nameRegex.test(name.trim())
 }

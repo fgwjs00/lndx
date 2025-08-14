@@ -4,7 +4,7 @@
  */
 
 import type { ApiResponse } from '@/types'
-import { shouldMockAuth } from '@/utils/dev'
+import { shouldMockAuth, mockLogin, mockSendSms, mockVerifySms } from '@/utils/dev'
 
 // 请求配置接口
 interface RequestConfig {
@@ -128,12 +128,47 @@ class HttpRequest {
   }
 
   /**
+   * 处理模拟请求
+   */
+  private async handleMockRequest<T>(config: RequestConfig): Promise<ApiResponse<T>> {
+    console.log(`[模拟模式] ${config.method} ${config.url}`, config.data)
+    
+    // 根据URL路径处理不同的模拟请�?
+    if (config.url === '/auth/login' && config.method === 'POST') {
+      const { phone, password } = config.data
+      return mockLogin(phone, password) as Promise<ApiResponse<T>>
+    }
+    
+    if (config.url === '/auth/send-sms' && config.method === 'POST') {
+      const { phone } = config.data
+      return mockSendSms(phone) as Promise<ApiResponse<T>>
+    }
+    
+    if (config.url === '/auth/verify-sms' && config.method === 'POST') {
+      const { phone, code } = config.data
+      return mockVerifySms(phone, code) as Promise<ApiResponse<T>>
+    }
+    
+    // 其他请求返回默认成功响应
+    return Promise.resolve({
+      code: 200,
+      message: '模拟请求成功',
+      data: {} as T
+    })
+  }
+
+  /**
    * 发送请求
    */
   private async request<T>(config: RequestConfig): Promise<ApiResponse<T>> {
     try {
       // 应用请求拦截器
       const finalConfig = this.interceptors.onRequest?.(config) || config
+
+      // 模拟模式处理
+      if (shouldMockAuth()) {
+        return this.handleMockRequest<T>(finalConfig)
+      }
 
       // 构建完整URL
       const url = `${this.baseURL}${finalConfig.url}`

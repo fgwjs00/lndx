@@ -21,10 +21,10 @@ export interface PaginatedResponse<T> {
 // 导出认证相关类型
 export * from './auth'
 
-// 用户角色类型 (保持兼容性)
+// 用户角色类型 (保持兼容)
 export type UserRole = 'admin' | 'teacher' | 'student'
 
-// 用户状态类型 (保持兼容性)
+// 用户状态类型 (保持兼容)
 export type UserStatus = 'active' | 'inactive' | 'suspended'
 
 // 用户信息类型
@@ -171,7 +171,7 @@ export interface Course {
   fee: number             // 课程费用
   requirements?: string    // 报名要求
   materials?: string       // 教材信息
-  semester: string         // 学期（如：2024秋季）
+  semester: string         // 学期（如2024秋季）
   ageRestriction: AgeRestriction // 年龄限制
   createdAt: string
   updatedAt: string
@@ -212,7 +212,7 @@ export interface Teacher {
   specialization: string   // 专业领域
   experience: number       // 教学经验（年）
   courses: Course[]        // 所授课程
-  students: StudentInfo[]  // 所带学生
+  students: StudentInfo[]  // 所带学员
   status: UserStatus       // 状态
   avatar?: string          // 头像
   biography?: string       // 个人简介
@@ -321,7 +321,7 @@ export interface RolePermission {
   permissions: Permission[]
 }
 
-// 所有类型已通过 export interface 和 export type 直接导出 
+// 所有类型已通过 export interface 和 export type 直接导出
 
 // 身份证读卡器相关类型定义
 export interface IdCardData {
@@ -330,7 +330,7 @@ export interface IdCardData {
   nation: string                  // 民族
   birth: string                   // 出生日期
   address: string                 // 住址
-  certNo: string                  // 身份证号码
+  certNo: string                  // 身份证号
   department: string              // 签发机关
   effectData: string              // 有效期开始
   expire: string                  // 有效期结束
