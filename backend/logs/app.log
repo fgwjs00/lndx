@@ -938,3 +938,28 @@ BusinessError: 手机号或密码错误
   }
 }
 2025-08-15 02:59:06 [INFO]: ::1 - - [14/Aug/2025:18:59:06 +0000] "POST /api/auth/login HTTP/1.1" 200 835 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-17 23:46:45 [INFO]: 🚀 服务器启动成功！
+2025-08-17 23:46:45 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-17 23:46:45 [INFO]: 🌍 环境模式: development
+2025-08-17 23:46:45 [INFO]: 📁 API前缀: /api
+2025-08-17 23:46:45 [INFO]: ⏰ 启动时间: 2025-08-17T15:46:45.337Z
+2025-08-17 23:46:58 [INFO]: ::1 - - [17/Aug/2025:15:46:58 +0000] "GET /api/auth/me HTTP/1.1" 200 312 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-17 23:47:08 [INFO]: 系统操作
+{
+  "action": "USER_LOGOUT",
+  "details": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "ip": "::1"
+  }
+}
+2025-08-17 23:47:08 [INFO]: ::1 - - [17/Aug/2025:15:47:08 +0000] "POST /api/auth/logout HTTP/1.1" 200 43 "http://localhost:5173/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-17 23:47:13 [INFO]: 用户操作
+{
+  "userId": "cmeblqp220005yn2xecnunew5",
+  "action": "LOGIN_SUCCESS",
+  "details": {
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+  }
+}
+2025-08-17 23:47:13 [INFO]: ::1 - - [17/Aug/2025:15:47:13 +0000] "POST /api/auth/login HTTP/1.1" 200 835 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
