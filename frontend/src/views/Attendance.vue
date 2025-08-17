@@ -23,7 +23,7 @@
       </div>
     </div>
   
-          <!-- 主要内容区域 -->
+   <!-- 主要内容区域 -->
     <div class="p-6">
       <!-- 查询筛选区-->
       <div class="bg-white rounded-lg shadow-lg p-6 mb-6">

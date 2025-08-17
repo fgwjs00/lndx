@@ -22,7 +22,7 @@
           </div>
           <div>
             <h3 class="text-2xl font-bold text-gray-800">95.2%</h3>
-            <p class="text-gray-500 text-sm">报名成功�?/p>
+            <p class="text-gray-500 text-sm">报名成功率</p>
           </div>
         </div>
       </div>

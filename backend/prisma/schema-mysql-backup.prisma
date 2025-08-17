@@ -1,0 +1,344 @@
+// Prisma Schema 文件
+// 学生报名及档案管理系统数据库模型
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表 (四级权限：super_admin, school_admin, teacher, student)
+model User {
+  id          String   @id @default(cuid())
+  phone       String   @unique
+  email       String?  @unique
+  password    String
+  realName    String
+  avatar      String?
+  role        UserRole
+  isActive    Boolean  @default(true)
+  lastLoginAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 关联关系
+  studentProfile Student? // 用户可能有学生档案
+  teacherProfile Teacher? // 用户可能有教师档案
+
+  // 操作日志
+  operationLogs OperationLog[]
+  
+  // 创建的数据记录
+  createdStudents   Student[] @relation("CreatedBy")
+  createdCourses    Course[]  @relation("CreatedBy")
+  createdEnrollments Enrollment[] @relation("CreatedBy")
+
+  @@map("users")
+}
+
+// 用户角色枚举
+enum UserRole {
+  SUPER_ADMIN  // 超级管理员
+  SCHOOL_ADMIN // 学校管理员
+  TEACHER      // 教师
+  STUDENT      // 学生
+}
+
+// 学生表
+model Student {
+  id            String   @id @default(cuid())
+  studentCode   String   @unique // 学生编号
+  realName      String
+  gender        Gender
+  age           Int
+  birthday      DateTime
+  idCardNumber  String   @unique
+  idCardAddress String   // 身份证地址
+  contactPhone  String   // 联系电话
+  
+  // 身份证照片
+  idCardFront   String? // 身份证正面照片URL
+  idCardBack    String? // 身份证背面照片URL
+  
+  // 现居住地址
+  currentAddress String
+  
+  // 紧急联系人信息
+  emergencyContact     String // 紧急联系人姓名
+  emergencyPhone       String // 紧急联系人电话
+  emergencyRelation    String // 紧急联系人关系
+  
+  // 健康信息
+  healthStatus    String?
+  medicalHistory  String?
+  allergies       String?
+  
+  // 其他信息
+  remarks         String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // 关联关系
+  userId        String?  @unique // 关联用户账号（可选）
+  user          User?    @relation(fields: [userId], references: [id])
+  
+  createdBy     String   // 创建者ID
+  creator       User     @relation("CreatedBy", fields: [createdBy], references: [id])
+  
+  // 报名记录
+  enrollments   Enrollment[]
+  
+  // 签到记录
+  attendances   Attendance[]
+
+  @@map("students")
+}
+
+// 性别枚举
+enum Gender {
+  MALE   // 男
+  FEMALE // 女
+}
+
+// 教师表
+model Teacher {
+  id          String   @id @default(cuid())
+  teacherCode String   @unique // 教师编号
+  realName    String
+  gender      Gender
+  phone       String   @unique
+  email       String?  @unique
+  specialties Json     // 专业特长（JSON数组）
+  experience  Int      // 教学经验（年）
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 关联关系
+  userId      String   @unique // 关联用户账号
+  user        User     @relation(fields: [userId], references: [id])
+  
+  // 授课课程
+  courses     CourseTeacher[]
+
+  @@map("teachers")
+}
+
+// 课程表
+model Course {
+  id           String     @id @default(cuid())
+  courseCode   String     @unique // 课程编号
+  name         String     // 课程名称
+  description  String?    // 课程描述
+  category     String     // 课程分类
+  level        String     // 课程级别
+  duration     Int        // 课程时长（分钟）
+  maxStudents  Int        // 最大学员数
+  price        Decimal    @db.Decimal(10, 2) // 课程价格
+  
+  // 年龄限制
+  hasAgeRestriction Boolean @default(false)
+  minAge           Int?
+  maxAge           Int?
+  ageDescription   String? // 年龄限制说明
+  
+  // 上课时间安排
+  timeSlots        Json     // 上课时间段 [{dayOfWeek, startTime, endTime, period}]
+  
+  // 课程状态
+  status           CourseStatus @default(DRAFT)
+  isActive         Boolean      @default(true)
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  // 关联关系
+  createdBy        String   // 创建者ID
+  creator          User     @relation("CreatedBy", fields: [createdBy], references: [id])
+  
+  // 授课教师
+  teachers         CourseTeacher[]
+  
+  // 报名记录
+  enrollments      Enrollment[]
+  
+  // 签到记录
+  attendances      Attendance[]
+
+  @@map("courses")
+}
+
+// 课程状态枚举
+enum CourseStatus {
+  DRAFT      // 草稿
+  PUBLISHED  // 已发布
+  SUSPENDED  // 暂停
+  CANCELLED  // 已取消
+}
+
+// 课程教师关联表
+model CourseTeacher {
+  id        String   @id @default(cuid())
+  courseId  String
+  teacherId String
+  isMain    Boolean  @default(false) // 是否主讲教师
+  createdAt DateTime @default(now())
+
+  // 关联关系
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teacher   Teacher @relation(fields: [teacherId], references: [id])
+
+  @@unique([courseId, teacherId])
+  @@map("course_teachers")
+}
+
+// 报名表
+model Enrollment {
+  id               String           @id @default(cuid())
+  enrollmentCode   String           @unique // 报名编号
+  studentId        String
+  courseId         String
+  status           EnrollmentStatus @default(PENDING)
+  enrollmentDate   DateTime         @default(now())
+  approvedAt       DateTime?
+  approvedBy       String?
+  cancelledAt      DateTime?
+  cancelReason     String?
+  remarks          String?
+  
+  // 支付信息
+  paymentStatus    PaymentStatus    @default(UNPAID)
+  paymentAmount    Decimal?         @db.Decimal(10, 2)
+  paidAt           DateTime?
+  paymentMethod    String?
+  paymentReference String?
+  
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  // 关联关系
+  student          Student          @relation(fields: [studentId], references: [id])
+  course           Course           @relation(fields: [courseId], references: [id])
+  createdBy        String           // 创建者ID
+  creator          User             @relation("CreatedBy", fields: [createdBy], references: [id])
+
+  @@unique([studentId, courseId])
+  @@map("enrollments")
+}
+
+// 报名状态枚举
+enum EnrollmentStatus {
+  PENDING   // 待审核
+  APPROVED  // 已通过
+  REJECTED  // 已拒绝
+  CANCELLED // 已取消
+}
+
+// 支付状态枚举
+enum PaymentStatus {
+  UNPAID    // 未支付
+  PAID      // 已支付
+  REFUNDED  // 已退款
+}
+
+// 签到表
+model Attendance {
+  id               String           @id @default(cuid())
+  studentId        String
+  courseId         String
+  attendanceDate   DateTime         // 签到日期
+  status           AttendanceStatus @default(ABSENT)
+  method           AttendanceMethod @default(MANUAL)
+  
+  // 签到时间信息
+  checkInTime      DateTime?        // 实际签到时间
+  isLate          Boolean          @default(false)
+  lateMinutes     Int?             // 迟到分钟数
+  
+  // 人脸识别信息
+  faceImageUrl    String?          // 签到时的人脸照片URL
+  faceScore       Float?           // 人脸匹配分数
+  
+  // 位置信息
+  location        String?          // 签到位置
+  deviceInfo      String?          // 签到设备信息
+  
+  remarks         String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // 关联关系
+  student         Student          @relation(fields: [studentId], references: [id])
+  course          Course           @relation(fields: [courseId], references: [id])
+
+  @@map("attendances")
+}
+
+// 签到状态枚举
+enum AttendanceStatus {
+  PRESENT // 出席
+  ABSENT  // 缺席
+  LATE    // 迟到
+  LEAVE   // 请假
+}
+
+// 签到方式枚举
+enum AttendanceMethod {
+  FACE_RECOGNITION // 人脸识别
+  MANUAL          // 手动签到
+  QR_CODE         // 二维码
+  CARD            // 刷卡
+}
+
+// 操作日志表
+model OperationLog {
+  id          String   @id @default(cuid())
+  userId      String
+  action      String   // 操作动作
+  resource    String   // 操作资源
+  resourceId  String?  // 资源ID
+  details     Json?    // 操作详情
+  ip          String?  // IP地址
+  userAgent   String?  // 用户代理
+  success     Boolean  @default(true)
+  error       String?  // 错误信息
+  createdAt   DateTime @default(now())
+
+  // 关联关系
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("operation_logs")
+}
+
+// 系统配置表
+model SystemConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  isSystem    Boolean  @default(false) // 是否为系统级配置
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_configs")
+}
+
+// 文件上传记录表
+model FileUpload {
+  id           String   @id @default(cuid())
+  originalName String   // 原始文件名
+  fileName     String   // 存储文件名
+  filePath     String   // 文件路径
+  fileSize     Int      // 文件大小（字节）
+  mimeType     String   // MIME类型
+  fileType     String   // 文件类型分类
+  uploadedBy   String?  // 上传者ID
+  isTemp       Boolean  @default(false) // 是否为临时文件
+  createdAt    DateTime @default(now())
+
+  @@map("file_uploads")
+}

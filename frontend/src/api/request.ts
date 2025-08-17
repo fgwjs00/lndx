@@ -71,20 +71,8 @@ class HttpRequest {
       // 统一处理响应数据
       if (response.code === 200) {
         return response
-      } else if (response.code === 401) {
-        // 在开发模式下，不要自动清除token和跳转登录页
-        if (shouldMockAuth()) {
-          console.log('开发模式：401错误，跳过自动登出')
-          throw new Error('未授权访问')
-        }
-        
-        // 未授权，清除token并跳转登录
-        localStorage.removeItem('token')
-        localStorage.removeItem('refreshToken')
-        localStorage.removeItem('user')
-        window.location.href = '/login'
-        throw new Error('未授权访问')
       } else {
+        // 对于非200响应，直接抛出错误让onError处理
         throw new Error(response.message || '请求失败')
       }
     }
@@ -104,21 +92,46 @@ class HttpRequest {
         case 400:
           return Promise.reject(new Error('请求参数错误'))
         case 401:
-          // 在开发模式下，不要自动清除token和跳转登录页
-          if (shouldMockAuth()) {
-            console.log('开发模式：401错误，跳过自动登出')
+          // 检查是否是登录相关的API请求
+          const requestUrl = error.config?.url || ''
+          const isAuthApi = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/register')
+          
+          // 如果是登录/注册API，让调用方处理错误，不要跳转
+          if (isAuthApi) {
+            console.log('登录API 401错误，返回错误信息供页面处理')
+            const errorData = error.response?.data
+            const errorMessage = errorData?.message || '登录失败'
+            return Promise.reject(new Error(errorMessage))
+          }
+          
+          // 对于其他API的401错误：
+          // 1. 如果当前已经在登录页，不要重复跳转
+          // 2. 在开发环境下，使用路由跳转而不是页面刷新
+          if (window.location.pathname === '/login') {
             return Promise.reject(new Error('未授权访问'))
           }
           
+          // 清除认证信息
           localStorage.removeItem('token')
           localStorage.removeItem('refreshToken')
           localStorage.removeItem('user')
-          window.location.href = '/login'
+          
+          // 使用Vue Router跳转，避免页面刷新
+          if (window.location.pathname !== '/login') {
+            import('@/router').then(({ default: router }) => {
+              router.push('/login')
+            })
+          }
+          
           return Promise.reject(new Error('未授权访问'))
         case 403:
           return Promise.reject(new Error('权限不足'))
         case 404:
           return Promise.reject(new Error('请求资源不存在'))
+        case 429:
+          // 对于登录API的429错误，返回后端的具体错误信息
+          const errorMsg = error.response?.data?.message || '请求过于频繁，请稍后再试'
+          return Promise.reject(new Error(errorMsg))
         case 500:
           return Promise.reject(new Error('服务器内部错误'))
         default:
@@ -198,6 +211,21 @@ class HttpRequest {
 
       // 发送请求
       const response = await fetch(requestUrl, options)
+      
+      // 检查HTTP状态码
+      if (!response.ok) {
+        // HTTP错误状态，构造错误对象并抛出
+        const errorData = await response.json().catch(() => ({}))
+        const error = {
+          response: {
+            status: response.status,
+            data: errorData
+          },
+          config: finalConfig
+        }
+        throw error
+      }
+      
       const data = await response.json()
 
       // 应用响应拦截器

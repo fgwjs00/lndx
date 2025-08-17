@@ -7,14 +7,14 @@ import { ref, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import { AuthService } from '@/api/auth'
 import { shouldMockAuth, mockLogin, mockSendSms, mockVerifySms } from '@/utils/dev'
+import { UserRole } from '@/types/auth'
 import type { 
   AuthState, 
   LoginRequest, 
   RegisterRequest, 
   UserInfo, 
   ChangePasswordRequest,
-  UpdateProfileRequest,
-  UserRole
+  UpdateProfileRequest
 } from '@/types/auth'
 
 /**
@@ -56,7 +56,20 @@ export const useAuthStore = defineStore('auth', () => {
       if (savedToken && savedUser) {
         token.value = savedToken
         refreshToken.value = savedRefreshToken
-        user.value = JSON.parse(savedUser)
+        
+        // 解析用户信息并转换角色格式
+        const parsedUser = JSON.parse(savedUser)
+        const roleMapping: Record<string, UserRole> = {
+          'SUPER_ADMIN': UserRole.SUPER_ADMIN,
+          'SCHOOL_ADMIN': UserRole.SCHOOL_ADMIN, 
+          'TEACHER': UserRole.TEACHER,
+          'STUDENT': UserRole.STUDENT
+        }
+        
+        user.value = {
+          ...parsedUser,
+          role: roleMapping[parsedUser.role] || parsedUser.role.toLowerCase() as UserRole
+        }
         permissions.value = savedPermissions ? JSON.parse(savedPermissions) : []
         isAuthenticated.value = true
 
@@ -64,6 +77,7 @@ export const useAuthStore = defineStore('auth', () => {
         if (shouldMockAuth()) {
           console.log('开发模式：跳过token验证，使用本地存储的用户信息')
           console.log('用户权限:', permissions.value)
+          console.log('🔍 初始化用户角色:', user.value?.role)
           return
         }
 
@@ -109,17 +123,38 @@ export const useAuthStore = defineStore('auth', () => {
         // 更新状态
         token.value = newToken
         refreshToken.value = newRefreshToken
-        user.value = userInfo
+        
+        // 转换后端角色格式为前端格式（SUPER_ADMIN -> super_admin）
+        const roleMapping: Record<string, UserRole> = {
+          'SUPER_ADMIN': UserRole.SUPER_ADMIN,
+          'SCHOOL_ADMIN': UserRole.SCHOOL_ADMIN, 
+          'TEACHER': UserRole.TEACHER,
+          'STUDENT': UserRole.STUDENT
+        }
+        
+        const convertedUserInfo = {
+          ...userInfo,
+          role: roleMapping[userInfo.role] || userInfo.role.toLowerCase() as UserRole
+        }
+        
+        user.value = convertedUserInfo
         permissions.value = userPermissions
         isAuthenticated.value = true
 
         // 保存到localStorage
         localStorage.setItem('token', newToken)
         localStorage.setItem('refreshToken', newRefreshToken)
-        localStorage.setItem('user', JSON.stringify(userInfo))
+        localStorage.setItem('user', JSON.stringify(convertedUserInfo))
         localStorage.setItem('permissions', JSON.stringify(userPermissions))
 
         console.log('✅ 登录成功，状态已更新')
+        console.log('🔍 用户数据详情:', {
+          originalRole: userInfo.role,
+          convertedRole: convertedUserInfo.role,
+          roleType: typeof convertedUserInfo.role,
+          permissions: userPermissions,
+          token: newToken?.substring(0, 20) + '...'
+        })
         message.success('登录成功')
         return true
       } else {
@@ -130,8 +165,21 @@ export const useAuthStore = defineStore('auth', () => {
       }
     } catch (err: any) {
       console.error('❌ 登录异常:', err)
-      error.value = err.message || '登录失败'
-      message.error(error.value)
+      // 提取错误信息
+      let errorMsg = '登录失败'
+      if (err instanceof Error) {
+        errorMsg = err.message
+      } else if (err.message) {
+        errorMsg = err.message
+      } else if (err.response?.data?.message) {
+        errorMsg = err.response.data.message
+      } else if (typeof err === 'string') {
+        errorMsg = err
+      }
+      
+      console.log('📢 显示错误消息:', errorMsg)
+      error.value = errorMsg
+      message.error(errorMsg)
       return false
     } finally {
       loading.value = false

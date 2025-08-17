@@ -1,0 +1,538 @@
+# 学生报名及档案管理系统 - 后端开发规范
+
+## 项目概述
+这是一个基于Node.js + Express + TypeScript + Prisma的后端API服务，为学生报名及档案管理系统提供数据支持和业务逻辑处理。
+
+## 技术栈
+- 运行环境：Node.js 18+
+- 框架：Express.js 4.x
+- 开发语言：TypeScript 5.x
+- 数据库：PostgreSQL 15 + Prisma ORM 5.x
+- 认证：JWT (jsonwebtoken)
+- 验证：Joi 17.x
+- 日志：Winston 3.x
+- 文档：Swagger + JSDoc
+- 包管理器：pnpm
+- 进程管理：PM2 (生产环境)
+- 缓存：Redis 7.x
+- 搜索：PostgreSQL全文搜索 + Elasticsearch (可选)
+
+## 项目架构
+
+### 目录结构
+```
+backend/
+├── src/
+│   ├── controllers/     # 控制器层 - 处理HTTP请求
+│   ├── services/        # 服务层 - 业务逻辑
+│   ├── models/          # 模型层 - 数据访问封装
+│   ├── middleware/      # 中间件 - 认证、验证、错误处理
+│   ├── routes/          # 路由层 - API路由定义
+│   ├── utils/           # 工具函数 - 通用工具
+│   ├── types/           # TypeScript类型定义
+│   ├── config/          # 配置文件 - 环境变量管理
+│   └── index.ts         # 应用入口
+├── prisma/             # 数据库相关
+│   ├── schema.prisma    # 数据模型定义
+│   ├── migrations/      # 数据库迁移
+│   └── seed.ts          # 数据库种子
+├── tests/              # 测试文件
+├── logs/               # 日志文件
+└── uploads/            # 上传文件
+```
+
+## 代码规范
+
+### TypeScript规范
+- **强制类型**：所有函数必须有明确的参数类型和返回值类型
+- **接口优先**：使用interface定义对象结构，type定义联合类型
+- **严格模式**：启用TypeScript strict模式
+- **命名规范**：
+  - 文件名：kebab-case (user-service.ts)
+  - 变量/函数：camelCase (getUserList)
+  - 类名：PascalCase (UserService)
+  - 常量：UPPER_SNAKE_CASE (JWT_SECRET)
+  - 接口：PascalCase + I前缀 (IUserData)
+
+### API设计规范
+```typescript
+// 统一响应格式
+interface ApiResponse<T = any> {
+  code: number
+  message: string
+  data?: T
+  timestamp?: string
+  path?: string
+}
+
+// 分页响应格式
+interface PaginatedResponse<T> {
+  list: T[]
+  pagination: {
+    page: number
+    pageSize: number
+    total: number
+    totalPages: number
+  }
+}
+```
+
+### 路由结构规范
+```typescript
+/**
+ * 路由文件结构示例
+ * @file routes/user.ts
+ */
+import { Router } from 'express'
+import { asyncHandler } from '@/middleware/errorHandler'
+import { requireAdmin } from '@/middleware/auth'
+
+const router = Router()
+
+/**
+ * 获取用户列表
+ * GET /api/users
+ * @permission admin
+ */
+router.get('/', requireAdmin, asyncHandler(async (req, res) => {
+  // 实现逻辑
+}))
+
+export default router
+```
+
+### 数据库操作规范
+- **Prisma优先**：使用Prisma Client进行所有数据库操作
+- **事务处理**：复杂操作使用Prisma事务
+- **错误处理**：捕获并转换Prisma错误
+- **查询优化**：合理使用select、include减少数据传输
+- **数组操作**：利用PostgreSQL原生数组类型和操作符
+- **全文搜索**：使用PostgreSQL内置全文搜索功能
+- **JSON操作**：充分利用PostgreSQL的JSONB类型
+
+```typescript
+// PostgreSQL数据库操作示例
+const users = await prisma.user.findMany({
+  where: { isActive: true },
+  select: {
+    id: true,
+    realName: true,
+    phone: true,
+    role: true
+  },
+  orderBy: { createdAt: 'desc' },
+  skip: (page - 1) * pageSize,
+  take: pageSize
+})
+
+// 数组查询示例（教师专业特长）
+const teachers = await prisma.teacher.findMany({
+  where: {
+    specialties: {
+      has: '舞蹈' // PostgreSQL数组包含查询
+    }
+  }
+})
+
+// 全文搜索示例
+const students = await prisma.$queryRaw`
+  SELECT * FROM students 
+  WHERE to_tsvector('simple', real_name) @@ to_tsquery('simple', ${keyword})
+`
+```
+
+### 错误处理规范
+- **自定义错误类**：使用BusinessError, ValidationError等
+- **统一处理**：通过errorHandler中间件统一处理
+- **错误日志**：使用errorLogger记录详细错误信息
+- **用户友好**：返回清晰的错误提示
+
+```typescript
+// 错误处理示例
+if (!user) {
+  throw new BusinessError('用户不存在', 404, 'USER_NOT_FOUND')
+}
+
+// 验证错误
+const { error, value } = validateUserData(req.body)
+if (error) {
+  throw new ValidationError('参数验证失败', error.details)
+}
+```
+
+## 安全规范
+
+### 认证授权
+- **JWT认证**：使用JWT进行用户认证
+- **权限控制**：基于角色的四级权限系统
+- **Token管理**：访问Token(7天) + 刷新Token(30天)
+- **中间件保护**：路由级权限验证
+
+### 数据安全
+- **密码加密**：使用bcryptjs加密密码
+- **输入验证**：使用Joi验证所有输入
+- **SQL注入防护**：使用Prisma参数化查询
+- **XSS防护**：使用helmet设置安全头
+
+### API安全
+- **限流保护**：使用express-rate-limit防止滥用
+- **CORS配置**：合理配置跨域资源访问
+- **日志记录**：记录所有关键操作日志
+
+## 日志规范
+
+### 日志级别
+- **error**: 系统错误、业务异常
+- **warn**: 警告信息、异常情况
+- **info**: 业务操作、系统信息
+- **debug**: 调试信息（开发环境）
+
+### 日志内容
+```typescript
+// 业务日志
+businessLogger.userAction(userId, 'USER_LOGIN', {
+  ip: req.ip,
+  userAgent: req.get('User-Agent')
+})
+
+// 错误日志
+errorLogger.system(error, {
+  url: req.url,
+  method: req.method,
+  body: req.body
+})
+```
+
+## 测试规范
+
+### 测试结构
+```
+tests/
+├── unit/           # 单元测试
+├── integration/    # 集成测试
+├── e2e/           # 端到端测试
+└── fixtures/       # 测试数据
+```
+
+### 测试命名
+- 测试文件：`*.test.ts` 或 `*.spec.ts`
+- 测试描述：使用中文描述测试场景
+- Mock数据：放在fixtures目录
+
+## 环境配置
+
+### 环境变量管理
+- **开发环境**：.env.development
+- **测试环境**：.env.test  
+- **生产环境**：.env.production
+- **示例文件**：env.example
+
+### 配置验证
+```typescript
+// 必要配置验证
+const requiredEnvVars = [
+  'DATABASE_URL',
+  'JWT_SECRET',
+  'NODE_ENV'
+]
+```
+
+## 数据库设计原则
+
+### PostgreSQL Schema设计
+- **命名规范**：表名使用复数形式（users, courses）
+- **字段类型**：充分利用PostgreSQL丰富的数据类型
+  - 使用数组类型存储列表数据（如专业特长）
+  - 使用JSONB类型存储结构化数据
+  - 使用枚举类型定义状态字段
+- **索引优化**：
+  - 在查询频繁字段添加B-tree索引
+  - 为全文搜索添加GIN索引
+  - 为JSONB字段添加GIN索引
+  - 使用部分索引优化查询
+- **关联关系**：正确设置外键关联和级联操作
+
+### PostgreSQL特有优化
+```sql
+-- 全文搜索索引
+CREATE INDEX idx_students_search 
+ON students USING GIN (to_tsvector('simple', real_name));
+
+-- 部分索引
+CREATE INDEX idx_active_users 
+ON users (created_at) WHERE is_active = true;
+
+-- JSONB索引
+CREATE INDEX idx_course_time_slots 
+ON courses USING GIN (time_slots);
+```
+
+### 迁移管理
+- **版本控制**：所有schema变更通过Prisma迁移管理
+- **向下兼容**：确保迁移的向下兼容性
+- **数据备份**：生产环境迁移前备份数据
+- **PostgreSQL扩展**：根据需要启用扩展
+```sql
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";      -- 相似度搜索
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";    -- UUID生成
+CREATE EXTENSION IF NOT EXISTS "btree_gin";    -- GIN索引优化
+```
+
+## 性能优化
+
+### PostgreSQL查询优化
+- **分页查询**：大数据集使用分页和游标
+- **字段选择**：只查询需要的字段
+- **连接查询**：合理使用include和select
+- **缓存策略**：Redis缓存热点数据
+- **全文搜索**：使用PostgreSQL内置搜索替代LIKE查询
+- **数组操作**：使用@>、&&等数组操作符提升性能
+- **窗口函数**：使用窗口函数进行复杂统计分析
+- **查询计划**：使用EXPLAIN分析查询性能
+
+```typescript
+// 高效的全文搜索
+const searchStudents = async (keyword: string) => {
+  return await prisma.$queryRaw`
+    SELECT *, ts_rank(
+      to_tsvector('simple', real_name), 
+      to_tsquery('simple', ${keyword})
+    ) as rank
+    FROM students 
+    WHERE to_tsvector('simple', real_name) @@ to_tsquery('simple', ${keyword})
+    ORDER BY rank DESC
+  `
+}
+
+// 数组包含查询
+const findTeachersBySkill = async (skill: string) => {
+  return await prisma.teacher.findMany({
+    where: { specialties: { has: skill } }
+  })
+}
+```
+
+### 并发处理
+- **异步操作**：使用async/await处理异步
+- **事务管理**：合理使用数据库事务
+- **连接池**：配置合适的数据库连接池
+
+## 部署规范
+
+### Docker化部署
+```dockerfile
+FROM node:18-alpine
+WORKDIR /app
+RUN npm install -g pnpm
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --production
+COPY . .
+RUN pnpm prisma:generate
+RUN pnpm build
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node healthcheck.js
+CMD ["pnpm", "start"]
+```
+
+### Docker Compose（PostgreSQL版本）
+```yaml
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: lndx_user
+      POSTGRES_PASSWORD: lndx_pass
+      POSTGRES_DB: lndx_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: .
+    environment:
+      - DATABASE_URL=postgresql://lndx_user:lndx_pass@postgres:5432/lndx_db
+      - REDIS_HOST=redis
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "3000:3000"
+```
+
+### PM2配置
+```javascript
+module.exports = {
+  apps: [{
+    name: 'lndx-backend',
+    script: 'dist/index.js',
+    instances: 'max',
+    exec_mode: 'cluster'
+  }]
+}
+```
+
+## 监控和运维
+
+### 健康检查
+- **HTTP接口**：GET /health
+- **数据库连接**：检查PostgreSQL和Prisma连接状态
+- **缓存连接**：检查Redis连接状态
+- **搜索服务**：检查Elasticsearch连接（如果使用）
+- **系统资源**：监控CPU、内存使用
+
+```typescript
+// 健康检查示例
+app.get('/health', async (req, res) => {
+  const health = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    services: {
+      database: 'checking...',
+      redis: 'checking...',
+      memory: process.memoryUsage()
+    }
+  }
+  
+  try {
+    // 检查PostgreSQL连接
+    await prisma.$queryRaw`SELECT 1`
+    health.services.database = 'healthy'
+  } catch (error) {
+    health.services.database = 'unhealthy'
+  }
+  
+  res.json(health)
+})
+```
+
+### 日志监控
+- **错误告警**：设置错误日志告警
+- **性能监控**：监控API响应时间
+- **业务指标**：监控关键业务数据
+
+## 文档规范
+
+### API文档
+- **Swagger集成**：自动生成API文档
+- **JSDoc注释**：为所有公开函数添加注释
+- **示例代码**：提供请求响应示例
+
+### 代码注释
+```typescript
+/**
+ * 用户登录服务
+ * @param loginData 登录数据
+ * @param loginData.phone 手机号
+ * @param loginData.password 密码
+ * @returns Promise<{token: string, user: IUser}>
+ * @throws {BusinessError} 用户不存在或密码错误
+ */
+async function login(loginData: ILoginData): Promise<ILoginResult> {
+  // 实现逻辑
+}
+```
+
+## 开发流程
+
+### Git规范
+- **分支命名**：feature/功能名、fix/修复名
+- **提交信息**：feat/fix/docs/style/refactor/test/chore
+- **PR模板**：使用统一的PR模板
+
+### 代码审查
+- **必要检查**：类型安全、错误处理、性能影响
+- **安全审查**：权限检查、输入验证、SQL注入
+- **测试覆盖**：确保关键逻辑有测试覆盖
+
+## AI辅助开发指导
+
+### 代码生成原则
+- **遵循架构**：严格按照分层架构组织代码
+- **类型安全**：生成的代码必须通过TypeScript检查
+- **错误处理**：包含完整的错误处理逻辑
+- **日志记录**：添加适当的业务日志
+- **注释完整**：提供详细的JSDoc注释
+
+### 最佳实践
+- **渐进开发**：先实现基础功能，再优化性能
+- **测试驱动**：重要功能先写测试再实现
+- **文档同步**：代码变更时同步更新文档
+- **安全优先**：任何功能都要考虑安全影响
+
+## 特殊要求
+
+### 学生管理系统特性（PostgreSQL增强版）
+- **多角色权限**：超级管理员/学校管理员/教师/学生
+- **数据隔离**：不同角色看到不同数据范围
+- **审计日志**：记录所有重要操作的审计轨迹（使用JSONB存储详细信息）
+- **文件处理**：身份证识别、头像上传等文件操作
+- **移动支持**：API需要同时支持PC和移动端
+- **全文搜索**：PostgreSQL原生中文全文搜索
+- **数组支持**：教师专业特长、学生兴趣爱好使用数组类型
+- **JSON存储**：课程时间表、考勤位置信息等使用JSONB
+- **高级统计**：使用窗口函数进行考勤趋势分析
+
+### 业务规则（PostgreSQL优化）
+- **报名流程**：学生报名→教师审核→系统确认（事务保证一致性）
+- **考勤管理**：支持人脸识别、手动签到等多种方式（位置信息JSON存储）
+- **权限继承**：上级角色可以管理下级角色的数据
+- **数据完整性**：PostgreSQL外键约束确保数据一致性
+- **搜索优化**：GIN索引支持高效的学生姓名搜索
+- **性能分析**：使用窗口函数计算学生出勤率趋势
+
+### PostgreSQL特有功能应用
+```typescript
+// 复杂统计查询示例
+const getAttendanceTrend = async (studentId: string) => {
+  return await prisma.$queryRaw`
+    SELECT attendance_date,
+           COUNT(*) OVER (
+             PARTITION BY student_id 
+             ORDER BY attendance_date 
+             ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+           ) as week_attendance_count
+    FROM attendances 
+    WHERE student_id = ${studentId}
+    ORDER BY attendance_date DESC
+  `
+}
+
+// 数组查询示例
+const findStudentsByInterests = async (interests: string[]) => {
+  return await prisma.student.findMany({
+    where: {
+      interests: {
+        hasEvery: interests // 包含所有指定兴趣
+      }
+    }
+  })
+}
+```
+
+## 禁止事项
+- 禁止在生产环境输出敏感信息到日志
+- 禁止跳过参数验证直接操作数据库
+- 禁止在业务逻辑中硬编码配置信息
+- 禁止忽略TypeScript类型错误
+- 禁止在没有事务保护的情况下进行复杂数据操作
+- 禁止在API响应中返回密码等敏感字段
+- 禁止不经过权限检查直接访问资源
+- 禁止使用同步方法处理文件I/O操作
+
+## 代码质量要求
+- 所有公开函数必须有JSDoc注释和TypeScript类型
+- 所有数据库操作必须有错误处理
+- 所有API接口必须有参数验证
+- 所有异步操作必须使用async/await
+- 通过ESLint和Prettier代码检查
+- 单元测试覆盖率 > 80%
+- 集成测试覆盖所有API端点
+
+遵循以上规范，确保后端代码的质量、安全性和可维护性。

@@ -1,0 +1,940 @@
+2025-08-14 23:54:03 [INFO]: 🚀 服务器启动成功！
+2025-08-14 23:54:03 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-14 23:54:03 [INFO]: 🌍 环境模式: development
+2025-08-14 23:54:03 [INFO]: 📁 API前缀: /api
+2025-08-14 23:54:03 [INFO]: ⏰ 启动时间: 2025-08-14T15:54:03.412Z
+2025-08-14 23:54:19 [INFO]: 收到SIGINT信号，开始优雅关闭服务器...
+2025-08-14 23:56:31 [INFO]: 🚀 服务器启动成功！
+2025-08-14 23:56:31 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-14 23:56:31 [INFO]: 🌍 环境模式: development
+2025-08-14 23:56:31 [INFO]: 📁 API前缀: /api
+2025-08-14 23:56:31 [INFO]: ⏰ 启动时间: 2025-08-14T15:56:31.524Z
+2025-08-15 00:01:07 [INFO]: 🚀 服务器启动成功！
+2025-08-15 00:01:07 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-15 00:01:07 [INFO]: 🌍 环境模式: development
+2025-08-15 00:01:07 [INFO]: 📁 API前缀: /api
+2025-08-15 00:01:07 [INFO]: ⏰ 启动时间: 2025-08-14T16:01:07.072Z
+2025-08-15 00:01:48 [INFO]: 🚀 服务器启动成功！
+2025-08-15 00:01:48 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-15 00:01:48 [INFO]: 🌍 环境模式: development
+2025-08-15 00:01:48 [INFO]: 📁 API前缀: /api
+2025-08-15 00:01:48 [INFO]: ⏰ 启动时间: 2025-08-14T16:01:48.917Z
+2025-08-15 00:01:57 [INFO]: 🚀 服务器启动成功！
+2025-08-15 00:01:57 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-15 00:01:57 [INFO]: 🌍 环境模式: development
+2025-08-15 00:01:57 [INFO]: 📁 API前缀: /api
+2025-08-15 00:01:57 [INFO]: ⏰ 启动时间: 2025-08-14T16:01:57.058Z
+2025-08-15 00:02:04 [INFO]: 🚀 服务器启动成功！
+2025-08-15 00:02:04 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-15 00:02:04 [INFO]: 🌍 环境模式: development
+2025-08-15 00:02:04 [INFO]: 📁 API前缀: /api
+2025-08-15 00:02:04 [INFO]: ⏰ 启动时间: 2025-08-14T16:02:04.567Z
+2025-08-15 00:02:34 [INFO]: 🚀 服务器启动成功！
+2025-08-15 00:02:34 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-15 00:02:34 [INFO]: 🌍 环境模式: development
+2025-08-15 00:02:34 [INFO]: 📁 API前缀: /api
+2025-08-15 00:02:34 [INFO]: ⏰ 启动时间: 2025-08-14T16:02:34.319Z
+2025-08-15 00:07:13 [INFO]: 收到SIGINT信号，开始优雅关闭服务器...
+2025-08-15 00:18:13 [INFO]: 🚀 服务器启动成功！
+2025-08-15 00:18:13 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-15 00:18:13 [INFO]: 🌍 环境模式: development
+2025-08-15 00:18:13 [INFO]: 📁 API前缀: /api
+2025-08-15 00:18:13 [INFO]: ⏰ 启动时间: 2025-08-14T16:18:13.476Z
+2025-08-15 00:18:17 [INFO]: 收到SIGINT信号，开始优雅关闭服务器...
+2025-08-15 00:19:01 [INFO]: 🚀 服务器启动成功！
+2025-08-15 00:19:01 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-15 00:19:01 [INFO]: 🌍 环境模式: development
+2025-08-15 00:19:01 [INFO]: 📁 API前缀: /api
+2025-08-15 00:19:01 [INFO]: ⏰ 启动时间: 2025-08-14T16:19:01.032Z
+2025-08-15 00:19:08 [INFO]: 收到SIGINT信号，开始优雅关闭服务器...
+2025-08-15 00:19:47 [INFO]: 🚀 服务器启动成功！
+2025-08-15 00:19:47 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-15 00:19:47 [INFO]: 🌍 环境模式: development
+2025-08-15 00:19:47 [INFO]: 📁 API前缀: /api
+2025-08-15 00:19:47 [INFO]: ⏰ 启动时间: 2025-08-14T16:19:47.595Z
+2025-08-15 00:19:55 [INFO]: 🚀 服务器启动成功！
+2025-08-15 00:19:55 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-15 00:19:55 [INFO]: 🌍 环境模式: development
+2025-08-15 00:19:55 [INFO]: 📁 API前缀: /api
+2025-08-15 00:19:55 [INFO]: ⏰ 启动时间: 2025-08-14T16:19:55.653Z
+2025-08-15 00:21:11 [INFO]: 收到SIGINT信号，开始优雅关闭服务器...
+2025-08-15 00:47:04 [INFO]: 🚀 服务器启动成功！
+2025-08-15 00:47:04 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-15 00:47:04 [INFO]: 🌍 环境模式: development
+2025-08-15 00:47:04 [INFO]: 📁 API前缀: /api
+2025-08-15 00:47:04 [INFO]: ⏰ 启动时间: 2025-08-14T16:47:04.997Z
+2025-08-15 00:48:36 [INFO]: ::1 - - [14/Aug/2025:16:48:36 +0000] "GET /api/health HTTP/1.1" 404 99 "-" "Mozilla/5.0 (Windows NT; Windows NT 10.0; zh-CN) WindowsPowerShell/5.1.26100.4768"
+2025-08-15 00:49:00 [INFO]: ::1 - - [14/Aug/2025:16:49:00 +0000] "GET /api HTTP/1.1" 404 92 "-" "Mozilla/5.0 (Windows NT; Windows NT 10.0; zh-CN) WindowsPowerShell/5.1.26100.4768"
+2025-08-15 00:49:17 [INFO]: ::1 - - [14/Aug/2025:16:49:17 +0000] "GET /api/docs HTTP/1.1" 404 97 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 00:49:17 [INFO]: ::1 - - [14/Aug/2025:16:49:17 +0000] "GET /favicon.ico HTTP/1.1" 404 100 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 00:50:48 [INFO]: ::1 - - [14/Aug/2025:16:50:48 +0000] "GET /api/docs HTTP/1.1" 404 97 "-" "node"
+2025-08-15 00:50:48 [INFO]: ::1 - - [14/Aug/2025:16:50:48 +0000] "GET /api/health HTTP/1.1" 404 99 "-" "node"
+2025-08-15 00:50:48 [ERROR]: 系统错误 缺少认证Token，请先登录
+AuthError: 缺少认证Token，请先登录
+    at authMiddleware (D:\web\2025\Cursor\lndx\backend\src\middleware\auth.ts:123:13)
+    at Layer.handle [as handle_request] (D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\index.js:328:13)
+    at D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\index.js:346:12)
+    at next (D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\index.js:280:10)
+    at D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express-rate-limit@7.5.1_express@4.21.2\node_modules\express-rate-limit\dist\index.cjs:807:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express-rate-limit@7.5.1_express@4.21.2\node_modules\express-rate-limit\dist\index.cjs:691:5
+{
+  "context": {
+    "url": "/api/users",
+    "method": "GET",
+    "ip": "::1",
+    "userAgent": "node",
+    "body": {},
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 00:50:48 [INFO]: ::1 - - [14/Aug/2025:16:50:48 +0000] "GET /api/users HTTP/1.1" 401 - "-" "node"
+2025-08-15 00:50:48 [INFO]: 用户操作
+{
+  "userId": "unknown",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "phone": "13800138000",
+    "reason": "user_not_found",
+    "ip": "::1"
+  }
+}
+2025-08-15 00:50:48 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "node",
+    "body": {
+      "phone": "13800138000",
+      "password": "123456"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 00:50:48 [INFO]: ::1 - - [14/Aug/2025:16:50:48 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "-" "node"
+2025-08-15 00:50:48 [INFO]: ::1 - - [14/Aug/2025:16:50:48 +0000] "GET /api/health HTTP/1.1" 404 99 "-" "node"
+2025-08-15 00:51:40 [ERROR]: 系统错误 缺少认证Token，请先登录
+AuthError: 缺少认证Token，请先登录
+    at authMiddleware (D:\web\2025\Cursor\lndx\backend\src\middleware\auth.ts:123:13)
+    at Layer.handle [as handle_request] (D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\index.js:328:13)
+    at D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\index.js:346:12)
+    at next (D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\index.js:280:10)
+    at D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express-rate-limit@7.5.1_express@4.21.2\node_modules\express-rate-limit\dist\index.cjs:807:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express-rate-limit@7.5.1_express@4.21.2\node_modules\express-rate-limit\dist\index.cjs:691:5
+{
+  "context": {
+    "url": "/api/users",
+    "method": "GET",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; zh-CN) WindowsPowerShell/5.1.26100.4768",
+    "body": {},
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 00:51:40 [INFO]: ::1 - - [14/Aug/2025:16:51:40 +0000] "GET /api/users HTTP/1.1" 401 1458 "-" "Mozilla/5.0 (Windows NT; Windows NT 10.0; zh-CN) WindowsPowerShell/5.1.26100.4768"
+2025-08-15 00:51:55 [INFO]: ::1 - - [14/Aug/2025:16:51:55 +0000] "GET /api/auth/me HTTP/1.1" 404 100 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 00:51:55 [INFO]: 系统操作
+{
+  "action": "USER_LOGOUT",
+  "details": {
+    "token": "mock_token_1_1755134...",
+    "ip": "::1"
+  }
+}
+2025-08-15 00:51:55 [INFO]: ::1 - - [14/Aug/2025:16:51:55 +0000] "POST /api/auth/logout HTTP/1.1" 200 43 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 00:52:05 [INFO]: 系统操作
+{
+  "action": "USER_LOGOUT",
+  "details": {
+    "token": "unknown",
+    "ip": "::1"
+  }
+}
+2025-08-15 00:52:05 [INFO]: ::1 - - [14/Aug/2025:16:52:05 +0000] "POST /api/auth/logout HTTP/1.1" 200 43 "http://localhost:5173/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 00:52:18 [INFO]: 用户操作
+{
+  "userId": "unknown",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "phone": "13800138000",
+    "reason": "user_not_found",
+    "ip": "::1"
+  }
+}
+2025-08-15 00:52:18 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138000",
+      "password": "123456"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 00:52:18 [INFO]: ::1 - - [14/Aug/2025:16:52:18 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 00:53:15 [INFO]: 用户操作
+{
+  "userId": "unknown",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "phone": "13800138000",
+    "reason": "user_not_found",
+    "ip": "::1"
+  }
+}
+2025-08-15 00:53:15 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138000",
+      "password": "123456"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 00:53:15 [INFO]: ::1 - - [14/Aug/2025:16:53:15 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 00:54:51 [INFO]: 🚀 服务器启动成功！
+2025-08-15 00:54:51 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-15 00:54:51 [INFO]: 🌍 环境模式: development
+2025-08-15 00:54:51 [INFO]: 📁 API前缀: /api
+2025-08-15 00:54:51 [INFO]: ⏰ 启动时间: 2025-08-14T16:54:51.281Z
+2025-08-15 00:55:03 [INFO]: 🚀 服务器启动成功！
+2025-08-15 00:55:03 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-15 00:55:03 [INFO]: 🌍 环境模式: development
+2025-08-15 00:55:03 [INFO]: 📁 API前缀: /api
+2025-08-15 00:55:03 [INFO]: ⏰ 启动时间: 2025-08-14T16:55:03.387Z
+2025-08-15 00:55:29 [INFO]: 🚀 服务器启动成功！
+2025-08-15 00:55:29 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-15 00:55:29 [INFO]: 🌍 环境模式: development
+2025-08-15 00:55:29 [INFO]: 📁 API前缀: /api
+2025-08-15 00:55:29 [INFO]: ⏰ 启动时间: 2025-08-14T16:55:29.068Z
+2025-08-15 00:57:11 [INFO]: ::1 - - [14/Aug/2025:16:57:11 +0000] "GET /api/health HTTP/1.1" 200 251 "-" "Mozilla/5.0 (Windows NT; Windows NT 10.0; zh-CN) WindowsPowerShell/5.1.26100.4768"
+2025-08-15 00:57:38 [INFO]: 用户操作
+{
+  "userId": "cmeblqp220005yn2xecnunew5",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "reason": "invalid_password",
+    "ip": "::1"
+  }
+}
+2025-08-15 00:57:38 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:123:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800000001",
+      "password": "123465"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 00:57:38 [INFO]: ::1 - - [14/Aug/2025:16:57:38 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 00:57:50 [INFO]: 🚀 服务器启动成功！
+2025-08-15 00:57:50 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-15 00:57:50 [INFO]: 🌍 环境模式: development
+2025-08-15 00:57:50 [INFO]: 📁 API前缀: /api
+2025-08-15 00:57:50 [INFO]: ⏰ 启动时间: 2025-08-14T16:57:50.181Z
+2025-08-15 01:11:14 [INFO]: 用户操作
+{
+  "userId": "cmeblqp220005yn2xecnunew5",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "reason": "invalid_password",
+    "ip": "::1"
+  }
+}
+2025-08-15 01:11:14 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:123:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800000001",
+      "password": "123465"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 01:11:14 [INFO]: ::1 - - [14/Aug/2025:17:11:14 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:11:59 [INFO]: 用户操作
+{
+  "userId": "cmeblqp220005yn2xecnunew5",
+  "action": "LOGIN_SUCCESS",
+  "details": {
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+  }
+}
+2025-08-15 01:11:59 [INFO]: ::1 - - [14/Aug/2025:17:11:59 +0000] "POST /api/auth/login HTTP/1.1" 200 703 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:14:07 [INFO]: ::1 - - [14/Aug/2025:17:14:07 +0000] "GET / HTTP/1.1" 404 89 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:14:07 [INFO]: ::1 - - [14/Aug/2025:17:14:07 +0000] "GET /favicon.ico HTTP/1.1" 404 100 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:14:21 [INFO]: ::1 - - [14/Aug/2025:17:14:21 +0000] "GET /api/auth/me HTTP/1.1" 200 312 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:15:11 [INFO]: 用户操作
+{
+  "userId": "cmeblqp220005yn2xecnunew5",
+  "action": "LOGIN_SUCCESS",
+  "details": {
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+  }
+}
+2025-08-15 01:15:11 [INFO]: ::1 - - [14/Aug/2025:17:15:11 +0000] "POST /api/auth/login HTTP/1.1" 200 703 "http://localhost:5173/login?redirect=/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:17:16 [INFO]: 🚀 服务器启动成功！
+2025-08-15 01:17:16 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-15 01:17:16 [INFO]: 🌍 环境模式: development
+2025-08-15 01:17:16 [INFO]: 📁 API前缀: /api
+2025-08-15 01:17:16 [INFO]: ⏰ 启动时间: 2025-08-14T17:17:16.991Z
+2025-08-15 01:24:05 [INFO]: 用户操作
+{
+  "userId": "cmeblqp220005yn2xecnunew5",
+  "action": "LOGIN_SUCCESS",
+  "details": {
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+  }
+}
+2025-08-15 01:24:05 [INFO]: ::1 - - [14/Aug/2025:17:24:05 +0000] "POST /api/auth/login HTTP/1.1" 200 703 "http://localhost:5173/login?redirect=/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:26:16 [INFO]: 用户操作
+{
+  "userId": "cmeblqp220005yn2xecnunew5",
+  "action": "LOGIN_SUCCESS",
+  "details": {
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+  }
+}
+2025-08-15 01:26:16 [INFO]: ::1 - - [14/Aug/2025:17:26:16 +0000] "POST /api/auth/login HTTP/1.1" 200 703 "http://localhost:5173/login?redirect=/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:29:29 [INFO]: 🚀 服务器启动成功！
+2025-08-15 01:29:29 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-15 01:29:29 [INFO]: 🌍 环境模式: development
+2025-08-15 01:29:29 [INFO]: 📁 API前缀: /api
+2025-08-15 01:29:29 [INFO]: ⏰ 启动时间: 2025-08-14T17:29:29.277Z
+2025-08-15 01:29:38 [INFO]: ::1 - - [14/Aug/2025:17:29:38 +0000] "GET /api/auth/me HTTP/1.1" 200 312 "http://localhost:5173/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:30:07 [INFO]: 🚀 服务器启动成功！
+2025-08-15 01:30:07 [INFO]: 📍 服务地址: http://localhost:3000
+2025-08-15 01:30:07 [INFO]: 🌍 环境模式: development
+2025-08-15 01:30:07 [INFO]: 📁 API前缀: /api
+2025-08-15 01:30:07 [INFO]: ⏰ 启动时间: 2025-08-14T17:30:07.649Z
+2025-08-15 01:32:50 [INFO]: 用户操作
+{
+  "userId": "cmeblqp220005yn2xecnunew5",
+  "action": "LOGIN_SUCCESS",
+  "details": {
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+  }
+}
+2025-08-15 01:32:50 [INFO]: ::1 - - [14/Aug/2025:17:32:50 +0000] "POST /api/auth/login HTTP/1.1" 200 835 "http://localhost:5173/login?redirect=/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:32:56 [INFO]: 系统操作
+{
+  "action": "USER_LOGOUT",
+  "details": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "ip": "::1"
+  }
+}
+2025-08-15 01:32:56 [INFO]: ::1 - - [14/Aug/2025:17:32:56 +0000] "POST /api/auth/logout HTTP/1.1" 200 43 "http://localhost:5173/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:33:01 [INFO]: 用户操作
+{
+  "userId": "cmeblqp250006yn2xctzm8jkk",
+  "action": "LOGIN_SUCCESS",
+  "details": {
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+  }
+}
+2025-08-15 01:33:01 [INFO]: ::1 - - [14/Aug/2025:17:33:01 +0000] "POST /api/auth/login HTTP/1.1" 200 858 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:33:21 [INFO]: ::1 - - [14/Aug/2025:17:33:21 +0000] "GET /api/applications/available-courses HTTP/1.1" 404 123 "http://localhost:5173/registration" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:34:06 [INFO]: 系统操作
+{
+  "action": "USER_LOGOUT",
+  "details": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "ip": "::1"
+  }
+}
+2025-08-15 01:34:06 [INFO]: ::1 - - [14/Aug/2025:17:34:06 +0000] "POST /api/auth/logout HTTP/1.1" 200 43 "http://localhost:5173/setting" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:34:12 [INFO]: 用户操作
+{
+  "userId": "cmeblqp260007yn2xmnkf9wva",
+  "action": "LOGIN_SUCCESS",
+  "details": {
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+  }
+}
+2025-08-15 01:34:12 [INFO]: ::1 - - [14/Aug/2025:17:34:12 +0000] "POST /api/auth/login HTTP/1.1" 200 868 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:34:49 [INFO]: 系统操作
+{
+  "action": "USER_LOGOUT",
+  "details": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "ip": "::1"
+  }
+}
+2025-08-15 01:34:49 [INFO]: ::1 - - [14/Aug/2025:17:34:49 +0000] "POST /api/auth/logout HTTP/1.1" 200 43 "http://localhost:5173/analysis" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:34:56 [INFO]: 用户操作
+{
+  "userId": "cmeblqp270008yn2xihtd9hqo",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "reason": "invalid_password",
+    "ip": "::1"
+  }
+}
+2025-08-15 01:34:56 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:123:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800000004",
+      "password": "123465"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 01:34:56 [INFO]: ::1 - - [14/Aug/2025:17:34:56 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:35:06 [INFO]: 用户操作
+{
+  "userId": "cmeblqp270008yn2xihtd9hqo",
+  "action": "LOGIN_SUCCESS",
+  "details": {
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+  }
+}
+2025-08-15 01:35:06 [INFO]: ::1 - - [14/Aug/2025:17:35:06 +0000] "POST /api/auth/login HTTP/1.1" 200 783 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:35:15 [INFO]: ::1 - - [14/Aug/2025:17:35:15 +0000] "GET /api/applications/available-courses HTTP/1.1" 404 123 "http://localhost:5173/registration" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:35:30 [INFO]: 系统操作
+{
+  "action": "USER_LOGOUT",
+  "details": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "ip": "::1"
+  }
+}
+2025-08-15 01:35:30 [INFO]: ::1 - - [14/Aug/2025:17:35:30 +0000] "POST /api/auth/logout HTTP/1.1" 200 43 "http://localhost:5173/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:35:40 [INFO]: 用户操作
+{
+  "userId": "unknown",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "phone": "13800138001",
+    "reason": "user_not_found",
+    "ip": "::1"
+  }
+}
+2025-08-15 01:35:40 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138001",
+      "password": "123456"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 01:35:40 [INFO]: ::1 - - [14/Aug/2025:17:35:40 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:35:56 [INFO]: 用户操作
+{
+  "userId": "unknown",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "phone": "13800138000",
+    "reason": "user_not_found",
+    "ip": "::1"
+  }
+}
+2025-08-15 01:35:56 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138000",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 01:35:56 [INFO]: ::1 - - [14/Aug/2025:17:35:56 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:39:33 [INFO]: 用户操作
+{
+  "userId": "cmeblqp220005yn2xecnunew5",
+  "action": "LOGIN_SUCCESS",
+  "details": {
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+  }
+}
+2025-08-15 01:39:33 [INFO]: ::1 - - [14/Aug/2025:17:39:33 +0000] "POST /api/auth/login HTTP/1.1" 200 835 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:39:42 [INFO]: 系统操作
+{
+  "action": "USER_LOGOUT",
+  "details": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "ip": "::1"
+  }
+}
+2025-08-15 01:39:42 [INFO]: ::1 - - [14/Aug/2025:17:39:42 +0000] "POST /api/auth/logout HTTP/1.1" 200 43 "http://localhost:5173/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:39:47 [INFO]: 用户操作
+{
+  "userId": "cmeblqp220005yn2xecnunew5",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "reason": "invalid_password",
+    "ip": "::1"
+  }
+}
+2025-08-15 01:39:47 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:123:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800000001",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 01:39:47 [INFO]: ::1 - - [14/Aug/2025:17:39:47 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:40:02 [INFO]: 用户操作
+{
+  "userId": "cmeblqp220005yn2xecnunew5",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "reason": "invalid_password",
+    "ip": "::1"
+  }
+}
+2025-08-15 01:40:02 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:123:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800000001",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 01:40:02 [INFO]: ::1 - - [14/Aug/2025:17:40:02 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:40:40 [WARN]: 登录限流触发
+{
+  "ip": "::1",
+  "phone": "13800138001",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+}
+2025-08-15 01:40:40 [INFO]: ::1 - - [14/Aug/2025:17:40:40 +0000] "POST /api/auth/login HTTP/1.1" 429 145 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:41:02 [WARN]: 登录限流触发
+{
+  "ip": "::1",
+  "phone": "13800000001",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+}
+2025-08-15 01:41:02 [INFO]: ::1 - - [14/Aug/2025:17:41:02 +0000] "POST /api/auth/login HTTP/1.1" 429 145 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 01:41:05 [WARN]: 登录限流触发
+{
+  "ip": "::1",
+  "phone": "13800000001",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+}
+2025-08-15 01:41:05 [INFO]: ::1 - - [14/Aug/2025:17:41:05 +0000] "POST /api/auth/login HTTP/1.1" 429 145 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 02:13:33 [INFO]: 用户操作
+{
+  "userId": "cmeblqp220005yn2xecnunew5",
+  "action": "LOGIN_SUCCESS",
+  "details": {
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+  }
+}
+2025-08-15 02:13:33 [INFO]: ::1 - - [14/Aug/2025:18:13:33 +0000] "POST /api/auth/login HTTP/1.1" 200 835 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 02:13:36 [INFO]: 系统操作
+{
+  "action": "USER_LOGOUT",
+  "details": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "ip": "::1"
+  }
+}
+2025-08-15 02:13:36 [INFO]: ::1 - - [14/Aug/2025:18:13:36 +0000] "POST /api/auth/logout HTTP/1.1" 200 43 "http://localhost:5173/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 02:13:42 [INFO]: 用户操作
+{
+  "userId": "cmeblqp220005yn2xecnunew5",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "reason": "invalid_password",
+    "ip": "::1"
+  }
+}
+2025-08-15 02:13:42 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:123:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800000001",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 02:13:42 [INFO]: ::1 - - [14/Aug/2025:18:13:42 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 02:14:02 [INFO]: 用户操作
+{
+  "userId": "unknown",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "phone": "13800138001",
+    "reason": "user_not_found",
+    "ip": "::1"
+  }
+}
+2025-08-15 02:14:02 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138001",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 02:14:02 [INFO]: ::1 - - [14/Aug/2025:18:14:02 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 02:16:18 [INFO]: 用户操作
+{
+  "userId": "unknown",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "phone": "13800138001",
+    "reason": "user_not_found",
+    "ip": "::1"
+  }
+}
+2025-08-15 02:16:18 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138001",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 02:16:18 [INFO]: ::1 - - [14/Aug/2025:18:16:18 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 02:16:33 [INFO]: 用户操作
+{
+  "userId": "unknown",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "phone": "13800138000",
+    "reason": "user_not_found",
+    "ip": "::1"
+  }
+}
+2025-08-15 02:16:33 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138000",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 02:16:33 [INFO]: ::1 - - [14/Aug/2025:18:16:33 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 02:22:14 [INFO]: 用户操作
+{
+  "userId": "unknown",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "phone": "13800138000",
+    "reason": "user_not_found",
+    "ip": "::1"
+  }
+}
+2025-08-15 02:22:14 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138000",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 02:22:14 [INFO]: ::1 - - [14/Aug/2025:18:22:14 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 02:25:38 [WARN]: 登录限流触发
+{
+  "ip": "::1",
+  "phone": "13800138000",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+}
+2025-08-15 02:25:38 [INFO]: ::1 - - [14/Aug/2025:18:25:38 +0000] "POST /api/auth/login HTTP/1.1" 429 145 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 02:27:39 [WARN]: 登录限流触发
+{
+  "ip": "::1",
+  "phone": "13800000001",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+}
+2025-08-15 02:27:39 [INFO]: ::1 - - [14/Aug/2025:18:27:39 +0000] "POST /api/auth/login HTTP/1.1" 429 145 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 02:51:37 [INFO]: 用户操作
+{
+  "userId": "cmeblqp220005yn2xecnunew5",
+  "action": "LOGIN_SUCCESS",
+  "details": {
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+  }
+}
+2025-08-15 02:51:37 [INFO]: ::1 - - [14/Aug/2025:18:51:37 +0000] "POST /api/auth/login HTTP/1.1" 200 835 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 02:51:40 [INFO]: 系统操作
+{
+  "action": "USER_LOGOUT",
+  "details": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "ip": "::1"
+  }
+}
+2025-08-15 02:51:40 [INFO]: ::1 - - [14/Aug/2025:18:51:40 +0000] "POST /api/auth/logout HTTP/1.1" 200 43 "http://localhost:5173/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 02:51:48 [INFO]: 用户操作
+{
+  "userId": "cmeblqp220005yn2xecnunew5",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "reason": "invalid_password",
+    "ip": "::1"
+  }
+}
+2025-08-15 02:51:48 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:123:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800000001",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 02:51:48 [INFO]: ::1 - - [14/Aug/2025:18:51:48 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 02:58:32 [INFO]: 用户操作
+{
+  "userId": "cmeblqp220005yn2xecnunew5",
+  "action": "LOGIN_SUCCESS",
+  "details": {
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+  }
+}
+2025-08-15 02:58:32 [INFO]: ::1 - - [14/Aug/2025:18:58:32 +0000] "POST /api/auth/login HTTP/1.1" 200 835 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 02:58:35 [INFO]: 系统操作
+{
+  "action": "USER_LOGOUT",
+  "details": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "ip": "::1"
+  }
+}
+2025-08-15 02:58:35 [INFO]: ::1 - - [14/Aug/2025:18:58:35 +0000] "POST /api/auth/logout HTTP/1.1" 200 43 "http://localhost:5173/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 02:58:40 [INFO]: 用户操作
+{
+  "userId": "unknown",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "phone": "13800138001",
+    "reason": "user_not_found",
+    "ip": "::1"
+  }
+}
+2025-08-15 02:58:40 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138001",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 02:58:40 [INFO]: ::1 - - [14/Aug/2025:18:58:40 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 02:58:50 [INFO]: 用户操作
+{
+  "userId": "unknown",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "phone": "13800138001",
+    "reason": "user_not_found",
+    "ip": "::1"
+  }
+}
+2025-08-15 02:58:50 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138001",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 02:58:50 [INFO]: ::1 - - [14/Aug/2025:18:58:50 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 02:58:58 [INFO]: 用户操作
+{
+  "userId": "cmeblqp220005yn2xecnunew5",
+  "action": "LOGIN_FAILED",
+  "details": {
+    "reason": "invalid_password",
+    "ip": "::1"
+  }
+}
+2025-08-15 02:58:58 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:123:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800000001",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 02:58:58 [INFO]: ::1 - - [14/Aug/2025:18:58:58 +0000] "POST /api/auth/login HTTP/1.1" 401 274 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+2025-08-15 02:59:06 [INFO]: 用户操作
+{
+  "userId": "cmeblqp220005yn2xecnunew5",
+  "action": "LOGIN_SUCCESS",
+  "details": {
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+  }
+}
+2025-08-15 02:59:06 [INFO]: ::1 - - [14/Aug/2025:18:59:06 +0000] "POST /api/auth/login HTTP/1.1" 200 835 "http://localhost:5173/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"

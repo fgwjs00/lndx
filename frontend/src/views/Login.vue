@@ -14,9 +14,10 @@
 
         <!-- 登录表单 -->
         <a-form
+          ref="formRef"
           :model="formData"
           :rules="rules"
-          @finish="handleLogin"
+          @submit.prevent
           layout="vertical"
           class="space-y-4"
         >
@@ -85,9 +86,9 @@
           <a-form-item>
             <a-button
               type="primary"
-              html-type="submit"
               size="large"
               :loading="loading"
+              @click="handleFormSubmit"
               class="w-full bg-gradient-to-r from-blue-500 to-purple-600 border-none hover:from-blue-600 hover:to-purple-700"
             >
               {{ loading ? '登录中...' : '登录' }}
@@ -119,9 +120,10 @@
           </p>
           <div class="text-xs text-green-600 space-y-1">
             <p><strong>测试账号：</strong></p>
-            <p>管理员: 13800138000 / 123456</p>
-            <p>教师: 13800138001 / 123456</p>
-            <p>学生: 13800138002 / 123456</p>
+            <p>超级管理员: 13800000001 / 123456</p>
+            <p>学校管理员: 13800000002 / 123456</p>
+            <p>教师: 13800000003 / 123456</p>
+            <p>学生: 13800000004 / 123456</p>
           </div>
         </div>
       </div>
@@ -190,6 +192,7 @@ const captchaImage = ref<string>('')
 const captchaId = ref<string>('')
 const showRegister = ref<boolean>(false)
 const showForgotPassword = ref<boolean>(false)
+const formRef = ref()
 
 // 表单数据
 const formData = reactive<LoginRequest>({
@@ -252,6 +255,23 @@ const getCaptcha = async (): Promise<void> => {
 const refreshCaptcha = (): void => {
   formData.captcha = ''
   getCaptcha()
+}
+
+/**
+ * 处理表单提交
+ */
+const handleFormSubmit = async (): Promise<void> => {
+  try {
+    // 使用 Ant Design 表单验证
+    const values = await formRef.value?.validateFields()
+    if (values) {
+      // 调用登录处理函数
+      await handleLogin(values)
+    }
+  } catch (error) {
+    console.error('表单验证失败:', error)
+    // 验证失败时不做任何操作，Ant Design 会自动显示错误信息
+  }
 }
 
 /**

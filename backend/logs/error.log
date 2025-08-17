@@ -1,0 +1,367 @@
+2025-08-15 00:50:48 [ERROR]: 系统错误 缺少认证Token，请先登录
+AuthError: 缺少认证Token，请先登录
+    at authMiddleware (D:\web\2025\Cursor\lndx\backend\src\middleware\auth.ts:123:13)
+    at Layer.handle [as handle_request] (D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\index.js:328:13)
+    at D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\index.js:346:12)
+    at next (D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\index.js:280:10)
+    at D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express-rate-limit@7.5.1_express@4.21.2\node_modules\express-rate-limit\dist\index.cjs:807:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express-rate-limit@7.5.1_express@4.21.2\node_modules\express-rate-limit\dist\index.cjs:691:5
+{
+  "context": {
+    "url": "/api/users",
+    "method": "GET",
+    "ip": "::1",
+    "userAgent": "node",
+    "body": {},
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 00:50:48 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "node",
+    "body": {
+      "phone": "13800138000",
+      "password": "123456"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 00:51:40 [ERROR]: 系统错误 缺少认证Token，请先登录
+AuthError: 缺少认证Token，请先登录
+    at authMiddleware (D:\web\2025\Cursor\lndx\backend\src\middleware\auth.ts:123:13)
+    at Layer.handle [as handle_request] (D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\index.js:328:13)
+    at D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\index.js:346:12)
+    at next (D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express@4.21.2\node_modules\express\lib\router\index.js:280:10)
+    at D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express-rate-limit@7.5.1_express@4.21.2\node_modules\express-rate-limit\dist\index.cjs:807:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async D:\web\2025\Cursor\lndx\backend\node_modules\.pnpm\express-rate-limit@7.5.1_express@4.21.2\node_modules\express-rate-limit\dist\index.cjs:691:5
+{
+  "context": {
+    "url": "/api/users",
+    "method": "GET",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; zh-CN) WindowsPowerShell/5.1.26100.4768",
+    "body": {},
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 00:52:18 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138000",
+      "password": "123456"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 00:53:15 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138000",
+      "password": "123456"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 00:57:38 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:123:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800000001",
+      "password": "123465"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 01:11:14 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:123:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800000001",
+      "password": "123465"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 01:34:56 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:123:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800000004",
+      "password": "123465"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 01:35:40 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138001",
+      "password": "123456"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 01:35:56 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138000",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 01:39:47 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:123:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800000001",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 01:40:02 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:123:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800000001",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 02:13:42 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:123:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800000001",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 02:14:02 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138001",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 02:16:18 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138001",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 02:16:33 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138000",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 02:22:14 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138000",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 02:51:48 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:123:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800000001",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 02:58:40 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138001",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 02:58:50 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:104:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800138001",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}
+2025-08-15 02:58:58 [ERROR]: 系统错误 手机号或密码错误
+BusinessError: 手机号或密码错误
+    at <anonymous> (D:\web\2025\Cursor\lndx\backend\src\routes\auth.ts:123:11)
+{
+  "context": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "body": {
+      "phone": "13800000001",
+      "password": "123123"
+    },
+    "params": {},
+    "query": {}
+  }
+}

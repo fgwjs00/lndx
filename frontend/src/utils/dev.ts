@@ -37,7 +37,7 @@ export const shouldMockAuth = (): boolean => {
 export const mockUsers = [
   {
     id: '1',
-    phone: '13800138000',
+    phone: '13800000001',
     password: '123456',
     realName: '超级管理员',
     email: 'superadmin@company.com',
@@ -49,7 +49,7 @@ export const mockUsers = [
   },
   {
     id: '2',
-    phone: '13800138001',
+    phone: '13800000002',
     password: '123456',
     realName: '学校管理员',
     email: 'schooladmin@school.com',
@@ -61,7 +61,7 @@ export const mockUsers = [
   },
   {
     id: '3',
-    phone: '13800138002',
+    phone: '13800000003',
     password: '123456',
     realName: '张老师',
     email: 'teacher@school.com',
@@ -73,7 +73,7 @@ export const mockUsers = [
   },
   {
     id: '4',
-    phone: '13800138003',
+    phone: '13800000004',
     password: '123456',
     realName: '李学生',
     email: 'student@school.com',
@@ -230,9 +230,10 @@ export const showDevModeInfo = (): void => {
   if (isDevelopment()) {
     console.log('%c🚀 开发模式已启用', 'color: #10b981; font-weight: bold; font-size: 14px;')
     console.log('%c📱 测试账号信息:', 'color: #3b82f6; font-weight: bold;')
-    console.log('%c管理员: 13800138000 / 123456', 'color: #6b7280;')
-    console.log('%c教师: 13800138001 / 123456', 'color: #6b7280;')
-    console.log('%c学生: 13800138002 / 123456', 'color: #6b7280;')
+    console.log('%c超级管理员: 13800000001 / 123456', 'color: #6b7280;')
+    console.log('%c学校管理员: 13800000002 / 123456', 'color: #6b7280;')
+    console.log('%c教师: 13800000003 / 123456', 'color: #6b7280;')
+    console.log('%c学生: 13800000004 / 123456', 'color: #6b7280;')
     console.log('%c📋 短信验证码: 123456', 'color: #6b7280;')
     console.log('%c🔧 验证码已跳过', 'color: #6b7280;')
     console.log('%c🔄 页面刷新后登录状态会自动保持', 'color: #10b981; font-weight: bold;')
