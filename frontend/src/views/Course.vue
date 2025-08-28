@@ -49,7 +49,7 @@
             <i class="fas fa-book text-purple-600 text-xl"></i>
           </div>
           <div>
-              <h3 class="text-2xl font-bold text-gray-800">{{ courses.length }}</h3>
+              <h3 class="text-2xl font-bold text-gray-800">{{ courseStats.totalCourses || courses.length }}</h3>
             <p class="text-gray-500 text-sm">总课程数</p>
           </div>
         </div>
@@ -96,19 +96,27 @@
       <div v-if="activeView === 'schedule'" class="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
         <div class="p-6 border-b border-gray-200">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h3 class="text-xl font-semibold text-gray-800">2024年秋季课程表</h3>
-            <div class="flex flex-col sm:flex-row gap-3">
+            <h3 class="text-xl font-semibold text-gray-800">{{ selectedSemester || '所有学期' }}课程表</h3>
+                    <div class="flex flex-col sm:flex-row gap-3">
+              <!-- 学期筛选 -->
+              <select 
+                v-model="selectedSemester"
+                class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">所有学期</option>
+                <option v-for="semester in availableSemesters" :key="semester" :value="semester">
+                  {{ semester }}
+                </option>
+              </select>
+
               <select 
                 v-model="selectedCategory" 
                 class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
-                  <option value="">所有分类</option>
-                <option value="music">音乐</option>
-                <option value="instrument">器乐</option>
-                <option value="art">艺术</option>
-                <option value="literature">文学</option>
-                <option value="practical">实用技术</option>
-                <option value="comprehensive">综合</option>
+                <option value="">所有院系</option>
+                <option v-for="category in availableCategories" :key="category" :value="category">
+                  {{ category }}
+                </option>
               </select>
         </div>
       </div>
@@ -124,6 +132,7 @@
                 <th class="text-center py-4 px-3 text-gray-600 font-semibold min-w-32">星期三</th>
                 <th class="text-center py-4 px-3 text-gray-600 font-semibold min-w-32">星期四</th>
                 <th class="text-center py-4 px-3 text-gray-600 font-semibold min-w-32">星期五</th>
+                <th class="text-center py-4 px-3 text-gray-600 font-semibold min-w-32">星期六</th>
               </tr>
             </thead>
             <tbody>
@@ -132,17 +141,19 @@
                   <div class="text-sm">{{ timeSlot.label }}</div>
                   <div class="text-xs text-gray-500">{{ timeSlot.time }}</div>
                 </td>
-                <td v-for="day in 5" :key="day" class="py-2 px-2 align-top">
+                <td v-for="day in 6" :key="day" class="py-2 px-2 align-top">
                   <div v-for="course in getCoursesForTimeSlot(day, timeSlot.period)" :key="course.id" 
                        class="mb-2 p-2 rounded-lg text-xs cursor-pointer hover:shadow-md transition-all"
                        :class="getCategoryColor(course.category)"
                        @click="showCourseDetail(course)"
                   >
                     <div class="font-semibold text-gray-800 mb-1">{{ course.name }}</div>
-                    <div class="text-gray-600">{{ course.teacher }}</div>
+                    <div class="text-gray-600 text-xs">
+                      {{ course.requiresGrades ? getLevelText(course.level) : '不分年级' }}
+                    </div>
                     <div class="flex items-center justify-between mt-1">
                       <span class="text-xs bg-white/50 px-1 rounded">{{ getCategoryText(course.category) }}</span>
-                      <span class="text-xs text-gray-500">{{ course.enrolled }}/{{ course.capacity }}</span>
+                      <span class="text-xs text-gray-500">{{ course.enrolled || 0 }}/{{ course.maxStudents || course.capacity || 0 }}</span>
                     </div>
                   </div>
                   <div v-if="!getCoursesForTimeSlot(day, timeSlot.period).length" 
@@ -165,7 +176,7 @@
           <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
           <input
             type="text"
-                placeholder="搜索课程名称、教师或编号..."
+                placeholder="搜索课程名称、教师或描述..."
             class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             v-model="searchQuery"
           />
@@ -175,17 +186,26 @@
         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
           <!-- 筛选区-->
           <div class="flex flex-col sm:flex-row gap-3">
+                <!-- 学期筛选 -->
+                <select 
+                  v-model="selectedSemester"
+                  class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 min-w-0"
+                >
+                  <option value="">所有学期</option>
+                  <option v-for="semester in availableSemesters" :key="semester" :value="semester">
+                    {{ semester }}
+                  </option>
+                </select>
+
                 <select 
                   v-model="selectedCategory"
                   class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 min-w-0"
                 >
-                  <option value="">所有分类</option>
-                  <option value="music">音乐</option>
-                  <option value="instrument">器乐</option>
-                  <option value="art">艺术</option>
-                  <option value="literature">文学</option>
-                  <option value="practical">实用技术</option>
-                  <option value="comprehensive">综合</option>
+                  <option value="">所有院系</option>
+                  <!-- 动态加载院系选项 -->
+                  <option v-for="deptCode in departmentCodes" :key="deptCode" :value="deptCode">
+                    {{ deptCode }}
+                  </option>
                 </select>
                 
                 <select 
@@ -202,14 +222,12 @@
                   v-model="selectedLevel"
                   class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 min-w-0"
                 >
-                  <option value="">所有级别</option>
-                  <option value="grade1">一年级</option>
-                  <option value="grade2">二年级</option>
-                  <option value="grade3">三年级</option>
-                  <option value="foundation">基础</option>
-                  <option value="improvement">提高</option>
-                  <option value="senior">高级</option>
-            </select>
+                  <option value="">所有年级</option>
+                  <option value="一年级">一年级</option>
+                  <option value="二年级">二年级</option>
+                  <option value="三年级">三年级</option>
+                  <option value="不分年级">不分年级</option>
+                </select>
           </div>
           
           <!-- 操作按钮 -->
@@ -237,6 +255,16 @@
               <i class="fas fa-download mr-2"></i>
                 <span class="whitespace-nowrap">导出课表</span>
             </button>
+            
+            <!-- 🔧 新增：批量删除按钮 -->
+            <button 
+              @click="handleBatchDelete"
+              :disabled="selectedCourseIds.length === 0"
+              class="bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0"
+            >
+              <i class="fas fa-trash mr-2"></i>
+              <span class="whitespace-nowrap">批量删除 ({{ selectedCourseIds.length }})</span>
+            </button>
           </div>
         </div>
       </div>
@@ -252,10 +280,20 @@
         <table class="w-full">
           <thead class="bg-gray-50">
             <tr>
+              <!-- 🔧 新增：批量选择列 -->
+              <th class="text-center py-4 px-4 text-gray-600 font-semibold w-12">
+                <a-checkbox 
+                  :checked="isAllSelected"
+                  :indeterminate="isIndeterminate"
+                  @change="(event: any) => handleSelectAll(event.target.checked)"
+                />
+              </th>
               <th class="text-left py-4 px-6 text-gray-600 font-semibold">课程信息</th>
-                  <th class="text-left py-4 px-6 text-gray-600 font-semibold">分类</th>
-                  <th class="text-left py-4 px-6 text-gray-600 font-semibold">级别</th>
-              <th class="text-left py-4 px-6 text-gray-600 font-semibold">任课教师</th>
+              <th class="text-left py-4 px-6 text-gray-600 font-semibold">学期</th>
+                  <th class="text-left py-4 px-6 text-gray-600 font-semibold">院系</th>
+                  <th class="text-left py-4 px-6 text-gray-600 font-semibold">年级</th>
+              <!-- 任课教师列已移除显示，数据库字段保留 -->
+              <th class="text-left py-4 px-6 text-gray-600 font-semibold">上课地点</th>
               <th class="text-left py-4 px-6 text-gray-600 font-semibold">上课时间</th>
                   <th class="text-left py-4 px-6 text-gray-600 font-semibold">报名情况</th>
                   <th class="text-left py-4 px-6 text-gray-600 font-semibold">年龄限制</th>
@@ -265,6 +303,13 @@
           </thead>
           <tbody>
             <tr v-for="course in filteredCourses" :key="course.id" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+              <!-- 🔧 新增：每行的复选框 -->
+              <td class="text-center py-4 px-4">
+                <a-checkbox 
+                  :checked="selectedCourseIds.includes(course.id)"
+                  @change="(event: any) => handleSelectCourse(course.id, event.target.checked)"
+                />
+              </td>
               <td class="py-4 px-6">
                 <div class="flex items-center">
                       <div class="w-10 h-10 rounded-lg flex items-center justify-center mr-3"
@@ -273,9 +318,14 @@
                   </div>
                   <div>
                     <p class="font-medium text-gray-800">{{ course.name }}</p>
-                        <p class="text-sm text-gray-500 font-mono">{{ course.courseId }}</p>
+                        <!-- 课程编号显示已移除 -->
                   </div>
                 </div>
+              </td>
+              <td class="py-4 px-6">
+                <span class="px-2 py-1 bg-indigo-100 text-indigo-600 rounded-full text-xs font-medium">
+                  {{ course.semester || '未指定学期' }}
+                </span>
               </td>
                   <td class="py-4 px-6">
                     <span class="px-2 py-1 rounded-full text-xs font-medium"
@@ -284,29 +334,39 @@
                     </span>
                   </td>
                   <td class="py-4 px-6">
-                    <span class="px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-medium">
-                      {{ getLevelText(course.level) }}
-                    </span>
+                    <div class="flex items-center gap-2">
+                      <span v-if="course.requiresGrades" class="px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-medium">
+                        {{ getLevelText(course.level) }}
+                      </span>
+                      <span v-else class="px-2 py-1 bg-green-100 text-green-600 rounded-full text-xs font-medium">
+                        不分年级
+                      </span>
+                    </div>
                   </td>
-              <td class="py-4 px-6 text-gray-600">{{ course.teacher }}</td>
+              <!-- 任课教师字段已移除显示，数据库字段保留 -->
+              <td class="py-4 px-6 text-gray-600">{{ course.location || '未指定地点' }}</td>
                   <td class="py-4 px-6 text-gray-600">
-                    <div v-for="timeSlot in course.timeSlots" :key="`${timeSlot.dayOfWeek}-${timeSlot.startTime}`" 
+                    <div v-for="timeSlot in (Array.isArray(course.timeSlots) ? course.timeSlots : [])" 
+                         :key="`${timeSlot.dayOfWeek}-${timeSlot.startTime}`" 
                          class="text-sm">
                       {{ getDayText(timeSlot.dayOfWeek) }} {{ timeSlot.startTime }}-{{ timeSlot.endTime }}
+                    </div>
+                    <div v-if="!Array.isArray(course.timeSlots) || course.timeSlots.length === 0" class="text-sm text-gray-400">
+                      未设置时间
                     </div>
                   </td>
                   <td class="py-4 px-6">
                     <div class="flex items-center">
                       <div class="flex-1 bg-gray-200 rounded-full h-2 mr-2">
                         <div class="bg-purple-500 h-2 rounded-full" 
-                             :style="{ width: Math.round((course.enrolled / course.capacity) * 100) + '%' }"></div>
+                             :style="{ width: Math.round(((course.enrolled || 0) / (course.capacity || course.maxStudents || 1)) * 100) + '%' }"></div>
                       </div>
-                      <span class="text-sm text-gray-600 min-w-0">{{ course.enrolled }}/{{ course.capacity }}</span>
+                      <span class="text-sm text-gray-600 min-w-0">{{ course.enrolled || 0 }}/{{ course.capacity || course.maxStudents || 0 }}</span>
                     </div>
                   </td>
                   <td class="py-4 px-6">
-                    <span v-if="course.ageRestriction.enabled" class="text-orange-600 text-xs bg-orange-50 px-2 py-1 rounded-lg">
-                      {{ formatAgeRestriction(course.ageRestriction) }}
+                    <span v-if="course.hasAgeRestriction" class="text-orange-600 text-xs bg-orange-50 px-2 py-1 rounded-lg">
+                      {{ formatAgeRestriction(course) }}
                     </span>
                     <span v-else class="text-gray-400 text-xs">不限年龄</span>
                   </td>
@@ -359,15 +419,27 @@
       <div class="p-6 border-t border-gray-200">
         <div class="flex items-center justify-between">
           <div class="text-sm text-gray-500">
-                显示 1-{{ Math.min(10, filteredCourses.length) }} 条，共{{ filteredCourses.length }} 条记录              </div>
-            </div>
+            显示 {{ (pagination.current - 1) * pagination.pageSize + 1 }}-{{ Math.min(pagination.current * pagination.pageSize, pagination.total) }} 条，共 {{ pagination.total }} 条记录
           </div>
+          <a-pagination
+            v-model:current="pagination.current"
+            v-model:page-size="pagination.pageSize"
+            :total="pagination.total"
+            show-size-changer
+            show-quick-jumper
+            :show-total="(total: number, _range: [number, number]) => `共 ${total} 条记录`"
+            :page-size-options="['10', '20', '50', '100']"
+            @change="handlePageChange"
+            @show-size-change="handlePageSizeChange"
+            class="text-right"
+          />
         </div>
       </div>
+    </div>
   
-      <!-- 统计分析视图 -->
+    <!-- 统计分析视图 -->
       <div v-if="activeView === 'statistics'">
-        <!-- 分类统计 -->
+        <!-- 院系统计 -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <div v-for="category in categoryStats" :key="category.key" 
                class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
@@ -425,7 +497,7 @@
       :destroy-on-close="true"
     >
       <CourseForm 
-        :course="editingCourse"
+        :course="editingCourse as Course | undefined"
         @success="handleCourseSuccess"
         @cancel="closeCourseForm"
       />
@@ -449,7 +521,7 @@
               </div>
               <div>
                 <h3 class="text-2xl font-semibold text-gray-800">{{ selectedCourse.name }}</h3>
-                <p class="text-gray-600">课程编号：{{ selectedCourse.courseId }}</p>
+                <!-- 课程编号显示已移除 -->
               </div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
@@ -462,11 +534,11 @@
                 <div class="text-sm text-gray-500">总容量</div>
               </div>
               <div>
-                <div class="text-2xl font-bold text-green-600">{{ selectedCourse.capacity - selectedCourse.enrolled }}</div>
+                <div class="text-2xl font-bold text-green-600">{{ (selectedCourse.capacity || selectedCourse.maxStudents || 0) - (selectedCourse.enrolled || 0) }}</div>
                 <div class="text-sm text-gray-500">剩余名额</div>
               </div>
               <div>
-                <div class="text-2xl font-bold text-orange-600">{{ Math.round((selectedCourse.enrolled / selectedCourse.capacity) * 100) }}%</div>
+                <div class="text-2xl font-bold text-orange-600">{{ Math.round(((selectedCourse.enrolled || 0) / (selectedCourse.capacity || selectedCourse.maxStudents || 1)) * 100) }}%</div>
                 <div class="text-sm text-gray-500">报名率</div>
               </div>
             </div>
@@ -482,25 +554,25 @@
                   <span class="font-medium">{{ getCategoryText(selectedCourse.category) }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-600">课程级别</span>
-                  <span class="font-medium">{{ getLevelText(selectedCourse.level) }}</span>
+                  <span class="text-gray-600">学期</span>
+                  <span class="font-medium">{{ selectedCourse.semester || '未指定学期' }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-600">任课教师</span>
-                  <span class="font-medium">{{ selectedCourse.teacher }}</span>
+                  <span class="text-gray-600">年级/类型</span>
+                  <span class="font-medium">
+                    {{ selectedCourse.requiresGrades ? getLevelText(selectedCourse.level) : '不分年级' }}
+                  </span>
                 </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-600">课程费用</span>
-                  <span class="font-medium">{{ selectedCourse.fee }}学期</span>
-                </div>
+                <!-- 任课教师字段已移除显示，数据库字段保留 -->
+                <!-- 课程费用显示已移除 -->
                               <div class="flex justify-between">
                 <span class="text-gray-600">上课地点</span>
-                <span class="font-medium">{{ selectedCourse.location }}</span>
+                <span class="font-medium">{{ selectedCourse.location || '未指定地点' }}</span>
               </div>
-              <div v-if="selectedCourse.ageRestriction.enabled" class="flex justify-between">
+              <div v-if="selectedCourse.hasAgeRestriction" class="flex justify-between">
                 <span class="text-gray-600">年龄限制</span>
                 <span class="font-medium text-orange-600">
-                  {{ formatAgeRestriction(selectedCourse.ageRestriction) }}
+                  {{ formatAgeRestriction(selectedCourse) }}
                 </span>
               </div>
             </div>
@@ -527,6 +599,122 @@
     </div>
       </a-modal>
   </div>
+
+  <!-- 学员名单模态框 -->
+  <a-modal
+    v-model:open="showStudentListModal"
+    :title="`${currentCourseStudents.courseName} - 学员名单`"
+    width="800px"
+  >
+    <template #footer>
+      <div class="flex justify-between items-center">
+        <div class="text-sm text-gray-600">
+          共 {{ currentCourseStudents.total }} 名学员
+        </div>
+        <div class="flex gap-2">
+          <button 
+            @click="exportCourseStudents"
+            :disabled="!currentCourseStudents.students.length || exportingCourseStudents"
+            class="bg-green-500 hover:bg-green-600 disabled:bg-green-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg flex items-center justify-center transition-colors"
+          >
+            <i class="fas fa-download mr-2"></i>
+            <span v-if="!exportingCourseStudents">导出学员名单</span>
+            <span v-else>导出中...</span>
+          </button>
+          <button 
+            @click="showStudentListModal = false"
+            class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            关闭
+          </button>
+        </div>
+      </div>
+    </template>
+    <div v-if="currentCourseStudents.students.length === 0" class="text-center py-8 text-gray-500">
+      <i class="fas fa-users text-4xl mb-4 opacity-30"></i>
+      <p>该课程暂无学员报名</p>
+    </div>
+    
+    <div v-else>
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">学员姓名</th>
+              <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">学员编号</th>
+              <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">联系电话</th>
+              <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">身份证号码</th>
+              <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">报名日期</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            <tr v-for="student in currentCourseStudents.students" :key="student.enrollmentCode" class="hover:bg-gray-50">
+              <td class="py-4 px-4 text-sm font-medium text-gray-900">
+                {{ student.studentName }}
+              </td>
+              <td class="py-4 px-4 text-sm text-gray-500">
+                {{ student.studentCode }}
+              </td>
+              <td class="py-4 px-4 text-sm text-gray-500">
+                {{ student.phone }}
+              </td>
+              <td class="py-4 px-4 text-sm text-blue-600 font-mono">
+                {{ student.enrollmentCode }}
+              </td>
+              <td class="py-4 px-4 text-sm text-gray-500">
+                {{ student.applicationDate }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </a-modal>
+
+  <!-- 批量导入模态框 -->
+  <BatchImportModal
+    v-model:open="showBatchImportModal"
+    @success="handleBatchImportSuccess"
+  />
+
+  <!-- 🔧 新增：批量删除确认模态框 -->
+  <a-modal
+    v-model:open="showBatchDeleteModal"
+    title="确认批量删除"
+    :width="500"
+    @ok="executeBatchDelete"
+    @cancel="showBatchDeleteModal = false"
+    ok-text="确认删除"
+    cancel-text="取消"
+    ok-type="danger"
+  >
+    <div class="py-4">
+      <div class="flex items-center mb-4">
+        <i class="fas fa-exclamation-triangle text-red-500 text-2xl mr-3"></i>
+        <div>
+          <p class="text-gray-800 font-medium">您即将删除以下课程：</p>
+        </div>
+      </div>
+      
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 max-h-64 overflow-y-auto">
+        <ul class="space-y-2">
+          <li v-for="courseId in selectedCourseIds" :key="courseId" 
+              class="flex items-center text-sm">
+            <i class="fas fa-book text-red-500 mr-2"></i>
+            <span class="font-medium">
+              {{ filteredCourses.find(c => c.id === courseId)?.name || courseId }}
+            </span>
+          </li>
+        </ul>
+      </div>
+      
+      <div class="text-sm text-gray-600 space-y-2">
+        <p><i class="fas fa-info-circle text-blue-500 mr-1"></i> 删除操作无法撤销</p>
+        <p><i class="fas fa-warning text-orange-500 mr-1"></i> 如果课程已有学员报名，可能需要先处理相关报名记录</p>
+      </div>
+    </div>
+  </a-modal>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -535,21 +723,61 @@
  * @component Course
    * @description 府谷县老年大学课程管理系统，支持课程表视图、列表视图和统计分析
  */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { message, Modal } from 'ant-design-vue'
-import type { Course, CourseCategory, CourseLevel, TimeSlot } from '@/types/index'
-import CourseForm from '@/components/CourseForm.vue'
 
-  // 响应式数据
+import { CourseService } from '@/api/course'
+import type { Course } from '@/types/models'
+import { ApplicationService } from '@/api/application'
+import { StudentService } from '@/api/student'
+import { EnrollmentStatus } from '@/types/models'
+import CourseForm from '@/components/CourseForm.vue'
+import BatchImportModal from '@/components/BatchImportModal.vue'
+import { getDepartmentCodes } from '@/config/departments'
+
+// 响应式数据
   const activeView = ref<'schedule' | 'list' | 'statistics'>('schedule')
-  const searchQuery = ref<string>('')
+const searchQuery = ref<string>('')
   const selectedCategory = ref<string>('')
+  
+  // 院系选项
+  const departmentCodes = getDepartmentCodes()
+
+// 学员名单模态框
+const showStudentListModal = ref<boolean>(false)
+const currentCourseStudents = ref<{
+  courseName: string
+  courseId: string
+  students: Array<{
+    studentName: string
+    studentCode: string
+    phone: string
+    applicationDate: string
+    enrollmentCode: string
+  }>
+  total: number
+}>({
+  courseName: '',
+  courseId: '',
+  students: [],
+  total: 0
+})
+
+// 导出相关状态
+const exportingCourseStudents = ref<boolean>(false)
   const selectedStatus = ref<string>('')
   const selectedLevel = ref<string>('')
+  const selectedSemester = ref<string>('')
+  const availableSemesters = ref<string[]>([])
+  const availableCategories = ref<string[]>([])
 const showCourseDetailModal = ref<boolean>(false)
 const selectedCourse = ref<Course | null>(null)
 const showCourseFormModal = ref<boolean>(false)
 const editingCourse = ref<Course | null>(null)
+
+// 🔧 新增：批量删除相关数据
+const selectedCourseIds = ref<string[]>([])
+const showBatchDeleteModal = ref<boolean>(false)
   
   // 时间段配置
   const timeSlots = [
@@ -561,284 +789,363 @@ const editingCourse = ref<Course | null>(null)
     {
       period: 'afternoon' as const,
       label: '下午',
-      time: '3:00-5:00'
+      time: '2:00-5:00'
     }
   ]
   
-  // 课程数据（根据实际课程表）
-  const courses = ref<Course[]>([
-  // 音乐类课程
-    {
-    id: 1, name: '二人台表演艺术', courseId: 'MUS001', description: '传统二人台表演艺术',
-    category: 'music', level: 'intermediate', teacher: '刘爱华', teacherId: 1, credits: 2,
-    capacity: 30, enrolled: 25, location: '音乐教室1', fee: 200, semester: '2024秋季',
-    timeSlots: [{ dayOfWeek: 1, startTime: '08:30', endTime: '10:30', period: 'morning' }],
-    startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
-    ageRestriction: { enabled: false, minAge: undefined, maxAge: undefined, description: '' },
-    createdAt: '2024-08-15', updatedAt: '2024-08-15'
-  },
-  {
-    id: 2, name: '声乐一年级', courseId: 'MUS002', description: '基础声乐技巧训练',
-    category: 'music', level: 'grade1', teacher: '杨秀英', teacherId: 2, credits: 2,
-    capacity: 35, enrolled: 32, location: '音乐教室2', fee: 180, semester: '2024秋季',
-    timeSlots: [{ dayOfWeek: 1, startTime: '15:00', endTime: '17:00', period: 'afternoon' }],
-    startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
-    ageRestriction: { enabled: false, minAge: undefined, maxAge: undefined, description: '' },
-    createdAt: '2024-08-15', updatedAt: '2024-08-15'
-  },
-  {
-    id: 3, name: '声乐三年级', courseId: 'MUS003', description: '高级声乐技巧与表演',
-    category: 'music', level: 'grade3', teacher: '孟丽', teacherId: 3, credits: 3,
-    capacity: 28, enrolled: 26, location: '音乐教室1', fee: 220, semester: '2024秋季',
-    timeSlots: [{ dayOfWeek: 3, startTime: '08:30', endTime: '10:30', period: 'morning' }],
-    startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
-    ageRestriction: { enabled: false, minAge: undefined, maxAge: undefined, description: '' },
-    createdAt: '2024-08-15', updatedAt: '2024-08-15'
-  },
+// API相关数据
+const apiCourses = ref<Course[]>([])
+const loading = ref<boolean>(false)
+const pagination = ref({
+  current: 1,
+  pageSize: 50, // 增加每页显示数量
+  total: 0
+})
 
-  // 器乐类课程
-    {
-    id: 4, name: '葫芦丝三年级', courseId: 'INS001', description: '葫芦丝高级演奏技巧',
-    category: 'instrument', level: 'grade3', teacher: '刘爱华', teacherId: 4, credits: 2,
-    capacity: 25, enrolled: 23, location: '器乐教室1', fee: 200, semester: '2024秋季',
-    timeSlots: [{ dayOfWeek: 1, startTime: '08:30', endTime: '10:30', period: 'morning' }],
-    startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
-    ageRestriction: { enabled: false, minAge: undefined, maxAge: undefined, description: '' },
-    createdAt: '2024-08-15', updatedAt: '2024-08-15'
-  },
-  {
-    id: 5, name: '古筝二年级', courseId: 'INS002', description: '古筝中级演奏技巧',
-    category: 'instrument', level: 'grade2', teacher: '高慧', teacherId: 5, credits: 2,
-    capacity: 20, enrolled: 18, location: '古筝教室', fee: 250, semester: '2024秋季',
-    timeSlots: [{ dayOfWeek: 1, startTime: '08:30', endTime: '10:30', period: 'morning' }],
-    startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
-    ageRestriction: { enabled: false, minAge: undefined, maxAge: undefined, description: '' },
-    createdAt: '2024-08-15', updatedAt: '2024-08-15'
-  },
-  {
-    id: 6, name: '电子琴一年级', courseId: 'INS003', description: '电子琴基础演奏',
-    category: 'instrument', level: 'grade1', teacher: '王清', teacherId: 6, credits: 2,
-    capacity: 30, enrolled: 28, location: '电子琴教室', fee: 200, semester: '2024秋季',
-    timeSlots: [{ dayOfWeek: 1, startTime: '15:00', endTime: '17:00', period: 'afternoon' }],
-    startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
-    ageRestriction: { enabled: false, minAge: undefined, maxAge: undefined, description: '' },
-    createdAt: '2024-08-15', updatedAt: '2024-08-15'
-  },
+// 统计数据
+const courseStats = ref({
+  total: 0,
+  totalCourses: 0, // 添加totalCourses字段
+  published: 0,
+  ongoing: 0,
+  completed: 0,
+  totalStudents: 0,
+  averageRating: 0
+})
 
-  // 艺术类课程
-    {
-    id: 7, name: '书法创作', courseId: 'ART001', description: '书法创作技巧与鉴赏',
-    category: 'art', level: 'senior', teacher: '闫国', teacherId: 7, credits: 2,
-    capacity: 25, enrolled: 22, location: '书法教室1', fee: 180, semester: '2024秋季',
-    timeSlots: [{ dayOfWeek: 1, startTime: '08:30', endTime: '10:30', period: 'morning' }],
-    startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
-    ageRestriction: { enabled: false, minAge: undefined, maxAge: undefined, description: '' },
-    createdAt: '2024-08-15', updatedAt: '2024-08-15'
-  },
-  {
-    id: 8, name: '绘画基础三年级', courseId: 'ART002', description: '绘画基础技法训练',
-    category: 'art', level: 'grade3', teacher: '王艺', teacherId: 8, credits: 2,
-    capacity: 20, enrolled: 17, location: '美术教室1', fee: 200, semester: '2024秋季',
-    timeSlots: [{ dayOfWeek: 2, startTime: '15:00', endTime: '17:00', period: 'afternoon' }],
-    startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
-    ageRestriction: { enabled: false, minAge: undefined, maxAge: undefined, description: '' },
-    createdAt: '2024-08-15', updatedAt: '2024-08-15'
-  },
+// 临时保留的硬编码数据（待删除）
+// ✅ 已清除模拟数据，现在只使用真实的API数据
+const courses = computed(() => apiCourses.value) // 兼容性引用，指向真实数据
 
-  // 文学类课程
-    {
-    id: 9, name: '朗诵与主持基础二年级', courseId: 'LIT001', description: '朗诵技巧与主持艺术',
-    category: 'literature', level: 'grade2', teacher: '刘玉', teacherId: 9, credits: 2,
-    capacity: 30, enrolled: 28, location: '朗诵教室', fee: 160, semester: '2024秋季',
-    timeSlots: [{ dayOfWeek: 1, startTime: '08:30', endTime: '10:30', period: 'morning' }],
-    startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
-    ageRestriction: { enabled: false, minAge: undefined, maxAge: undefined, description: '' },
-    createdAt: '2024-08-15', updatedAt: '2024-08-15'
-  },
-  {
-    id: 10, name: '诗词鉴赏与写作', courseId: 'LIT002', description: '古典诗词鉴赏与创作',
-    category: 'literature', level: 'intermediate', teacher: '马丽', teacherId: 10, credits: 2,
-    capacity: 25, enrolled: 23, location: '文学教室', fee: 150, semester: '2024秋季',
-    timeSlots: [{ dayOfWeek: 2, startTime: '08:30', endTime: '10:30', period: 'morning' }],
-    startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
-    ageRestriction: { enabled: false, minAge: undefined, maxAge: undefined, description: '' },
-    createdAt: '2024-08-15', updatedAt: '2024-08-15'
-  },
+// 工具函数
+/**
+ * 获取当年学期
+ * @returns 当年学期字符串（如：2025年秋季）
+ */
+const getCurrentYearSemester = (): string => {
+  const currentYear = new Date().getFullYear()
+  return `${currentYear}年秋季`
+}
 
-  // 实用技能类课程
-  {
-    id: 11, name: '计算机应用', courseId: 'PRA001', description: '计算机基础操作与应用',
-    category: 'practical', level: 'beginner', teacher: '付玉', teacherId: 11, credits: 2,
-    capacity: 35, enrolled: 32, location: '机房1', fee: 180, semester: '2024秋季',
-    timeSlots: [
-      { dayOfWeek: 2, startTime: '15:00', endTime: '17:00', period: 'afternoon' },
-      { dayOfWeek: 4, startTime: '15:00', endTime: '17:00', period: 'afternoon' }
-    ],
-    startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
-    ageRestriction: { enabled: false, minAge: undefined, maxAge: undefined, description: '' },
-    createdAt: '2024-08-15', updatedAt: '2024-08-15'
-  },
-
-  // 综合类课程
-    {
-    id: 12, name: '老干部合唱团', courseId: 'COM001', description: '合唱艺术与团队协作',
-    category: 'comprehensive', level: 'intermediate', teacher: '高建', teacherId: 12, credits: 2,
-    capacity: 50, enrolled: 45, location: '大礼堂', fee: 120, semester: '2024秋季',
-    timeSlots: [{ dayOfWeek: 2, startTime: '15:00', endTime: '17:00', period: 'afternoon' }],
-    startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
-    ageRestriction: { enabled: false, minAge: undefined, maxAge: undefined, description: '' },
-    createdAt: '2024-08-15', updatedAt: '2024-08-15'
-  },
-
-  // 新增示例：有年龄限制的舞蹈课程
-    {
-    id: 13, name: '民族舞蹈', courseId: 'DAN001', description: '民族舞蹈基础训练与表演',
-    category: 'music', level: 'intermediate', teacher: '李舞', teacherId: 13, credits: 2,
-    capacity: 25, enrolled: 20, location: '舞蹈教室', fee: 250, semester: '2024秋季',
-    timeSlots: [{ dayOfWeek: 3, startTime: '15:00', endTime: '17:00', period: 'afternoon' }],
-    startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
-    ageRestriction: { 
-      enabled: true, 
-      minAge: undefined, 
-      maxAge: 65, 
-      description: '舞蹈课程需要一定的身体协调性和体力，建议55岁以上学员报名' 
-    },
-    createdAt: '2024-08-15', updatedAt: '2024-08-15'
+// API调用方法
+/**
+ * 获取可用学期列表
+ */
+const fetchSemesters = async (): Promise<void> => {
+  try {
+    const response = await CourseService.getSemesters()
+    availableSemesters.value = response.data || []
+    console.log('获取学期列表成功:', response.data)
+    
+    // 设置默认学期为当年学期
+    setDefaultSemester()
+  } catch (error) {
+    console.error('获取学期列表失败:', error)
+    // 失败时使用默认学期选项
+    availableSemesters.value = ['2025年秋季',  '2024年秋季']
+    
+    // 设置默认学期为当年学期
+    setDefaultSemester()
   }
-])
+}
 
-  // 计算属性
-  const filteredCourses = computed<Course[]>(() => {
-    let result = courses.value
+/**
+ * 设置默认学期为当年学期
+ */
+const setDefaultSemester = (): void => {
+  const currentSemester = getCurrentYearSemester()
   
-    if (searchQuery.value) {
-      const query = searchQuery.value.toLowerCase()
-      result = result.filter(course => 
-        course.name.toLowerCase().includes(query) ||
-        course.courseId.toLowerCase().includes(query) ||
-        course.teacher.toLowerCase().includes(query)
-      )
+  // 如果当年学期存在于可用学期列表中，则设置为默认值
+  if (availableSemesters.value.includes(currentSemester)) {
+    selectedSemester.value = currentSemester
+    console.log(`设置默认学期为: ${currentSemester}`)
+  } else if (availableSemesters.value.length > 0) {
+    // 如果当年学期不存在，则选择第一个可用学期
+    selectedSemester.value = availableSemesters.value[0]
+    console.log(`当年学期不存在，设置默认学期为: ${selectedSemester.value}`)
+  }
+}
+
+/**
+ * 获取可用分类列表
+ */
+const fetchCategories = async (): Promise<void> => {
+  try {
+    const response = await CourseService.getCategories()
+    availableCategories.value = response.data || []
+    console.log('获取分类列表成功:', response.data)
+  } catch (error) {
+    console.error('获取分类列表失败:', error)
+    // 失败时使用新的院系选项
+    availableCategories.value = getDepartmentCodes()
+  }
+}
+
+/**
+ * 获取课程列表
+ */
+const fetchCourses = async (): Promise<void> => {
+  try {
+    loading.value = true
+    const params: any = {
+      page: pagination.value.current,
+      pageSize: pagination.value.pageSize,
     }
-  
-    if (selectedCategory.value) {
-      result = result.filter(course => course.category === selectedCategory.value)
+    
+    // 只有当搜索词不为空时才添加 keyword 参数
+    if (searchQuery.value && searchQuery.value.trim()) {
+      params.keyword = searchQuery.value.trim()
     }
-  
-    if (selectedStatus.value) {
-      result = result.filter(course => course.status === selectedStatus.value)
+    
+    // 只有当选择了院系时才添加 category 参数
+    if (selectedCategory.value && selectedCategory.value !== 'all') {
+      params.category = selectedCategory.value
     }
-  
-    if (selectedLevel.value) {
-      result = result.filter(course => course.level === selectedLevel.value)
-    }
-  
-    return result
-  })
-  
-  const activeCourses = computed<number>(() => 
-    courses.value.filter(course => course.status === 'active').length
-  )
-  
-  const totalEnrolled = computed<number>(() => 
-    courses.value.reduce((sum, course) => sum + course.enrolled, 0)
-  )
-  
-  const uniqueTeachers = computed<number>(() => 
-    new Set(courses.value.map(course => course.teacher)).size
-  )
-  
-  // 分类统计
-  const categoryStats = computed(() => {
-    const categories = [
-      { key: 'music' as CourseCategory, name: '音乐' },
-      { key: 'instrument' as CourseCategory, name: '器乐' },
-      { key: 'art' as CourseCategory, name: '艺术' },
-      { key: 'literature' as CourseCategory, name: '文学' },
-      { key: 'practical' as CourseCategory, name: '实用技能' },
-      { key: 'comprehensive' as CourseCategory, name: '综合' }
-    ]
-  
-    return categories.map(category => {
-      const coursesInCategory = courses.value.filter(course => course.category === category.key)
-      return {
-        ...category,
-        count: coursesInCategory.length,
-        enrolled: coursesInCategory.reduce((sum, course) => sum + course.enrolled, 0)
+    
+    // 只有当选择了年级时才添加 level 参数
+    if (selectedLevel.value && selectedLevel.value !== 'all') {
+      if (selectedLevel.value === '不分年级') {
+        // 传递特殊参数表示筛选不分年级的课程
+        params.requiresGrades = 'false'
+      } else {
+        // 传递具体年级
+        params.level = selectedLevel.value
+        params.requiresGrades = 'true'
       }
-    }).filter(category => category.count > 0)
+    }
+
+    // 只有当选择了学期时才添加 semester 参数
+    if (selectedSemester.value && selectedSemester.value !== 'all') {
+      params.semester = selectedSemester.value
+    }
+
+    const response = await CourseService.getCourses(params)
+    apiCourses.value = response.data?.list || []
+    pagination.value.total = response.data?.total || 0
+    
+    console.log('获取课程列表成功:', response.data)
+  } catch (error) {
+    console.error('获取课程列表失败:', error)
+    message.error('获取课程列表失败')
+    apiCourses.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+/**
+ * 获取课程统计信息
+ */
+const fetchCourseStats = async (): Promise<void> => {
+  try {
+    const response = await CourseService.getCourseStats()
+    if (response.data) {
+      courseStats.value = {
+        ...courseStats.value,
+        ...response.data,
+        totalCourses: response.data.total || response.data.totalCourses || 0
+      }
+    }
+  } catch (error) {
+    console.error('获取课程统计失败:', error)
+  }
+}
+
+/**
+ * 删除课程
+ */
+const deleteCourse = (course: Course): void => {
+  Modal.confirm({
+    title: '确认删除',
+    content: `确定要删除课程"${course.name}"吗？此操作不可恢复。`,
+    okText: '确定',
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        await CourseService.deleteCourse(course.id)
+        message.success(`删除课程 ${course.name} 成功`)
+        await fetchCourses()
+      } catch (error) {
+        console.error('删除课程失败:', error)
+        message.error('删除课程失败')
+      }
+    }
+  })
+}
+
+/**
+ * 修改课程状态
+ */
+const changeCourseStatus = async (course: Course, status: Course['status']): Promise<void> => {
+  try {
+    await CourseService.changeCourseStatus(course.id, status)
+    message.success(`修改课程状态成功`)
+    await fetchCourses()
+  } catch (error) {
+    console.error('修改课程状态失败:', error)
+    message.error('修改课程状态失败')
+  }
+}
+
+// 计算属性
+const filteredCourses = computed<Course[]>(() => {
+  // ✅ 只使用真实的API数据
+  let result = apiCourses.value
+  
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    result = result.filter(course => 
+      course.name.toLowerCase().includes(query) ||
+      // course.courseCode?.toLowerCase().includes(query) || // 已移除
+      course.description?.toLowerCase().includes(query)
+    )
+  }
+  
+  if (selectedCategory.value) {
+    result = result.filter(course => course.category === selectedCategory.value)
+  }
+  
+  if (selectedStatus.value) {
+    result = result.filter(course => course.status === selectedStatus.value)
+  }
+  
+  if (selectedLevel.value) {
+    if (selectedLevel.value === '不分年级') {
+      // 筛选不分年级的课程
+      result = result.filter(course => !course.requiresGrades)
+    } else {
+      // 筛选指定年级的课程
+      result = result.filter(course => course.requiresGrades && course.level === selectedLevel.value)
+    }
+  }
+
+  if (selectedSemester.value) {
+    result = result.filter(course => course.semester === selectedSemester.value)
+  }
+  
+  return result
+})
+
+const activeCourses = computed<number>(() => 
+  apiCourses.value.filter(course => course.status === 'PUBLISHED').length
+)
+
+const totalEnrolled = computed<number>(() => 
+  apiCourses.value.reduce((sum, course) => sum + (course.enrolled || 0), 0)
+)
+
+const uniqueTeachers = computed<number>(() => 
+  new Set(
+    apiCourses.value
+      .map(course => course.teacher)
+      .filter(Boolean) // 过滤掉null/undefined
+  ).size
+  )
+  
+  // 分类统计 (基于真实数据库分类)
+  const categoryStats = computed(() => {
+    // 从实际课程数据中获取所有分类
+    const categoryMap = new Map()
+    
+    apiCourses.value.forEach(course => {
+      const categoryName = course.category || '未分类'
+      
+      if (!categoryMap.has(categoryName)) {
+        categoryMap.set(categoryName, {
+          key: categoryName,
+          name: categoryName,
+          count: 0,
+          enrolled: 0
+        })
+      }
+      
+      const category = categoryMap.get(categoryName)
+      category.count += 1
+      category.enrolled += (course.enrolled || 0)
+    })
+    
+    // 转换为数组并按报名数排序
+    return Array.from(categoryMap.values())
+      .filter(category => category.count > 0)
+      .sort((a, b) => b.enrolled - a.enrolled)
   })
   
-  // 教师统计
+  // 🔧 新增：批量选择相关计算属性
+  const isAllSelected = computed(() => {
+    return filteredCourses.value.length > 0 && 
+           selectedCourseIds.value.length === filteredCourses.value.length
+  })
+  
+  const isIndeterminate = computed(() => {
+    return selectedCourseIds.value.length > 0 && 
+           selectedCourseIds.value.length < filteredCourses.value.length
+  })
+  
+  // 教师统计 (基于真实teacher字段)
   const teacherStats = computed(() => {
     const teacherMap = new Map()
     
-    courses.value.forEach(course => {
-      if (!teacherMap.has(course.teacher)) {
-        teacherMap.set(course.teacher, {
-          name: course.teacher,
+    apiCourses.value.forEach(course => {
+      const teacherName = course.teacher || '未指定'
+      
+      if (!teacherMap.has(teacherName)) {
+        teacherMap.set(teacherName, {
+          name: teacherName,
           courses: 0,
           students: 0
         })
       }
       
-      const teacher = teacherMap.get(course.teacher)
+      const teacher = teacherMap.get(teacherName)
       teacher.courses += 1
-      teacher.students += course.enrolled
+      teacher.students += (course.enrolled || 0)
     })
     
-    return Array.from(teacherMap.values()).sort((a, b) => b.students - a.students)
+    return Array.from(teacherMap.values())
+      .filter(teacher => teacher.name !== '未指定') // 过滤掉未指定教师
+      .sort((a, b) => b.students - a.students)
   })
   
   // 工具方法
-  const getCategoryColor = (category: CourseCategory, variant: 'normal' | 'light' = 'normal'): string => {
-    const colors = {
-      music: variant === 'light' ? 'bg-red-100 text-red-600' : 'bg-red-500',
-      instrument: variant === 'light' ? 'bg-blue-100 text-blue-600' : 'bg-blue-500',
-      art: variant === 'light' ? 'bg-purple-100 text-purple-600' : 'bg-purple-500',
-      literature: variant === 'light' ? 'bg-green-100 text-green-600' : 'bg-green-500',
-      practical: variant === 'light' ? 'bg-orange-100 text-orange-600' : 'bg-orange-500',
-      comprehensive: variant === 'light' ? 'bg-pink-100 text-pink-600' : 'bg-pink-500'
+  const getCategoryColor = (category: string, variant: 'normal' | 'light' = 'normal'): string => {
+    const colors: Record<string, string> = {
+      // 新的院系颜色配置
+      '书画系': variant === 'light' ? 'bg-red-100 text-red-600' : 'bg-red-500',
+      '书画非遗系': variant === 'light' ? 'bg-purple-100 text-purple-600' : 'bg-purple-500',
+      '电子信息系': variant === 'light' ? 'bg-blue-100 text-blue-600' : 'bg-blue-500',
+      '声乐戏曲系': variant === 'light' ? 'bg-pink-100 text-pink-600' : 'bg-pink-500',
+      '器乐演奏系': variant === 'light' ? 'bg-indigo-100 text-indigo-600' : 'bg-indigo-500',
+      '语言文学系': variant === 'light' ? 'bg-green-100 text-green-600' : 'bg-green-500',
+      '舞蹈体育系': variant === 'light' ? 'bg-yellow-100 text-yellow-600' : 'bg-yellow-500',
+      '家政保健系': variant === 'light' ? 'bg-orange-100 text-orange-600' : 'bg-orange-500',
     }
     return colors[category] || (variant === 'light' ? 'bg-gray-100 text-gray-600' : 'bg-gray-500')
   }
   
-  const getCategoryIcon = (category: CourseCategory): string => {
-    const icons = {
-      music: 'fas fa-music',
-      instrument: 'fas fa-guitar',
-      art: 'fas fa-palette',
-      literature: 'fas fa-feather-alt',
-      practical: 'fas fa-laptop',
-      comprehensive: 'fas fa-users'
+  const getCategoryIcon = (category: string): string => {
+    const icons: Record<string, string> = {
+      // 新的院系图标配置
+      '书画系': 'fas fa-palette',
+      '书画非遗系': 'fas fa-hand-holding-heart',
+      '电子信息系': 'fas fa-laptop',
+      '声乐戏曲系': 'fas fa-music',
+      '器乐演奏系': 'fas fa-guitar',
+      '语言文学系': 'fas fa-feather-alt',
+      '舞蹈体育系': 'fas fa-running',
+      '家政保健系': 'fas fa-home',
+
     }
     return icons[category] || 'fas fa-book'
   }
   
-  const getCategoryText = (category: CourseCategory): string => {
-    const texts = {
-        music: '音乐',
-      instrument: '器乐',
-      art: '艺术',
-      literature: '文学',
-      practical: '实用技能',
-      comprehensive: '综合'
-    }
-    return texts[category] || '未知'
+  const getCategoryText = (category: string): string => {
+    // 新的院系直接显示原名称，不需要映射
+    return category || '未知分类'
   }
   
-  const getLevelText = (level: CourseLevel): string => {
-    const texts = {
-      beginner: '入门',
-      intermediate: '中级',
-      advanced: '高级',
-      grade1: '一年级',
-      grade2: '二年级',
-      grade3: '三年级',
-      foundation: '基础',
-      improvement: '提高',
-      senior: '高级'
-    }
-    return texts[level] || '未知'
+    const getLevelText = (level: string): string => {
+    // 直接显示年级，不需要映射
+    return level || '未知年级'
   }
   
   const getDayText = (dayOfWeek: number): string => {
@@ -849,20 +1156,21 @@ const editingCourse = ref<Course | null>(null)
   const getPeriodText = (period: string): string => {
     const periods = {
       morning: '上午',
-      afternoon: '下午',
-      evening: '晚上'
+      afternoon: '下午'
     }
     return periods[period as keyof typeof periods] || '未知'
   }
   
 const getStatusClass = (status: string): string => {
   switch (status) {
-    case 'active':
+    case 'PUBLISHED':
       return 'bg-green-100 text-green-600'
-    case 'pending':
-      return 'bg-blue-100 text-blue-600'
-    case 'completed':
-      return 'bg-gray-100 text-gray-600'
+    case 'DRAFT':
+      return 'bg-yellow-100 text-yellow-600'
+    case 'SUSPENDED':
+      return 'bg-orange-100 text-orange-600'
+    case 'CANCELLED':
+      return 'bg-red-100 text-red-600'
     default:
       return 'bg-gray-100 text-gray-600'
   }
@@ -870,12 +1178,14 @@ const getStatusClass = (status: string): string => {
 
 const getStatusText = (status: string): string => {
   switch (status) {
-    case 'active':
-      return '进行中'
-    case 'pending':
-      return '待开课'
-    case 'completed':
-      return '已结课'
+    case 'DRAFT':
+      return '草稿'
+    case 'PUBLISHED':
+      return '已发布'
+    case 'SUSPENDED':
+      return '暂停'
+    case 'CANCELLED':
+      return '已取消'
     default:
       return '未知'
   }
@@ -883,7 +1193,7 @@ const getStatusText = (status: string): string => {
   
   const getCoursesForTimeSlot = (dayOfWeek: number, period: string): Course[] => {
     return filteredCourses.value.filter(course =>
-      course.timeSlots.some(slot => 
+      Array.isArray(course.timeSlots) && course.timeSlots.some((slot: any) => 
         slot.dayOfWeek === dayOfWeek && slot.period === period
       )
     )
@@ -921,51 +1231,128 @@ const closeCourseForm = (): void => {
 /**
  * 处理课程表单成功提交
  */
-const handleCourseSuccess = (courseData: Course): void => {
-  if (editingCourse.value) {
-    // 更新现有课程
-    const index = courses.value.findIndex(c => c.id === editingCourse.value!.id)
-    if (index !== -1) {
-      courses.value[index] = courseData
-    }
-  } else {
-    // 添加新课程
-    courses.value.push(courseData)
+const handleCourseSuccess = async (_courseData: Course): Promise<void> => {
+  try {
+    message.success(editingCourse.value ? '课程更新成功' : '课程创建成功')
+    closeCourseForm()
+    // 重新获取最新的课程列表数据
+    await fetchCourses()
+  } catch (error) {
+    console.error('刷新课程列表失败:', error)
   }
-  closeCourseForm()
 }
 
-/**
- * 删除课程
- */
-const deleteCourse = (course: Course): void => {
-  Modal.confirm({
-    title: '确认删除',
-    content: `确定要删除课程"${course.name}"吗？此操作不可恢复。`,
-    okText: '确定',
-    cancelText: '取消',
-    onOk: () => {
-      const index = courses.value.findIndex(c => c.id === course.id)
-      if (index !== -1) {
-        courses.value.splice(index, 1)
-        message.success('课程删除成功')
-      }
-    }
-  })
-}
+
 
 /**
  * 显示学员名单
  */
-const showStudentList = (course: Course): void => {
-  message.info(`查看"${course.name}"的学员名单功能开发中...`)
+const showStudentList = async (course: Course): Promise<void> => {
+  try {
+    console.log('查询课程学员名单:', { courseId: course.id, courseName: course.name })
+    
+    // 获取该课程的报名学员列表，使用正确的filters对象
+    const response = await ApplicationService.getApplicationList({
+      courseId: course.id,   // 关键：按课程ID筛选
+      status: EnrollmentStatus.APPROVED,    // 只显示已通过的报名
+      page: 1,
+      pageSize: 100          // 获取更多数据
+    })
+    
+    console.log('学员名单查询结果:', response)
+    
+    if (response.code === 200 && response.data.list) {
+      const studentList = response.data.list.map(app => ({
+        studentName: app.studentInfo?.name || '未知',
+        studentCode: app.studentInfo?.studentCode || '',
+        phone: app.studentInfo?.phone || '', // 🔧 修复：使用正确的字段名
+        applicationDate: app.applicationDate,
+        enrollmentCode: app.studentInfo?.idNumber || '' // 🔧 修复：显示身份证号码而不是报名编号
+      }))
+      
+      console.log('格式化的学员列表:', studentList)
+      
+      // 创建学员列表Modal
+      showStudentListModal.value = true
+      currentCourseStudents.value = {
+        courseName: course.name,
+        courseId: course.id,
+        students: studentList,
+        total: response.data.total || 0
+      }
+    } else {
+      message.warning(`暂无"${course.name}"的报名学员`)
+    }
+  } catch (error) {
+    console.error('获取学员名单失败:', error)
+    message.error('获取学员名单失败')
+  }
 }
+
+/**
+ * 🔧 导出课程学员名单
+ */
+const exportCourseStudents = async () => {
+  try {
+    exportingCourseStudents.value = true
+    console.log('🔄 开始导出课程学员名单...', {
+      courseId: currentCourseStudents.value.courseId,
+      courseName: currentCourseStudents.value.courseName
+    })
+
+    message.loading('正在导出学员名单，请稍候...', 1)
+
+    // 调用学员导出API，传递课程ID和已通过状态
+    const blob = await StudentService.exportStudents({
+      courseId: currentCourseStudents.value.courseId,
+      status: EnrollmentStatus.APPROVED
+    } as any)
+
+    // 创建下载链接
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+
+    // 生成文件名
+    const timestamp = new Date().toLocaleString('zh-CN').replace(/[/:]/g, '-').replace(/\s/g, '_')
+    const filename = `${currentCourseStudents.value.courseName}_学员名单_${timestamp}.csv`
+    link.download = filename
+
+    // 触发下载
+    document.body.appendChild(link)
+    link.click()
+
+    // 清理
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+
+    console.log('✅ 课程学员名单导出完成')
+    message.success('学员名单导出成功！')
+
+  } catch (error) {
+    console.error('导出课程学员名单失败:', error)
+    message.error('导出失败，请重试')
+  } finally {
+    exportingCourseStudents.value = false
+  }
+}
+
+// 批量导入相关
+const showBatchImportModal = ref<boolean>(false)
 
 /**
  * 批量导入课程
  */
 const handleBatchImport = (): void => {
-  message.info('批量导入功能开发中...')
+  showBatchImportModal.value = true
+}
+
+/**
+ * 批量导入成功回调
+ */
+const handleBatchImportSuccess = (): void => {
+  fetchCourses()
+  message.success('批量导入完成，课程列表已刷新')
 }
 
 /**
@@ -997,10 +1384,71 @@ const handleExportSchedule = (): void => {
 }
 
 /**
+ * 🔧 新增：批量选择功能
+ * 全选/取消全选
+ */
+const handleSelectAll = (checked: boolean): void => {
+  if (checked) {
+    selectedCourseIds.value = filteredCourses.value.map(course => course.id)
+  } else {
+    selectedCourseIds.value = []
+  }
+}
+
+/**
+ * 🔧 新增：单个课程选择
+ */
+const handleSelectCourse = (courseId: string, checked: boolean): void => {
+  if (checked) {
+    if (!selectedCourseIds.value.includes(courseId)) {
+      selectedCourseIds.value.push(courseId)
+    }
+  } else {
+    const index = selectedCourseIds.value.indexOf(courseId)
+    if (index > -1) {
+      selectedCourseIds.value.splice(index, 1)
+    }
+  }
+}
+
+/**
+ * 🔧 新增：批量删除确认
+ */
+const handleBatchDelete = (): void => {
+  if (selectedCourseIds.value.length === 0) {
+    message.warning('请先选择要删除的课程')
+    return
+  }
+  showBatchDeleteModal.value = true
+}
+
+/**
+ * 🔧 新增：执行批量删除
+ */
+const executeBatchDelete = async (): void => {
+  try {
+    await CourseService.batchDeleteCourses(selectedCourseIds.value)
+    message.success(`成功删除${selectedCourseIds.value.length}门课程`)
+    selectedCourseIds.value = []
+    showBatchDeleteModal.value = false
+    await fetchCourses()
+  } catch (error) {
+    console.error('批量删除失败:', error)
+    message.error('批量删除失败，请重试')
+  }
+}
+
+/**
  * 格式化年龄限制显示
  */
-const formatAgeRestriction = (ageRestriction: any): string => {
-  const { minAge, maxAge, description } = ageRestriction
+const formatAgeRestriction = (course: any): string => {
+  const { minAge, maxAge, ageDescription, hasAgeRestriction } = course
+  
+  // 🔧 修复：如果没有年龄限制，直接返回
+  if (!hasAgeRestriction && !minAge && !maxAge && !ageDescription) {
+    return ''
+  }
+  
   let text = ''
   
   if (minAge && maxAge) {
@@ -1011,49 +1459,80 @@ const formatAgeRestriction = (ageRestriction: any): string => {
     text = `${maxAge}岁以下`
   }
   
-  if (description) {
-    text += ` (${description})`
+  if (ageDescription) {
+    text += ` (${ageDescription})`
   }
   
-  return text
+  return text || '无限制'
 }
 
 /**
  * 生成课程表CSV内容
  */
 const generateCourseScheduleCSV = (): string => {
-  const headers = ['课程名称', '课程编号', '分类', '级别', '教师', '上课时间', '地点', '容量', '已报名', '费用', '状态']
+  const headers = ['课程编号', '课程名称', '院系', '年级/类型', '学期', '上课时间', '地点', '容量', '已报名', '年龄限制', '状态', '课程描述']
   const rows = [headers.join(',')]
   
-  courses.value.forEach(course => {
-    const timeSlots = course.timeSlots.map(slot => 
+  apiCourses.value.forEach(course => {
+    const timeSlots = course.timeSlots?.map((slot: any) => 
       `${getDayText(slot.dayOfWeek)} ${slot.startTime}-${slot.endTime}`
-    ).join(';')
+    ).join(';') || '未设置'
+    
+    // 年级显示逻辑：有年级显示年级，不分年级显示"不分年级"
+    const gradeDisplay = course.requiresGrades ? (course.level || '未知年级') : '不分年级'
+    
+    // 🔧 修复：格式化年龄限制信息
+    const ageRestriction = formatAgeRestriction(course) || '无限制'
+    
+    // 年龄限制数据已格式化
     
     const row = [
+      course.courseCode || course.code || '',
       course.name,
-      course.courseId,
-      getCategoryText(course.category),
-      getLevelText(course.level),
-      course.teacher,
+      course.category || '',
+      gradeDisplay,
+      course.semester || '未指定学期',
       timeSlots,
-      course.location,
-      course.capacity,
-      course.enrolled,
-      course.fee,
-      getStatusText(course.status)
+      course.location || '未指定地点',
+      (course.maxStudents || course.capacity || 0).toString(),
+      course.enrolled?.toString() || '0',
+      ageRestriction,
+      course.status === 'PUBLISHED' ? '已发布' : course.status === 'DRAFT' ? '草稿' : '其他',
+      course.description || ''
     ]
-    rows.push(row.join(','))
+    rows.push(row.map(field => `"${field}"`).join(','))
   })
   
   return '\uFEFF' + rows.join('\n') // 添加BOM以支持中文
 }
 
+// 分页处理函数
+const handlePageChange = (page: number): void => {
+  pagination.value.current = page
+  fetchCourses()
+}
+
+const handlePageSizeChange = (_current: number, size: number): void => {
+  pagination.value.current = 1
+  pagination.value.pageSize = size
+  fetchCourses()
+}
+
+// 监听器
+watch([searchQuery, selectedCategory, selectedLevel, selectedSemester], () => {
+  pagination.value.current = 1
+  fetchCourses()
+}, { deep: true })
+
 /**
  * 组件挂载时初始化数据
  */
 onMounted((): void => {
-  console.log('Course 组件已挂载，加载', courses.value.length, '门课程')
+  console.log('Course 组件已挂载')
+  fetchSemesters()  // 获取学期列表
+  fetchCategories() // 获取分类列表
+  fetchCourses()
+  fetchCourseStats()
 })
 </script>
 

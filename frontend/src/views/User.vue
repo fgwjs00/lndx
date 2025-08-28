@@ -212,37 +212,69 @@
       
       <!-- 用户表格 -->
       <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead>
-            <tr class="bg-gray-50">
-              <th class="text-left py-4 px-6 text-gray-600 font-semibold">头像</th>
-              <th class="text-left py-4 px-6 text-gray-600 font-semibold">姓名</th>
-              <th class="text-left py-4 px-6 text-gray-600 font-semibold">
-                {{ activeTab === 'teacher' ? '工号' : '手机号' }}
-              </th>
-              <th v-if="activeTab === 'teacher'" class="text-left py-4 px-6 text-gray-600 font-semibold">学科</th>
-              <th v-if="activeTab === 'all'" class="text-left py-4 px-6 text-gray-600 font-semibold">角色</th>
-              <th class="text-left py-4 px-6 text-gray-600 font-semibold">状态</th>
-              <th class="text-left py-4 px-6 text-gray-600 font-semibold">注册时间</th>
-              <th class="text-left py-4 px-6 text-gray-600 font-semibold">最后登录</th>
-              <th class="text-left py-4 px-6 text-gray-600 font-semibold">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr 
-              v-for="user in currentTabUsers" 
-              :key="user.id"
-              class="border-b border-gray-100 hover:bg-gray-50 transition-colors"
-            >
+        <!-- 加载状态显示 -->
+        <div v-if="tableLoading" class="relative">
+          <SkeletonLoader type="table" :rows="5" />
+        </div>
+        
+        <!-- 实际表格内容 -->
+        <div v-else class="relative">
+          <!-- 刷新指示器 -->
+          <div v-if="refreshing" class="absolute top-4 right-4 z-10">
+            <LoadingSpinner size="small" message="刷新中..." />
+          </div>
+          
+          <table class="w-full">
+            <thead>
+              <tr class="bg-gray-50">
+                <th class="text-left py-4 px-6 text-gray-600 font-semibold">头像</th>
+                <th class="text-left py-4 px-6 text-gray-600 font-semibold">姓名</th>
+                <th class="text-left py-4 px-6 text-gray-600 font-semibold">
+                  {{ activeTab === 'teacher' ? '工号' : '手机号' }}
+                </th>
+                <th v-if="activeTab === 'teacher'" class="text-left py-4 px-6 text-gray-600 font-semibold">学科</th>
+                <th v-if="activeTab === 'all'" class="text-left py-4 px-6 text-gray-600 font-semibold">角色</th>
+                <th class="text-left py-4 px-6 text-gray-600 font-semibold">状态</th>
+                <th class="text-left py-4 px-6 text-gray-600 font-semibold">注册时间</th>
+                <th class="text-left py-4 px-6 text-gray-600 font-semibold">最后登录</th>
+                <th class="text-left py-4 px-6 text-gray-600 font-semibold">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- 空状态 -->
+              <tr v-if="currentTabUsers.length === 0">
+                <td :colspan="activeTab === 'teacher' ? 8 : (activeTab === 'all' ? 8 : 7)" class="py-12 text-center text-gray-500">
+                  <div class="flex flex-col items-center space-y-3">
+                    <i class="fas fa-users text-4xl text-gray-300"></i>
+                    <p>暂无用户数据</p>
+                    <button 
+                      @click="fetchUsers(true)" 
+                      class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
+                    >
+                      <i class="fas fa-refresh mr-2"></i>刷新数据
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              
+              <!-- 用户数据行 -->
+              <tr 
+                v-for="user in (currentTabUsers as User[])" 
+                :key="user.id"
+                class="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+              >
               <td class="py-4 px-6">
-                <img :src="user.avatar" :alt="user.realName" class="w-10 h-10 rounded-full">
+                <img v-if="user.avatar" :src="user.avatar" :alt="user.realName" class="w-10 h-10 rounded-full">
+                <div v-else class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                  {{ user.realName?.charAt(0) || '?' }}
+                </div>
               </td>
               <td class="py-4 px-6 text-gray-800 font-medium">{{ user.realName }}</td>
               <td class="py-4 px-6 text-gray-600">
-                {{ activeTab === 'teacher' ? (user.teacherId || user.phone) : user.phone }}
+                {{ user.phone }}
               </td>
               <td v-if="activeTab === 'teacher'" class="py-4 px-6 text-gray-600">
-                {{ user.subject || '未设置' }}
+                未设置
               </td>
               <td v-if="activeTab === 'all'" class="py-4 px-6">
                 <span 
@@ -255,13 +287,13 @@
               <td class="py-4 px-6">
                 <span 
                   class="px-3 py-1 rounded-full text-xs font-medium"
-                  :class="getStatusClass(user.status)"
+                  :class="getStatusClass(user.isActive)"
                 >
-                  {{ getStatusText(user.status) }}
+                  {{ getStatusText(user.isActive) }}
                 </span>
               </td>
-              <td class="py-4 px-6 text-gray-600">{{ user.createTime }}</td>
-              <td class="py-4 px-6 text-gray-600">{{ user.lastLoginTime || '从未登录' }}</td>
+              <td class="py-4 px-6 text-gray-600">{{ formatDate(user.createdAt) }}</td>
+              <td class="py-4 px-6 text-gray-600">{{ formatDate(user.lastLoginAt) || '从未登录' }}</td>
               <td class="py-4 px-6">
                 <div class="flex items-center gap-3">
                   <button 
@@ -273,32 +305,55 @@
                   </button>
                   <button 
                     @click="resetPassword(user)"
-                    class="p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200 transition-colors flex items-center justify-center min-w-0"
+                    :disabled="isButtonLoading(`reset-password-${user.id}`)"
+                    :class="[
+                      'p-2 rounded-lg transition-colors flex items-center justify-center min-w-0',
+                      isButtonLoading(`reset-password-${user.id}`) 
+                        ? 'bg-yellow-100 text-yellow-400 cursor-not-allowed' 
+                        : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
+                    ]"
                     title="重置密码"
                   >
-                    <i class="fas fa-key text-sm"></i>
+                    <LoadingSpinner v-if="isButtonLoading(`reset-password-${user.id}`)" size="small" />
+                    <i v-else class="fas fa-key text-sm"></i>
                   </button>
                   <button 
                     @click="toggleUserStatus(user)"
-                    class="p-2 rounded-lg transition-colors flex items-center justify-center min-w-0"
-                    :class="user.status === 'active' ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-600 hover:bg-green-200'"
-                    :title="user.status === 'active' ? '禁用用户' : '启用用户'"
+                    :disabled="isButtonLoading(`toggle-status-${user.id}`)"
+                    :class="[
+                      'p-2 rounded-lg transition-colors flex items-center justify-center min-w-0',
+                      isButtonLoading(`toggle-status-${user.id}`) 
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : user.isActive 
+                          ? 'bg-red-100 text-red-600 hover:bg-red-200' 
+                          : 'bg-green-100 text-green-600 hover:bg-green-200'
+                    ]"
+                    :title="user.isActive ? '禁用用户' : '启用用户'"
                   >
-                    <i :class="user.status === 'active' ? 'fas fa-ban' : 'fas fa-check'" class="text-sm"></i>
+                    <LoadingSpinner v-if="isButtonLoading(`toggle-status-${user.id}`)" size="small" />
+                    <i v-else :class="user.isActive ? 'fas fa-ban' : 'fas fa-check'" class="text-sm"></i>
                   </button>
                   <button 
-                    v-if="user.id !== authStore.user?.id"
+                    v-if="user.id !== String(authStore.user?.id)"
                     @click="deleteUser(user)"
-                    class="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center min-w-0"
+                    :disabled="isButtonLoading(`delete-user-${user.id}`)"
+                    :class="[
+                      'p-2 rounded-lg transition-colors flex items-center justify-center min-w-0',
+                      isButtonLoading(`delete-user-${user.id}`)
+                        ? 'bg-red-100 text-red-400 cursor-not-allowed'
+                        : 'bg-red-100 text-red-600 hover:bg-red-200'
+                    ]"
                     title="删除用户"
                   >
-                    <i class="fas fa-trash text-sm"></i>
+                    <LoadingSpinner v-if="isButtonLoading(`delete-user-${user.id}`)" size="small" />
+                    <i v-else class="fas fa-trash text-sm"></i>
                   </button>
                 </div>
               </td>
             </tr>
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
       
       <!-- 分页 -->
@@ -325,15 +380,17 @@
     <!-- 添加/编辑用户弹窗 -->
     <a-modal
       v-model:open="showUserForm"
-      :title="editingUser ? '编辑用户' : '添加用户'"
-      :width="800"
+      :title="null"
+      :width="900"
       :footer="null"
       :destroy-on-close="true"
+      centered
     >
       <UserForm 
         :user="editingUser"
         :default-role="activeTab === 'teacher' ? 'teacher' : (activeTab === 'student' ? 'student' : undefined)"
-        @success="handleUserSuccess" 
+        :loading="formSubmitLoading"
+        @submit="handleUserSubmit" 
         @cancel="showUserForm = false"
       />
     </a-modal>
@@ -346,116 +403,77 @@
  * @component User
  * @description 统一管理所有用户账户，包括管理员、教师、学生的账户管理
  */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import UserForm from '@/components/UserForm.vue'
 import { useAuthStore } from '@/store/auth'
+import { UserService, type User, type UserRole } from '@/api/user'
+import { withErrorHandling, withRetry } from '@/utils/errorHandler'
+import { useTableLoading, useButtonLoading } from '@/utils/loadingManager'
+import { createAdvancedFilter, debounce, perfMonitor } from '@/utils/performance'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
 
-  // 响应式数据
+// 响应式数据
 const authStore = useAuthStore()
 const activeTab = ref<'all' | 'admin' | 'teacher' | 'student'>('all')
 const searchQuery = ref<string>('')
 const selectedStatus = ref<string>('')
 const showUserForm = ref<boolean>(false)
 const editingUser = ref<any>(null)
+const formSubmitLoading = ref<boolean>(false)
 
-// 模拟用户数据
-const users = ref([
-  {
-    id: 1,
-    realName: '张三',
-    phone: '13800138001',
-    role: 'admin',
-    status: 'active',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin1',
-    createTime: '2024-01-15 10:30:00',
-    lastLoginTime: '2025-07-15 09:15:00'
-  },
-  {
-    id: 2,
-    realName: '李四',
-    phone: '13800138002',
-    role: 'teacher',
-    status: 'active',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=teacher1',
-    createTime: '2024-02-20 14:20:00',
-    lastLoginTime: '2025-07-14 16:30:00',
-    teacherId: 'T001',
-    subject: '数学'
-  },
-  {
-    id: 3,
-    realName: '王五',
-    phone: '13800138003',
-    role: 'teacher',
-    status: 'active',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=teacher2',
-    createTime: '2024-03-10 09:45:00',
-    lastLoginTime: '2025-07-15 08:20:00',
-    teacherId: 'T002',
-    subject: '英语'
-  },
-  {
-    id: 4,
-    realName: '赵六',
-    phone: '13800138004',
-    role: 'student',
-    status: 'active',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=student1',
-    createTime: '2024-04-05 11:00:00',
-    lastLoginTime: '2025-07-13 20:45:00'
-  },
-  {
-    id: 5,
-    realName: '钱七',
-    phone: '13800138005',
-    role: 'student',
-    status: 'inactive',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=student2',
-    createTime: '2024-05-12 15:30:00',
-    lastLoginTime: null
+// 用户数据和分页
+const users = ref<User[]>([])
+const pagination = ref({
+  current: 1,
+  pageSize: 10,
+  total: 0
+})
+
+// Loading状态管理
+const { setButtonLoading, isButtonLoading } = useButtonLoading()
+const { tableLoading, refreshing, setTableLoading, setRefreshing } = useTableLoading()
+
+// 高性能计算属性 - 使用优化的过滤系统
+const activeUsers = computed(() => users.value.filter(user => user.isActive))
+const studentUsers = computed(() => users.value.filter(user => user.role === 'STUDENT'))
+const teacherUsers = computed(() => users.value.filter(user => user.role === 'TEACHER'))
+const adminUsers = computed(() => users.value.filter(user => 
+  user.role === 'SUPER_ADMIN' || user.role === 'SCHOOL_ADMIN'
+))
+
+// 使用高级过滤器优化性能  
+const currentTabUsers = createAdvancedFilter<User>(users, (filter) => {
+  // 权限检查
+  if (authStore.isStudent) {
+    return filter.filter(() => false) // 学生不能看到任何用户数据
   }
-])
-
-// 计算属性
-const activeUsers = computed(() => users.value.filter(user => user.status === 'active'))
-const studentUsers = computed(() => users.value.filter(user => user.role === 'student'))
-const teacherUsers = computed(() => users.value.filter(user => user.role === 'teacher'))
-const adminUsers = computed(() => users.value.filter(user => user.role === 'admin'))
-
-const currentTabUsers = computed(() => {
-  let filteredUsers = users.value
-
-  // 根据用户角色限制可见数据
+  
   if (authStore.isTeacher && !authStore.isAdmin) {
-    // 教师只能看到学生
-    filteredUsers = filteredUsers.filter(user => user.role === 'student')
-  } else if (authStore.isStudent) {
-    // 学生不能看到任何用户数据
-    return []
+    filter.filterBy('role', 'STUDENT' as UserRole)
   }
 
-  // 按分页签过滤
-  if (activeTab.value !== 'all') {
-    filteredUsers = filteredUsers.filter(user => user.role === activeTab.value)
+  // 标签页过滤
+  if (activeTab.value === 'admin') {
+    filter.filter((user: User) => user.role === 'SUPER_ADMIN' || user.role === 'SCHOOL_ADMIN')
+  } else if (activeTab.value === 'teacher') {
+    filter.filterBy('role', 'TEACHER' as UserRole)
+  } else if (activeTab.value === 'student') {
+    filter.filterBy('role', 'STUDENT' as UserRole)
   }
 
-  // 按搜索关键词过滤
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filteredUsers = filteredUsers.filter(user => 
-      user.realName.toLowerCase().includes(query) || 
-      user.phone.includes(query) ||
-      (user.teacherId && user.teacherId.toLowerCase().includes(query))
-    )
+  // 搜索过滤 - 一次性搜索多个字段
+  if (searchQuery.value?.trim()) {
+    filter.search(['realName', 'phone', 'email'] as (keyof User)[], searchQuery.value)
   }
 
-  // 按状态过滤
+  // 状态过滤
   if (selectedStatus.value) {
-    filteredUsers = filteredUsers.filter(user => user.status === selectedStatus.value)
+    filter.filterBy('isActive', selectedStatus.value === 'active')
   }
 
-  return filteredUsers
+  return filter
 })
 
 // 权限计算属性
@@ -468,15 +486,6 @@ const canExportData = computed(() => {
 })
 
 // 方法
-const getTabTitle = (): string => {
-  const titles = {
-    all: '全部用户',
-    admin: '管理员列表',
-    teacher: '教师列表',
-    student: '学生列表'
-  }
-  return titles[activeTab.value]
-}
 
 const getSearchPlaceholder = (): string => {
   const placeholders = {
@@ -500,87 +509,212 @@ const getAddButtonText = (): string => {
 
 const getRoleClass = (role: string): string => {
   const classes = {
-    admin: 'bg-red-100 text-red-800',
-    teacher: 'bg-blue-100 text-blue-800',
-    student: 'bg-green-100 text-green-800'
+    'SUPER_ADMIN': 'bg-purple-100 text-purple-800',
+    'SCHOOL_ADMIN': 'bg-red-100 text-red-800',
+    'TEACHER': 'bg-blue-100 text-blue-800',
+    'STUDENT': 'bg-green-100 text-green-800'
   }
   return classes[role as keyof typeof classes] || 'bg-gray-100 text-gray-800'
 }
 
 const getRoleText = (role: string): string => {
   const texts = {
-    admin: '管理员',
-    teacher: '教师',
-    student: '学生'
+    'SUPER_ADMIN': '超级管理员',
+    'SCHOOL_ADMIN': '学校管理员',
+    'TEACHER': '教师',
+    'STUDENT': '学生'
   }
   return texts[role as keyof typeof texts] || '未知'
 }
 
-const getStatusClass = (status: string): string => {
-  return status === 'active' 
+const getStatusClass = (isActive: boolean): string => {
+  return isActive 
     ? 'bg-green-100 text-green-800' 
     : 'bg-red-100 text-red-800'
 }
 
-const getStatusText = (status: string): string => {
-  return status === 'active' ? '正常' : '禁用'
+const getStatusText = (isActive: boolean): string => {
+  return isActive ? '正常' : '禁用'
 }
 
-const editUser = (user: any): void => {
+/**
+ * 格式化日期
+ */
+const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return '-'
+  return new Date(dateString).toLocaleString('zh-CN')
+}
+
+// API调用方法
+/**
+ * 获取用户列表 - 带性能监控
+ */
+const fetchUsers = withRetry(async (isRefresh: boolean = false): Promise<void> => {
+  // 性能监控开始
+  perfMonitor.mark('fetchUsers-start')
+  
+  if (isRefresh) {
+    setRefreshing(true)
+  } else {
+    setTableLoading(true)
+  }
+  
+  try {
+    // 构建查询参数，过滤掉无效值
+    const params: any = {
+      page: pagination.value.current,
+      pageSize: pagination.value.pageSize,
+    }
+    
+    // 只有当搜索词不为空时才添加 keyword 参数
+    if (searchQuery.value && searchQuery.value.trim()) {
+      params.keyword = searchQuery.value.trim()
+    }
+    
+    // 只有当不是 'all' 标签页时才添加 role 参数
+    if (activeTab.value !== 'all') {
+      const roleParam = getRoleParam()
+      if (roleParam) {
+        params.role = roleParam
+      }
+    }
+
+    const response = await UserService.getUsers(params)
+    users.value = response.data?.list || []
+    pagination.value.total = response.data?.total || 0
+    
+    // 性能监控结束
+    perfMonitor.measure('用户列表加载', 'fetchUsers-start')
+    console.log('获取用户列表成功:', response.data)
+  } finally {
+    setTableLoading(false)
+    setRefreshing(false)
+  }
+}, '获取用户列表', { maxRetries: 2, delay: 1000 })
+
+// 防抖优化的搜索函数
+const debouncedFetchUsers = debounce(() => {
+  pagination.value.current = 1
+  fetchUsers()
+}, 500)
+
+/**
+ * 根据当前标签页获取角色参数
+ */
+const getRoleParam = (): string | undefined => {
+  const roleMap: Record<string, string> = {
+    admin: 'SUPER_ADMIN,SCHOOL_ADMIN',
+    teacher: 'TEACHER',
+    student: 'STUDENT'
+  }
+  return roleMap[activeTab.value] || undefined
+}
+
+const editUser = (user: User): void => {
   editingUser.value = { ...user }
   showUserForm.value = true
 }
 
-const resetPassword = (user: any): void => {
-  message.success(`已重置用户 ${user.realName} 的密码`)
-}
-
-const toggleUserStatus = (user: any): void => {
-  const newStatus = user.status === 'active' ? 'inactive' : 'active'
-  const action = newStatus === 'active' ? '启用' : '禁用'
+/**
+ * 重置用户密码
+ */
+const resetPassword = withErrorHandling(async (user: User): Promise<void> => {
+  const buttonKey = `reset-password-${user.id}`
+  setButtonLoading(buttonKey, true)
   
-  // 更新用户状态
-  const userIndex = users.value.findIndex(u => u.id === user.id)
-  if (userIndex !== -1) {
-    users.value[userIndex].status = newStatus
-    message.success(`${action}用户 ${user.realName}`)
+  try {
+    await UserService.resetPassword(user.id, '123456')
+    message.success(`已重置用户 ${user.realName} 的密码为默认密码`)
+  } finally {
+    setButtonLoading(buttonKey, false)
   }
-}
+}, '重置用户密码')
 
-const deleteUser = (user: any): void => {
-  if (confirm(`确定要删除用户 ${user.realName} 吗？此操作不可恢复。`)) {
-    const userIndex = users.value.findIndex(u => u.id === user.id)
-    if (userIndex !== -1) {
-      users.value.splice(userIndex, 1)
-      message.success(`已删除用户 ${user.realName}`)
+/**
+ * 切换用户状态
+ */
+const toggleUserStatus = withErrorHandling(async (user: User): Promise<void> => {
+  const buttonKey = `toggle-status-${user.id}`
+  setButtonLoading(buttonKey, true)
+  
+  try {
+    const newStatus = !user.isActive
+    const action = newStatus ? '启用' : '禁用'
+    
+    await UserService.toggleUserStatus(user.id, newStatus)
+    message.success(`${action}用户 ${user.realName} 成功`)
+    // 重新获取数据
+    await fetchUsers(true) // 使用刷新模式
+  } finally {
+    setButtonLoading(buttonKey, false)
+  }
+}, '切换用户状态')
+
+/**
+ * 删除用户
+ */
+const deleteUser = withErrorHandling(async (user: User): Promise<void> => {
+  const buttonKey = `delete-user-${user.id}`
+  setButtonLoading(buttonKey, true)
+  
+  try {
+    await UserService.deleteUser(user.id)
+    message.success(`删除用户 ${user.realName} 成功`)
+    await fetchUsers(true) // 使用刷新模式
+  } finally {
+    setButtonLoading(buttonKey, false)
+  }
+}, '删除用户')
+
+/**
+ * 处理用户表单提交
+ */
+const handleUserSubmit = withErrorHandling(async (formData: any): Promise<void> => {
+  formSubmitLoading.value = true
+  
+  try {
+    if (editingUser.value) {
+      // 更新用户
+      await UserService.updateUser(editingUser.value.id, formData)
+      message.success('更新用户成功')
+    } else {
+      // 创建用户
+      await UserService.createUser(formData)
+      message.success('创建用户成功')
     }
+    
+    // 关闭表单并重置
+    showUserForm.value = false
+    editingUser.value = null
+    
+    // 重新获取数据
+    await fetchUsers(true)
+  } finally {
+    formSubmitLoading.value = false
   }
-}
+}, '保存用户信息')
 
-const handleUserSuccess = (): void => {
-  showUserForm.value = false
-  editingUser.value = null
-  message.success('用户操作成功')
-}
+
 
 const exportUserData = (): void => {
-  const data = currentTabUsers.value
+  const data: User[] = currentTabUsers.value
   if (data.length === 0) {
       message.warning('暂无数据可导出')
     return
   }
   
   // 构造CSV数据
-  const headers = ['姓名', '手机号', '角色', '状态', '注册时间', '最后登录']
+  const headers = ['姓名', '手机号', '邮箱', '角色', '状态', '创建时间', '最后登录']
   const csvContent = [
     headers.join(','),
-    ...data.map(user => [
+    ...data.map((user: User) => [
       user.realName,
       user.phone,
+      user.email || '未设置',
       getRoleText(user.role),
-      getStatusText(user.status),
-      user.createTime,
-      user.lastLoginTime || '从未登录'
+      getStatusText(user.isActive),
+      formatDate(user.createdAt),
+      formatDate(user.lastLoginAt) || '从未登录'
     ].join(','))
   ].join('\n')
   
@@ -598,9 +732,20 @@ const exportUserData = (): void => {
   message.success('用户数据导出成功')
 }
 
+// 监听器 - 优化搜索性能
+watch(activeTab, () => {
+  pagination.value.current = 1
+  fetchUsers() // 立即执行标签页切换
+})
+
+watch(searchQuery, () => {
+  debouncedFetchUsers() // 防抖搜索
+})
+
 // 生命周期
 onMounted(() => {
-  // 初始化逻辑
+  console.log('用户管理页面已挂载')
+  fetchUsers()
 })
 </script>
 

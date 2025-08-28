@@ -1,11 +1,11 @@
 <template>
   <a-modal
-    :open="visible"
+    :open="props.open"
     title="账户设置"
     :width="800"
     @ok="handleSave"
     @cancel="handleCancel"
-    @update:open="(value) => emit('update:visible', value)"
+    @update:open="(value) => emit('update:open', value)"
     :confirm-loading="loading"
     ok-text="保存设置"
     cancel-text="取消"
@@ -268,14 +268,14 @@ import { useAuthStore } from '@/store/auth'
 
 // 组件属性
 interface Props {
-  visible: boolean
+  open: boolean
 }
 
 const props = defineProps<Props>()
 
 // 组件事件
 const emit = defineEmits<{
-  'update:visible': [visible: boolean]
+  'update:open': [open: boolean]
   success: []
 }>()
 
@@ -309,7 +309,7 @@ const settings = reactive({
 })
 
 // 监听弹窗显示状态
-watch(() => props.visible, (newValue) => {
+watch(() => props.open, (newValue) => {
   if (newValue) {
     // 弹窗打开时，加载设置数据
     loadSettings()
@@ -470,7 +470,7 @@ const handleSave = async (): Promise<void> => {
     loading.value = true
     saveSettings()
     emit('success')
-    emit('update:visible', false)
+    emit('update:open', false)
   } catch (error) {
     console.error('保存失败:', error)
   } finally {
@@ -482,7 +482,7 @@ const handleSave = async (): Promise<void> => {
  * 处理取消
  */
 const handleCancel = (): void => {
-  emit('update:visible', false)
+  emit('update:open', false)
 }
 </script>
 

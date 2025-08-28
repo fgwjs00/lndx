@@ -30,8 +30,8 @@ export type UserStatus = 'active' | 'inactive' | 'suspended'
 // 用户信息类型
 export interface User {
   id: number
-  username: string
-  email: string
+  realName: string
+  email?: string
   phone: string
   role: UserRole
   status: UserStatus
@@ -56,7 +56,8 @@ export interface StudentInfo {
   isRetired: boolean       // 是否在职
   retirementCategory: string // 保险类别
   major: string            // 所报专业
-  studyPeriod: string      // 保险有效期
+  studyPeriodStart: string // 保险有效期开始日期
+  studyPeriodEnd: string   // 保险有效期结束日期
   studentId?: string       // 学员证号
   agreementSigned: boolean  // 是否签订超龄协议
   familyAddress: string    // 家庭住址
@@ -71,21 +72,29 @@ export interface StudentInfo {
   updatedAt: string
 }
 
-// 课程状态类型
-export type CourseStatus = 'active' | 'pending' | 'completed' | 'cancelled'
+// 课程状态类型 - 与后端Prisma schema保持一致
+export type CourseStatus = 'DRAFT' | 'PUBLISHED' | 'SUSPENDED' | 'CANCELLED'
 
-// 课程分类类型
-export type CourseCategory = 'music' | 'instrument' | 'art' | 'literature' | 'practical' | 'comprehensive'
+// 院系类型 - 根据实际院系更新
+export type CourseCategory = 
+  | '书画系'
+  | '书画非遗系' 
+  | '电子信息系'
+  | '声乐戏曲系'
+  | '器乐演奏系'
+  | '语言文学系'
+  | '舞蹈体育系'
+  | '家政保健系'
 
-// 课程级别类型
-export type CourseLevel = 'beginner' | 'intermediate' | 'advanced' | 'grade1' | 'grade2' | 'grade3' | 'foundation' | 'improvement' | 'senior'
+// 年级类型
+export type CourseLevel = '一年级' | '二年级' | '三年级' | ''
 
 // 时间段类型
 export interface TimeSlot {
   dayOfWeek: 1 | 2 | 3 | 4 | 5 | 6 | 7  // 1-7 对应周一到周日
   startTime: string                       // 格式: "08:30"
   endTime: string                         // 格式: "10:30"
-  period: 'morning' | 'afternoon' | 'evening' // 时段
+  period: 'morning' | 'afternoon' // 时段
 }
 
 // 年龄限制类型
@@ -154,21 +163,20 @@ export interface FaceRecognitionResult {
 export interface Course {
   id: number
   name: string             // 课程名称
-  courseId: string         // 课程编号
+  courseId?: string        // 课程编号（可选，后期可能需要）
   description: string      // 课程描述
-  category: CourseCategory // 课程分类
-  level: CourseLevel       // 课程级别
+  category: CourseCategory // 院系
+  level: CourseLevel      // 年级
   teacher: string          // 授课教师
   teacherId?: number       // 教师ID
-  credits: number          // 学分
+  credits?: number         // 学分（可选，后期可能需要）
   capacity: number         // 容量
   enrolled: number         // 已报名人数
   timeSlots: TimeSlot[]    // 上课时间段（支持多个时间段）
   location: string         // 上课地点
-  startDate: string        // 开课日期
-  endDate: string          // 结课日期
+  startDate?: string       // 开课日期（可选，后期可能需要）
+  endDate?: string         // 结课日期（可选，后期可能需要）
   status: CourseStatus     // 课程状态
-  fee: number             // 课程费用
   requirements?: string    // 报名要求
   materials?: string       // 教材信息
   semester: string         // 学期（如2024秋季）
@@ -289,6 +297,7 @@ export interface SearchFilters {
   status?: string
   dateRange?: [string, string]
   category?: string
+  courseId?: string          // 课程ID筛选
   page?: number
   pageSize?: number
   sortBy?: string

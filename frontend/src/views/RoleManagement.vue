@@ -214,108 +214,23 @@
   import { ref, computed, onMounted } from 'vue'
   import { message } from 'ant-design-vue'
   import RoleForm from '@/components/RoleForm.vue'
+  import { RoleService } from '@/api/role'
   import type { UserRole } from '@/types/auth'
+  import type { Role } from '@/api/role'
   
-  // 角色接口定义
-  interface Role {
-    id: string
-    key: UserRole | string
-    name: string
-    description: string
-    icon: string
-    permissions: string[]
-    status: 'active' | 'inactive'
-    isSystem: boolean
-    createdAt: string
-    updatedAt: string
-  }
+  // 使用从API导入的Role接口类型
   
   // 响应式数据
   const selectedRole = ref<Role | null>(null)
   const showRoleForm = ref<boolean>(false)
   const editingRole = ref<Role | null>(null)
   
-  // 模拟角色数据 - 四级权限系统
-const roles = ref<Role[]>([
-  {
-    id: '1',
-    key: 'super_admin',
-    name: '超级管理员',
-    description: '公司最高权限，拥有系统所有权限，可管理所有功能模块',
-    icon: 'fas fa-crown',
-    permissions: [
-      'system:*', 'user:*', 'student:*', 'teacher:*', 'course:*', 
-      'application:*', 'analysis:*', 'setting:*', 'logs:*', 'school:*'
-    ],
-    status: 'active',
-    isSystem: true,
-    createdAt: '2024-01-01 00:00:00',
-    updatedAt: '2024-01-01 00:00:00'
-  },
-  {
-    id: '2',
-    key: 'school_admin',
-    name: '学校管理员',
-    description: '学校级别管理权限，可配置本校用户、课程等信息',
-    icon: 'fas fa-school',
-    permissions: [
-      'user:read', 'user:create', 'user:update',
-      'student:*', 'teacher:*', 'course:*',
-      'application:*', 'analysis:read', 'setting:read', 'setting:update'
-    ],
-    status: 'active',
-    isSystem: true,
-    createdAt: '2024-01-01 00:00:00',
-    updatedAt: '2024-01-01 00:00:00'
-  },
-  {
-    id: '3',
-    key: 'teacher',
-    name: '教师',
-    description: '教学权限，可管理课程、学生和报名信息',
-    icon: 'fas fa-chalkboard-teacher',
-    permissions: [
-      'student:read', 'student:create', 'student:update',
-      'course:read', 'course:create', 'course:update',
-      'application:read', 'application:approve',
-      'analysis:read', 'attendance:manage'
-    ],
-    status: 'active',
-    isSystem: true,
-    createdAt: '2024-01-01 00:00:00',
-    updatedAt: '2024-01-01 00:00:00'
-  },
-  {
-    id: '4',
-    key: 'student',
-    name: '学生',
-    description: '学生权限，可查看课程信息、提交报名申请',
-    icon: 'fas fa-user-graduate',
-    permissions: [
-      'profile:read', 'profile:update',
-      'course:read', 'application:create', 'application:read'
-    ],
-    status: 'active',
-    isSystem: true,
-    createdAt: '2024-01-01 00:00:00',
-    updatedAt: '2024-01-01 00:00:00'
-  }
-])
+  // 角色数据 - 从后端API获取
+  const roles = ref<Role[]>([])
+  const loading = ref<boolean>(false)
   
-  // 所有可用权限
-  const allPermissions = ref<string[]>([
-    'system:read', 'system:create', 'system:update', 'system:delete', 'system:*',
-    'user:read', 'user:create', 'user:update', 'user:delete', 'user:*',
-    'student:read', 'student:create', 'student:update', 'student:delete', 'student:*',
-    'teacher:read', 'teacher:create', 'teacher:update', 'teacher:delete', 'teacher:*',
-    'course:read', 'course:create', 'course:update', 'course:delete', 'course:*',
-    'application:read', 'application:create', 'application:update', 'application:delete', 'application:approve', 'application:*',
-    'analysis:read', 'analysis:*',
-    'setting:read', 'setting:update', 'setting:*',
-    'logs:read', 'logs:*',
-    'attendance:read', 'attendance:manage', 'attendance:*',
-    'profile:read', 'profile:update', 'profile:*'
-  ])
+  // 所有可用权限 - 从后端API获取
+  const allPermissions = ref<string[]>([])
   
   // 计算属性
   const totalPermissions = computed(() => allPermissions.value.length)
@@ -347,23 +262,85 @@ const roles = ref<Role[]>([
     showRoleForm.value = true
   }
   
-  const deleteRole = (role: Role): void => {
-    if (confirm(`确定要删除角色 ${role.name} 吗？此操作不可恢复。`)) {
-      const index = roles.value.findIndex(r => r.id === role.id)
-      if (index !== -1) {
-        roles.value.splice(index, 1)
-        if (selectedRole.value?.id === role.id) {
-          selectedRole.value = null
+  const deleteRole = async (role: Role): Promise<void> => {
+    if (!confirm(`确定要删除角色 ${role.name} 吗？此操作不可恢复。`)) {
+      return
+    }
+
+    try {
+      console.log('🗑️ 删除角色:', role.id, role.name)
+      const response = await RoleService.deleteRole(role.id)
+      
+      if (response.code === 200) {
+        message.success(response.message || `角色 ${role.name} 删除成功`)
+        
+        // 只有删除成功时才从前端列表中移除
+        const index = roles.value.findIndex(r => r.id === role.id)
+        if (index !== -1) {
+          roles.value.splice(index, 1)
+          if (selectedRole.value?.id === role.id) {
+            selectedRole.value = null
+          }
         }
-        message.success(`已删除角色 ${role.name}`)
+        
+        // 刷新角色列表以确保数据同步
+        await fetchRoles()
+      } else {
+        message.error(response.message || '删除角色失败')
       }
+    } catch (error: any) {
+      console.error('❌ 删除角色失败:', error)
+      message.error(error.response?.data?.message || '删除角色失败，请重试')
     }
   }
   
   const handleRoleSuccess = (): void => {
     showRoleForm.value = false
     editingRole.value = null
-    message.success('角色操作成功')
+    // 重新加载角色数据
+    fetchRoles()
+  }
+
+  // 获取角色列表
+  const fetchRoles = async (): Promise<void> => {
+    try {
+      loading.value = true
+      console.log('🔄 获取角色列表...')
+      const response = await RoleService.getRoles()
+      if (response.code === 200) {
+        roles.value = response.data
+        console.log('✅ 角色列表获取成功:', response.data)
+        
+        // 如果没有选中角色，默认选择第一个
+        if (!selectedRole.value && roles.value.length > 0) {
+          selectedRole.value = roles.value[0]
+        }
+      } else {
+        message.error(response.message || '获取角色列表失败')
+      }
+    } catch (error: any) {
+      console.error('❌ 获取角色列表失败:', error)
+      message.error('获取角色列表失败')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // 获取权限列表
+  const fetchPermissions = async (): Promise<void> => {
+    try {
+      console.log('🔄 获取权限列表...')
+      const response = await RoleService.getPermissions()
+      if (response.code === 200) {
+        allPermissions.value = response.data
+        console.log('✅ 权限列表获取成功:', response.data.length, '项权限')
+      } else {
+        message.error(response.message || '获取权限列表失败')
+      }
+    } catch (error: any) {
+      console.error('❌ 获取权限列表失败:', error)
+      message.error('获取权限列表失败')
+    }
   }
   
   const getRoleColorClass = (roleKey: string): string => {
@@ -384,11 +361,13 @@ const roles = ref<Role[]>([
       teacher: '教师管理',
       course: '课程管理',
       application: '报名管理',
+      grade: '年级管理',
       analysis: '数据分析',
       setting: '系统设置',
       logs: '日志管理',
       attendance: '签到管理',
-      profile: '个人资料'
+      profile: '个人资料',
+      school: '学校管理'
     }
     return nameMap[resource] || resource
   }
@@ -401,11 +380,13 @@ const roles = ref<Role[]>([
       teacher: 'fas fa-chalkboard-teacher',
       course: 'fas fa-book',
       application: 'fas fa-file-alt',
+      grade: 'fas fa-graduation-cap',
       analysis: 'fas fa-chart-bar',
       setting: 'fas fa-cog',
       logs: 'fas fa-list-alt',
       attendance: 'fas fa-check-circle',
-      profile: 'fas fa-user'
+      profile: 'fas fa-user',
+      school: 'fas fa-school'
     }
     return iconMap[resource] || 'fas fa-key'
   }
@@ -419,6 +400,10 @@ const roles = ref<Role[]>([
       delete: '删除',
       approve: '审批',
       manage: '管理',
+      import: '导入',
+      export: '导出',
+      upgrade: '升级',
+      graduate: '毕业',
       '*': '全部权限'
     }
     return actionMap[action] || action
@@ -431,11 +416,12 @@ const roles = ref<Role[]>([
   }
   
   // 生命周期
-  onMounted(() => {
-    // 默认选择第一个角色
-    if (roles.value.length > 0) {
-      selectedRole.value = roles.value[0]
-    }
+  onMounted(async () => {
+    console.log('🚀 角色管理页面初始化...')
+    await Promise.all([
+      fetchRoles(),
+      fetchPermissions()
+    ])
   })
   </script>
   

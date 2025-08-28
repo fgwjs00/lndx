@@ -71,7 +71,7 @@
  * @description 基于东信EST系列身份证读卡器的Vue 3组件，支持身份证信息读取和自动填充
  */
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
-import { message } from 'ant-design-vue'
+import { message as antMessage } from 'ant-design-vue'
 import type { IdCardData, IdCardReaderMessage, IdCardReaderConfig, IdCardReaderState } from '@/types'
 import dayjs from 'dayjs'
 
@@ -157,17 +157,17 @@ const connectReader = async (): Promise<void> => {
  */
 const handleMessage = (data: string): void => {
   try {
-    const message: IdCardReaderMessage = JSON.parse(data)
+    const readerMessage: IdCardReaderMessage = JSON.parse(data)
     
-    switch (message.fun) {
+    switch (readerMessage.fun) {
       case 'EST_GetVersion#':
-        if (message.rCode === '0') {
-          readerState.deviceInfo = message.errMsg
+        if (readerMessage.rCode === '0') {
+          readerState.deviceInfo = readerMessage.errMsg
         }
         break
 
       case 'EST_Reader_ReadIDCard#':
-        handleIdCardRead(message)
+        handleIdCardRead(readerMessage)
         break
 
       default:
@@ -181,23 +181,23 @@ const handleMessage = (data: string): void => {
 /**
  * 处理身份证读取结果
  */
-const handleIdCardRead = (message: IdCardReaderMessage): void => {
+const handleIdCardRead = (readerMessage: IdCardReaderMessage): void => {
   readerState.reading = false
 
-  if (message.rCode === '0') {
+  if (readerMessage.rCode === '0') {
     const cardData: IdCardData = {
-      name: message.name,
-      sex: message.sex,
-      nation: message.nation,
-      birth: message.birth,
-      address: message.address,
-      certNo: message.certNo,
-      department: message.department,
-      effectData: message.effectData,
-      expire: message.expire,
-      base64Data: message.base64Data,
-      imageFront: message.imageFront,
-      imageBack: message.imageBack
+      name: readerMessage.name,
+      sex: readerMessage.sex,
+      nation: readerMessage.nation,
+      birth: readerMessage.birth,
+      address: readerMessage.address,
+      certNo: readerMessage.certNo,
+      department: readerMessage.department,
+      effectData: readerMessage.effectData,
+      expire: readerMessage.expire,
+      base64Data: readerMessage.base64Data,
+      imageFront: readerMessage.imageFront,
+      imageBack: readerMessage.imageBack
     }
 
     // 直接触发填充事件，不保存数据到组件内部
@@ -206,12 +206,12 @@ const handleIdCardRead = (message: IdCardReaderMessage): void => {
       emit('photoRead', `data:image/jpeg;base64,${cardData.base64Data}`)
     }
     
-  } else if (message.rCode === '-2') {
+  } else if (readerMessage.rCode === '-2') {
     // 请放置身份证
-    message.warning('请将身份证放置在读卡器上')
+    antMessage.warning('请将身份证放置在读卡器上')
   } else {
-    readerState.lastError = message.errMsg
-    emit('error', message.errMsg)
+    readerState.lastError = readerMessage.errMsg
+    emit('error', readerMessage.errMsg)
   }
 }
 
@@ -220,7 +220,7 @@ const handleIdCardRead = (message: IdCardReaderMessage): void => {
  */
 const readIdCard = (): void => {
   if (!socket.value || socket.value.readyState !== WebSocket.OPEN) {
-    message.error('设备未连接')
+    antMessage.error('设备未连接')
     return
   }
 

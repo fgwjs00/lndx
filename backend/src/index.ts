@@ -11,6 +11,7 @@ import helmet from 'helmet'
 import compression from 'compression'
 import morgan from 'morgan'
 import dotenv from 'dotenv'
+import path from 'path'
 
 // 导入配置和中间件
 import { config } from '@/config'
@@ -26,9 +27,14 @@ import userRoutes from '@/routes/user'
 import studentRoutes from '@/routes/student'
 import courseRoutes from '@/routes/course'
 import enrollmentRoutes from '@/routes/enrollment'
+import applicationRoutes from '@/routes/application'
+import applicationV2Routes from '@/routes/applicationV2'
+import gradeManagementRoutes from '@/routes/gradeManagement'
 import attendanceRoutes from '@/routes/attendance'
 import uploadRoutes from '@/routes/upload'
 import searchRoutes from '@/routes/search'
+import roleRoutes from '@/routes/role'
+import analysisRoutes from '@/routes/analysis'
 
 // 加载环境变量
 dotenv.config()
@@ -41,7 +47,9 @@ const app = express()
 /**
  * 基础中间件配置
  */
-app.use(helmet()) // 安全头设置
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+})) // 安全头设置
 app.use(compression()) // 响应压缩
 app.use(cors({
   origin: config.corsOrigin,
@@ -94,6 +102,16 @@ app.get(`${apiPrefix}/health`, (req, res) => {
   })
 })
 
+/**
+ * 静态文件服务 - 用于提供上传的图片文件
+ */
+app.use('/uploads', cors({
+  origin: ['http://localhost:5173', 'http://localhost:3000', config.corsOrigin].filter(Boolean) as string[],
+  credentials: true,
+  methods: ['GET', 'HEAD', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+}), express.static(path.join(__dirname, '../uploads')))
+
 // 公开路由（不需要认证）
 app.use(`${apiPrefix}/auth`, authRoutes)
 app.use(`${apiPrefix}/upload`, uploadRoutes) // 文件上传（身份证识别等）
@@ -103,7 +121,12 @@ app.use(`${apiPrefix}/users`, authMiddleware, userRoutes)
 app.use(`${apiPrefix}/students`, authMiddleware, studentRoutes)
 app.use(`${apiPrefix}/courses`, authMiddleware, courseRoutes)
 app.use(`${apiPrefix}/enrollments`, authMiddleware, enrollmentRoutes)
+app.use(`${apiPrefix}/applications`, authMiddleware, applicationRoutes) // 报名申请路由
+app.use(`${apiPrefix}/applications-v2`, applicationV2Routes) // 新版报名申请路由（含年级管理）
 app.use(`${apiPrefix}/attendance`, authMiddleware, attendanceRoutes)
+app.use(`${apiPrefix}/analysis`, authMiddleware, analysisRoutes) // 数据分析路由
+app.use(`${apiPrefix}/roles`, authMiddleware, roleRoutes) // 角色管理路由
+app.use(`${apiPrefix}/grade-management`, authMiddleware, gradeManagementRoutes) // 年级管理路由
 app.use(`${apiPrefix}/search`, searchRoutes)
 
 /**

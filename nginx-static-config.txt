@@ -1,0 +1,41 @@
+# 在您的网站Nginx配置中，应该包含以下配置：
+
+server {
+    listen 80;
+    server_name ln.tuojiayi.com;  # 您的域名
+    
+    # 网站根目录
+    root /www/wwwroot/lndx/frontend/dist;
+    index index.html index.htm;
+    
+    # 静态文件服务 - 关键配置！
+    location /uploads/ {
+        alias /www/wwwroot/lndx/backend/uploads/;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+        
+        # 确保文件权限正确
+        autoindex off;
+        
+        # 支持的文件类型
+        location ~* \.(jpg|jpeg|png|gif|ico|svg|webp)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+    }
+    
+    # API代理到后端
+    location /api/ {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # 前端路由
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

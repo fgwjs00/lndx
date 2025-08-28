@@ -50,16 +50,25 @@ class HttpRequest {
     this.interceptors.onRequest = (config: RequestConfig) => {
       // 添加认证token
       const token = localStorage.getItem('token')
+      console.log('📤 请求拦截器:', { 
+        url: config.url, 
+        method: config.method, 
+        hasToken: !!token,
+        tokenPrefix: token ? token.substring(0, 20) + '...' : 'none'
+      })
+      
       if (token) {
         config.headers = {
           ...config.headers,
           Authorization: `Bearer ${token}`
         }
+      } else {
+        console.warn('⚠️ 请求时未找到token')
       }
 
-      // 添加默认headers
+      // 添加默认headers (FormData时不设置Content-Type，让浏览器自动处理)
       config.headers = {
-        'Content-Type': 'application/json',
+        ...(!(config.data instanceof FormData) && { 'Content-Type': 'application/json' }),
         ...config.headers
       }
 
@@ -69,10 +78,10 @@ class HttpRequest {
     // 响应拦截器
     this.interceptors.onResponse = <T>(response: ApiResponse<T>) => {
       // 统一处理响应数据
-      if (response.code === 200) {
+      if (response.code >= 200 && response.code < 300) {
         return response
       } else {
-        // 对于非200响应，直接抛出错误让onError处理
+        // 对于非2xx响应，直接抛出错误让onError处理
         throw new Error(response.message || '请求失败')
       }
     }
@@ -83,59 +92,82 @@ class HttpRequest {
       
       // 网络错误
       if (!error.response) {
-        return Promise.reject(new Error('网络连接异常'))
+        console.warn('🌐 网络连接异常，但保持认证状态')
+        return Promise.reject(new Error('网络连接异常，请检查网络连接'))
       }
 
       // HTTP错误
       const { status } = error.response
       switch (status) {
-        case 400:
-          return Promise.reject(new Error('请求参数错误'))
-        case 401:
+        case 400: {
+          // 尝试提取后端返回的具体错误信息
+          const badRequestData = error.response?.data
+          if (badRequestData?.message) {
+            // 如果后端提供了具体错误信息，使用它
+            return Promise.reject(new Error(badRequestData.message))
+          } else {
+            // 否则使用通用错误信息
+            return Promise.reject(new Error('请求参数错误'))
+          }
+        }
+        case 401: {
           // 检查是否是登录相关的API请求
           const requestUrl = error.config?.url || ''
           const isAuthApi = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/register')
           
           // 如果是登录/注册API，让调用方处理错误，不要跳转
           if (isAuthApi) {
-            console.log('登录API 401错误，返回错误信息供页面处理')
+            console.log('🔐 登录API 401错误，返回错误信息供页面处理')
             const errorData = error.response?.data
             const errorMessage = errorData?.message || '登录失败'
             return Promise.reject(new Error(errorMessage))
           }
           
-          // 对于其他API的401错误：
-          // 1. 如果当前已经在登录页，不要重复跳转
-          // 2. 在开发环境下，使用路由跳转而不是页面刷新
-          if (window.location.pathname === '/login') {
-            return Promise.reject(new Error('未授权访问'))
-          }
+          // 对于其他API的401错误，需要谨慎处理
+          console.warn('⚠️ API调用收到401错误:', requestUrl)
           
-          // 清除认证信息
-          localStorage.removeItem('token')
-          localStorage.removeItem('refreshToken')
-          localStorage.removeItem('user')
+          // 检查是否真的是认证问题，还是网络问题
+          const authErrorData = error.response?.data
+          const isTokenExpired = authErrorData?.code === 401 && authErrorData?.message?.includes('token')
           
-          // 使用Vue Router跳转，避免页面刷新
-          if (window.location.pathname !== '/login') {
-            import('@/router').then(({ default: router }) => {
-              router.push('/login')
+          // 只有明确是token问题才清除认证信息
+          if (isTokenExpired) {
+            console.log('🔑 Token确实已过期，清除认证信息')
+            // 通过authStore来处理logout，而不是直接操作localStorage
+            import('@/store/auth').then(({ useAuthStore }) => {
+              const authStore = useAuthStore()
+              authStore.logout()
             })
+          } else {
+            // 可能是网络问题或服务器问题，不要清除认证信息
+            console.log('🌐 可能是网络问题，保持认证状态')
+            return Promise.reject(new Error('网络连接异常，请检查网络或稍后重试'))
           }
           
           return Promise.reject(new Error('未授权访问'))
-        case 403:
+        }
+        case 403: {
           return Promise.reject(new Error('权限不足'))
-        case 404:
+        }
+        case 404: {
           return Promise.reject(new Error('请求资源不存在'))
-        case 429:
+        }
+        case 409: {
+          // 处理冲突错误，如数据重复等
+          const errorMsg = error.response?.data?.message || '数据冲突，请检查输入'
+          return Promise.reject(new Error(errorMsg))
+        }
+        case 429: {
           // 对于登录API的429错误，返回后端的具体错误信息
           const errorMsg = error.response?.data?.message || '请求过于频繁，请稍后再试'
           return Promise.reject(new Error(errorMsg))
-        case 500:
+        }
+        case 500: {
           return Promise.reject(new Error('服务器内部错误'))
-        default:
+        }
+        default: {
           return Promise.reject(new Error(`请求失败: ${status}`))
+        }
       }
     }
   }
@@ -205,15 +237,26 @@ class HttpRequest {
       // 添加查询参数
       let requestUrl = url
       if (finalConfig.params) {
-        const searchParams = new URLSearchParams(finalConfig.params)
-        requestUrl = `${url}?${searchParams.toString()}`
+        // 过滤掉 undefined 值，避免传递 "undefined" 字符串
+        const filteredParams: Record<string, string> = {}
+        Object.keys(finalConfig.params).forEach(key => {
+          const value = finalConfig.params[key]
+          if (value !== undefined && value !== null && value !== '') {
+            filteredParams[key] = String(value)
+          }
+        })
+        
+        if (Object.keys(filteredParams).length > 0) {
+          const searchParams = new URLSearchParams(filteredParams)
+          requestUrl = `${url}?${searchParams.toString()}`
+        }
       }
 
       // 发送请求
       const response = await fetch(requestUrl, options)
       
-      // 检查HTTP状态码
-      if (!response.ok) {
+      // 检查HTTP状态码 - 接受2xx范围内的所有成功状态码
+      if (response.status < 200 || response.status >= 300) {
         // HTTP错误状态，构造错误对象并抛出
         const errorData = await response.json().catch(() => ({}))
         const error = {

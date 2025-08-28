@@ -176,16 +176,20 @@ router.post('/login', loginLimiter, asyncHandler(async (req, res) => {
         'setting:update'
       ],
       'TEACHER': [
-        'student:read',
-        'student:create',
-        'student:update',
-        'course:read',
-        'course:create',
-        'course:update',
-        'application:read',
-        'application:approve',
+        // 学生管理权限
+        'student:read', 'student:create', 'student:update', 'student:delete',
+        // 课程管理权限
+        'course:read', 'course:create', 'course:update', 'course:delete', 'course:import', 'course:export',
+        // 报名管理权限
+        'application:read', 'application:create', 'application:update', 'application:approve',
+        // 年级管理权限
+        'grade:read', 'grade:manage', 'grade:upgrade', 'grade:graduate',
+        // 数据分析权限
         'analysis:read',
-        'attendance:manage'
+        // 考勤管理权限
+        'attendance:read', 'attendance:manage',
+        // 个人资料权限
+        'profile:read', 'profile:update'
       ],
       'STUDENT': [
         'profile:read',
@@ -200,10 +204,13 @@ router.post('/login', loginLimiter, asyncHandler(async (req, res) => {
 
   const permissions = getUserPermissions(user.role)
 
+  // 检查是否需要强制修改密码
+  const mustChangePassword = user.mustChangePassword || false
+
   // 返回登录成功响应
   res.json({
     code: 200,
-    message: '登录成功',
+    message: mustChangePassword ? '登录成功，需要修改密码' : '登录成功',
     data: {
       token,
       refreshToken,
@@ -213,9 +220,11 @@ router.post('/login', loginLimiter, asyncHandler(async (req, res) => {
         email: user.email,
         realName: user.realName,
         avatar: user.avatar,
-        role: user.role
+        role: user.role.toLowerCase(),
+        mustChangePassword
       },
-      permissions
+      permissions,
+      mustChangePassword
     }
   })
 }))
@@ -383,7 +392,7 @@ router.post('/register', asyncHandler(async (req, res) => {
   })
 
   res.status(201).json({
-    code: 201,
+    code: 200,
     message: '注册成功',
     data: {
       user: {
@@ -421,8 +430,14 @@ router.post('/refresh', asyncHandler(async (req, res) => {
       throw new BusinessError('用户不存在或已被禁用', 401, 'INVALID_REFRESH_TOKEN')
     }
 
-    // 生成新的访问Token
+    // 生成新的访问Token和刷新Token
     const newToken = generateToken({
+      id: user.id,
+      phone: user.phone,
+      role: user.role
+    })
+
+    const newRefreshToken = generateRefreshToken({
       id: user.id,
       phone: user.phone,
       role: user.role
@@ -432,7 +447,19 @@ router.post('/refresh', asyncHandler(async (req, res) => {
       code: 200,
       message: 'Token刷新成功',
       data: {
-        token: newToken
+        token: newToken,
+        refreshToken: newRefreshToken,
+        user: {
+          id: user.id,
+          phone: user.phone,
+          email: user.email,
+          realName: user.realName,
+          avatar: user.avatar,
+          role: user.role,
+          isActive: user.isActive,
+          createdAt: user.createdAt,
+          lastLoginAt: user.lastLoginAt
+        }
       }
     })
   } catch (error) {
@@ -469,17 +496,15 @@ router.get('/me', asyncHandler(async (req, res) => {
       code: 200,
       message: '获取用户信息成功',
       data: {
-        user: {
-          id: user.id,
-          phone: user.phone,
-          email: user.email,
-          realName: user.realName,
-          avatar: user.avatar,
-          role: user.role,
-          isActive: user.isActive,
-          createdAt: user.createdAt,
-          lastLoginAt: user.lastLoginAt
-        }
+        id: user.id,
+        phone: user.phone,
+        email: user.email,
+        realName: user.realName,
+        avatar: user.avatar,
+        role: user.role.toLowerCase(),
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+        lastLoginAt: user.lastLoginAt
       }
     })
   } catch (error) {
@@ -507,6 +532,82 @@ router.post('/logout', asyncHandler(async (req, res) => {
     code: 200,
     message: '退出登录成功'
   })
+}))
+
+/**
+ * 修改密码
+ * POST /api/auth/change-password
+ */
+router.post('/change-password', asyncHandler(async (req, res) => {
+  const authHeader = req.headers.authorization
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null
+  
+  if (!token) {
+    throw new BusinessError('缺少认证Token', 401, 'MISSING_TOKEN')
+  }
+
+  try {
+    // 验证Token
+    const decoded = jwt.verify(token, config.jwtSecret) as any
+    
+    // 查找用户
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId }
+    })
+
+    if (!user || !user.isActive) {
+      throw new BusinessError('用户不存在或已被禁用', 401, 'INVALID_TOKEN')
+    }
+
+    const { oldPassword, newPassword, confirmPassword } = req.body
+
+    // 验证请求数据
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      throw new BusinessError('请填写完整的密码信息', 400, 'MISSING_REQUIRED_FIELDS')
+    }
+
+    if (newPassword !== confirmPassword) {
+      throw new BusinessError('新密码和确认密码不一致', 400, 'PASSWORD_MISMATCH')
+    }
+
+    if (newPassword.length < 6) {
+      throw new BusinessError('新密码至少需要6位', 400, 'PASSWORD_TOO_SHORT')
+    }
+
+    // 验证旧密码
+    const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password)
+    if (!isOldPasswordValid) {
+      throw new BusinessError('原密码错误', 400, 'INVALID_OLD_PASSWORD')
+    }
+
+    // 哈希新密码
+    const saltRounds = 10
+    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds)
+
+    // 更新密码并清除强制修改密码标记
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { 
+        password: hashedNewPassword,
+        mustChangePassword: false,
+        updatedAt: new Date()
+      }
+    })
+
+    businessLogger.userAction(user.id, 'PASSWORD_CHANGE', { 
+      message: '用户修改密码成功',
+      timestamp: new Date().toISOString()
+    })
+
+    res.json({
+      code: 200,
+      message: '密码修改成功',
+      data: null
+    })
+  } catch (error) {
+    if (error instanceof BusinessError) throw error
+    throw new BusinessError('Token无效', 401, 'INVALID_TOKEN')
+  }
 }))
 
 export default router

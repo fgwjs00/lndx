@@ -1,11 +1,11 @@
 <template>
   <a-modal
-    :open="visible"
+    :open="props.open"
     title="修改密码"
     :width="600"
     @ok="handleSubmit"
     @cancel="handleCancel"
-    @update:open="(value) => emit('update:visible', value)"
+    @update:open="(value) => emit('update:open', value)"
     :confirm-loading="loading"
     ok-text="修改密码"
     cancel-text="取消"
@@ -152,14 +152,14 @@ import type { ChangePasswordRequest } from '@/types/auth'
 
 // 组件属性
 interface Props {
-  visible: boolean
+  open: boolean
 }
 
 const props = defineProps<Props>()
 
 // 组件事件
 const emit = defineEmits<{
-  'update:visible': [visible: boolean]
+  'update:open': [open: boolean]
   success: []
 }>()
 
@@ -222,7 +222,7 @@ const formRules = {
 }
 
 // 监听弹窗显示状态
-watch(() => props.visible, (newValue) => {
+watch(() => props.open, (newValue) => {
   if (newValue) {
     resetForm()
   }
@@ -316,7 +316,7 @@ const handleSubmit = async (): Promise<void> => {
     if (success) {
       message.success('密码修改成功，请重新登录')
       emit('success')
-      emit('update:visible', false)
+      emit('update:open', false)
       
       // 修改密码后，建议用户重新登录
       setTimeout(() => {
@@ -334,7 +334,7 @@ const handleSubmit = async (): Promise<void> => {
  * 处理取消
  */
 const handleCancel = (): void => {
-  emit('update:visible', false)
+  emit('update:open', false)
 }
 </script>
 

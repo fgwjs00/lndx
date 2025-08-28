@@ -29,6 +29,7 @@ export const useAuthStore = defineStore('auth', () => {
   const permissions = ref<string[]>([])
   const loading = ref<boolean>(false)
   const error = ref<string | null>(null)
+  const mustChangePassword = ref<boolean>(false)
 
   // 计算属性
   const isSuperAdmin = computed<boolean>(() => user.value?.role === 'super_admin')
@@ -48,17 +49,83 @@ export const useAuthStore = defineStore('auth', () => {
    */
   const initializeAuth = async (): Promise<void> => {
     try {
+      console.log('🔄 开始初始化认证状态...')
       const savedToken = localStorage.getItem('token')
       const savedRefreshToken = localStorage.getItem('refreshToken')
       const savedUser = localStorage.getItem('user')
       const savedPermissions = localStorage.getItem('permissions')
+      const savedMustChangePassword = localStorage.getItem('mustChangePassword')
+
+      console.log('💾 从localStorage获取数据:', {
+        hasToken: !!savedToken,
+        hasRefreshToken: !!savedRefreshToken,
+        hasUser: !!savedUser,
+        hasPermissions: !!savedPermissions
+      })
+
+      // 打印实际的用户数据用于调试
+      if (savedUser) {
+        try {
+          const userData = JSON.parse(savedUser)
+          console.log('👤 localStorage中的用户数据:', userData)
+          
+          // 检查数据是否被错误嵌套（如 {user: {...}} 格式）
+          let actualUserData = userData
+          if (userData.user && typeof userData.user === 'object' && !userData.id) {
+            console.warn('⚠️ 检测到嵌套的用户数据格式，提取实际用户信息')
+            actualUserData = userData.user
+            console.log('🔄 提取后的用户数据:', actualUserData)
+            
+            // 重新保存正确格式的数据
+            localStorage.setItem('user', JSON.stringify(actualUserData))
+          }
+          
+          console.log('🔍 用户角色字段详情:', {
+            role: actualUserData.role,
+            roleType: typeof actualUserData.role,
+            roleExists: 'role' in actualUserData,
+            hasId: 'id' in actualUserData
+          })
+        } catch (parseError) {
+          console.error('❌ 解析localStorage用户数据失败:', parseError)
+          console.log('🧹 检测到损坏的用户数据，清除localStorage')
+          localStorage.removeItem('token')
+          localStorage.removeItem('refreshToken')
+          localStorage.removeItem('user')
+          localStorage.removeItem('permissions')
+          console.log('✅ 已清除损坏的认证数据，请重新登录')
+          return
+        }
+      }
 
       if (savedToken && savedUser) {
         token.value = savedToken
         refreshToken.value = savedRefreshToken
         
         // 解析用户信息并转换角色格式
-        const parsedUser = JSON.parse(savedUser)
+        let parsedUser: any
+        try {
+          const userData = JSON.parse(savedUser)
+          
+          // 处理可能的嵌套数据格式
+          if (userData.user && typeof userData.user === 'object' && !userData.id) {
+            console.warn('🔧 修复嵌套的用户数据格式')
+            parsedUser = userData.user
+            // 重新保存正确格式
+            localStorage.setItem('user', JSON.stringify(parsedUser))
+          } else {
+            parsedUser = userData
+          }
+          
+        } catch (parseError) {
+          console.error('❌ 解析用户数据失败:', parseError)
+          console.log('🧹 清除损坏的用户数据')
+          localStorage.removeItem('token')
+          localStorage.removeItem('refreshToken')
+          localStorage.removeItem('user')
+          localStorage.removeItem('permissions')
+          return
+        }
         const roleMapping: Record<string, UserRole> = {
           'SUPER_ADMIN': UserRole.SUPER_ADMIN,
           'SCHOOL_ADMIN': UserRole.SCHOOL_ADMIN, 
@@ -66,12 +133,30 @@ export const useAuthStore = defineStore('auth', () => {
           'STUDENT': UserRole.STUDENT
         }
         
+        // 安全处理用户角色转换
+        let userRole: UserRole
+        if (parsedUser.role && typeof parsedUser.role === 'string') {
+          userRole = roleMapping[parsedUser.role] || parsedUser.role.toLowerCase() as UserRole
+        } else {
+          console.warn('⚠️ 用户角色数据异常:', parsedUser.role, '，设置为默认学生角色')
+          userRole = UserRole.STUDENT
+        }
+        
         user.value = {
           ...parsedUser,
-          role: roleMapping[parsedUser.role] || parsedUser.role.toLowerCase() as UserRole
+          role: userRole
         }
         permissions.value = savedPermissions ? JSON.parse(savedPermissions) : []
+        mustChangePassword.value = savedMustChangePassword ? JSON.parse(savedMustChangePassword) : false
         isAuthenticated.value = true
+
+        console.log('✅ 认证状态已恢复:', {
+          userId: user.value?.id,
+          userRole: user.value?.role,
+          userName: user.value?.realName,
+          permissionCount: permissions.value.length,
+          isAuthenticated: isAuthenticated.value
+        })
 
         // 在开发模式下跳过API验证，直接使用本地存储的用户信息
         if (shouldMockAuth()) {
@@ -81,12 +166,31 @@ export const useAuthStore = defineStore('auth', () => {
           return
         }
 
-        // 生产模式：验证token是否有效
-        await getCurrentUser()
+        // 生产模式：尝试验证token是否有效
+        // 但不要因为API失败就强制退出登录
+        try {
+          await getCurrentUser(false) // 不强制退出登录
+        } catch (error) {
+          console.warn('验证token时API调用失败，但保持登录状态:', error)
+          // 不抛出错误，保持当前登录状态
+        }
+      } else {
+        console.log('❌ 未找到有效的token或用户信息，保持未登录状态')
       }
     } catch (error) {
       console.error('初始化认证状态失败:', error)
-      await logout()
+      
+      // 只有在解析localStorage数据时出错才清除认证状态
+      // 网络错误不应该导致logout
+      if (error instanceof SyntaxError) {
+        console.log('🧹 localStorage数据解析失败，清除损坏的数据')
+        localStorage.removeItem('token')
+        localStorage.removeItem('refreshToken')
+        localStorage.removeItem('user')
+        localStorage.removeItem('permissions')
+      } else {
+        console.log('🔄 其他初始化错误，但保持现有认证状态')
+      }
     }
   }
 
@@ -114,11 +218,12 @@ export const useAuthStore = defineStore('auth', () => {
       }
       
       if (response.code === 200) {
-        const { token: newToken, refreshToken: newRefreshToken, user: userInfo } = response.data
+        const { token: newToken, refreshToken: newRefreshToken, user: userInfo, mustChangePassword: needPasswordChange } = response.data
         const userPermissions = response.data.permissions || []
         
         console.log('👤 用户信息:', userInfo)
         console.log('🔑 权限列表:', userPermissions)
+        console.log('🔒 需要强制修改密码:', needPasswordChange)
         
         // 更新状态
         token.value = newToken
@@ -132,20 +237,31 @@ export const useAuthStore = defineStore('auth', () => {
           'STUDENT': UserRole.STUDENT
         }
         
+        // 安全处理角色转换
+        let convertedRole: UserRole
+        if (userInfo.role && typeof userInfo.role === 'string') {
+          convertedRole = roleMapping[userInfo.role] || userInfo.role.toLowerCase() as UserRole
+        } else {
+          console.warn('⚠️ 登录返回的用户角色数据异常:', userInfo.role, '，设置为默认学生角色')
+          convertedRole = UserRole.STUDENT
+        }
+        
         const convertedUserInfo = {
           ...userInfo,
-          role: roleMapping[userInfo.role] || userInfo.role.toLowerCase() as UserRole
+          role: convertedRole
         }
         
         user.value = convertedUserInfo
         permissions.value = userPermissions
         isAuthenticated.value = true
+        mustChangePassword.value = needPasswordChange || userInfo.mustChangePassword || false
 
         // 保存到localStorage
         localStorage.setItem('token', newToken)
         localStorage.setItem('refreshToken', newRefreshToken)
         localStorage.setItem('user', JSON.stringify(convertedUserInfo))
         localStorage.setItem('permissions', JSON.stringify(userPermissions))
+        localStorage.setItem('mustChangePassword', JSON.stringify(mustChangePassword.value))
 
         console.log('✅ 登录成功，状态已更新')
         console.log('🔍 用户数据详情:', {
@@ -155,7 +271,12 @@ export const useAuthStore = defineStore('auth', () => {
           permissions: userPermissions,
           token: newToken?.substring(0, 20) + '...'
         })
-        message.success('登录成功')
+        // 根据是否需要强制修改密码显示不同的消息
+        if (mustChangePassword.value) {
+          message.warning('登录成功，请立即修改密码')
+        } else {
+          message.success('登录成功')
+        }
         return true
       } else {
         console.log('❌ 登录失败:', response.message)
@@ -219,12 +340,18 @@ export const useAuthStore = defineStore('auth', () => {
    * 用户登出
    */
   const logout = async (): Promise<void> => {
+    // 打印调用堆栈，帮助调试
+    console.log('🚪 执行用户登出...')
+    console.trace('💡 Logout调用堆栈:')
+    
     try {
       // 调用登出API
       await AuthService.logout()
+      console.log('✅ 登出API调用成功')
     } catch (error) {
-      console.error('登出API调用失败:', error)
+      console.error('❌ 登出API调用失败:', error)
     } finally {
+      console.log('🧹 清除本地认证状态...')
       // 清除状态
       isAuthenticated.value = false
       user.value = null
@@ -232,12 +359,14 @@ export const useAuthStore = defineStore('auth', () => {
       refreshToken.value = null
       permissions.value = []
       error.value = null
+      mustChangePassword.value = false
 
       // 清除localStorage
       localStorage.removeItem('token')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('user')
       localStorage.removeItem('permissions')
+      localStorage.removeItem('mustChangePassword')
 
       message.success('已退出登录')
     }
@@ -246,13 +375,48 @@ export const useAuthStore = defineStore('auth', () => {
   /**
    * 获取当前用户信息
    */
-  const getCurrentUser = async (): Promise<void> => {
+  const getCurrentUser = async (forceLogoutOnError: boolean = true): Promise<void> => {
     try {
       const response = await AuthService.getCurrentUser()
       
       if (response.code === 200) {
-        user.value = response.data
-        localStorage.setItem('user', JSON.stringify(response.data))
+        let userInfo = response.data
+        console.log('📋 获取到的当前用户信息:', userInfo)
+        
+        // 检查是否是嵌套格式 {user: {...}}
+        if ((userInfo as any).user && typeof (userInfo as any).user === 'object' && !userInfo.id) {
+          console.log('🔄 检测到API返回嵌套格式，提取用户信息')
+          userInfo = (userInfo as any).user
+          console.log('🔄 提取后的用户信息:', userInfo)
+        }
+        
+        // 确保用户信息格式与登录时一致，进行角色转换
+        const roleMapping: Record<string, UserRole> = {
+          'SUPER_ADMIN': UserRole.SUPER_ADMIN,
+          'SCHOOL_ADMIN': UserRole.SCHOOL_ADMIN, 
+          'TEACHER': UserRole.TEACHER,
+          'STUDENT': UserRole.STUDENT
+        }
+        
+        // 安全处理角色转换
+        let convertedRole: UserRole
+        if (userInfo.role && typeof userInfo.role === 'string') {
+          convertedRole = roleMapping[userInfo.role] || userInfo.role.toLowerCase() as UserRole
+          console.log('✅ 角色转换成功:', userInfo.role, '->', convertedRole)
+        } else {
+          console.warn('⚠️ 当前用户API返回的角色数据异常:', userInfo.role, '，设置为默认学生角色')
+          convertedRole = UserRole.STUDENT
+        }
+        
+        const convertedUserInfo = {
+          ...userInfo,
+          role: convertedRole
+        }
+        
+        console.log('🔄 最终转换后的用户信息:', convertedUserInfo)
+        
+        user.value = convertedUserInfo
+        localStorage.setItem('user', JSON.stringify(convertedUserInfo))
       } else {
         throw new Error(response.message || '获取用户信息失败')
       }
@@ -265,7 +429,13 @@ export const useAuthStore = defineStore('auth', () => {
         return
       }
       
-      await logout()
+      // 只有在明确要求时才强制退出登录
+      if (forceLogoutOnError) {
+        await logout()
+      } else {
+        // 抛出错误让调用方决定如何处理
+        throw error
+      }
     }
   }
 
@@ -282,14 +452,45 @@ export const useAuthStore = defineStore('auth', () => {
       
       if (response.code === 200) {
         const { token: newToken, refreshToken: newRefreshToken, user: userInfo } = response.data
+        console.log('🔄 刷新token返回的用户信息:', userInfo)
+        
+        // 检查是否是嵌套格式
+        let actualUserInfo = userInfo
+        if (userInfo && (userInfo as any).user && typeof (userInfo as any).user === 'object' && !userInfo.id) {
+          console.log('🔄 刷新token检测到嵌套格式，提取用户信息')
+          actualUserInfo = (userInfo as any).user
+        }
+        
+        // 确保角色格式与登录时一致
+        const roleMapping: Record<string, UserRole> = {
+          'SUPER_ADMIN': UserRole.SUPER_ADMIN,
+          'SCHOOL_ADMIN': UserRole.SCHOOL_ADMIN, 
+          'TEACHER': UserRole.TEACHER,
+          'STUDENT': UserRole.STUDENT
+        }
+        
+        // 安全处理角色转换
+        let convertedRole: UserRole
+        if (actualUserInfo.role && typeof actualUserInfo.role === 'string') {
+          convertedRole = roleMapping[actualUserInfo.role] || actualUserInfo.role.toLowerCase() as UserRole
+          console.log('✅ 刷新token角色转换成功:', actualUserInfo.role, '->', convertedRole)
+        } else {
+          console.warn('⚠️ 刷新token返回的角色数据异常:', actualUserInfo.role, '，设置为默认学生角色')
+          convertedRole = UserRole.STUDENT
+        }
+        
+        const convertedUserInfo = {
+          ...actualUserInfo,
+          role: convertedRole
+        }
         
         token.value = newToken
         refreshToken.value = newRefreshToken
-        user.value = userInfo
+        user.value = convertedUserInfo
 
         localStorage.setItem('token', newToken)
         localStorage.setItem('refreshToken', newRefreshToken)
-        localStorage.setItem('user', JSON.stringify(userInfo))
+        localStorage.setItem('user', JSON.stringify(convertedUserInfo))
 
         return true
       } else {
@@ -314,6 +515,9 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await AuthService.changePassword(passwordData)
       
       if (response.code === 200) {
+        // 密码修改成功后清除强制修改密码标记
+        mustChangePassword.value = false
+        localStorage.removeItem('mustChangePassword')
         message.success('密码修改成功')
         return true
       } else {
@@ -413,6 +617,7 @@ export const useAuthStore = defineStore('auth', () => {
     permissions,
     loading,
     error,
+    mustChangePassword,
     
     // 计算属性
     isSuperAdmin,

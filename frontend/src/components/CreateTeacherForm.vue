@@ -198,7 +198,7 @@ const passwordStrengthClass = computed<string>(() => {
     case 'weak': return 'bg-red-500'
     case 'medium': return 'bg-yellow-500'
     case 'strong': return 'bg-green-500'
-    default: return 'bg-gray-300'
+    default: return 'bg-gray-200'
   }
 })
 

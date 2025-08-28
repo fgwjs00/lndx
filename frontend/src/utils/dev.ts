@@ -2,6 +2,13 @@
  * 开发模式工具函数
  * @module utils/dev
  * @description 提供开发环境下的特殊功能和配置
+ * 
+ * 🚨 注意：这些函数仅在开发环境使用，生产环境将被优化掉
+ * 
+ * 配置说明：
+ * - __DEV_MODE__: 是否为开发模式
+ * - __SKIP_CAPTCHA__: 是否跳过验证码验证
+ * - __MOCK_AUTH__: 是否启用模拟认证（false = 使用真实API）
  */
 
 // 引入类型声明
@@ -10,6 +17,7 @@
 /**
  * 检查是否为开发模式
  * @returns {boolean} 是否为开发模式
+ * @description 用于控制开发环境特有的功能显示
  */
 export const isDevelopment = (): boolean => {
   return typeof __DEV_MODE__ !== 'undefined' ? __DEV_MODE__ : import.meta.env.DEV
@@ -18,6 +26,7 @@ export const isDevelopment = (): boolean => {
 /**
  * 检查是否跳过验证码
  * @returns {boolean} 是否跳过验证码
+ * @description 开发环境下可跳过验证码验证，提高开发效率
  */
 export const shouldSkipCaptcha = (): boolean => {
   return typeof __SKIP_CAPTCHA__ !== 'undefined' ? __SKIP_CAPTCHA__ : import.meta.env.DEV
@@ -26,9 +35,22 @@ export const shouldSkipCaptcha = (): boolean => {
 /**
  * 检查是否启用模拟认证
  * @returns {boolean} 是否启用模拟认证
+ * @description 
+ * - true: 使用本地模拟数据，不发送网络请求
+ * - false: 使用真实后端API
+ * 
+ * ⚠️ 当前配置：false（使用真实后端）
  */
 export const shouldMockAuth = (): boolean => {
-  return typeof __MOCK_AUTH__ !== 'undefined' ? __MOCK_AUTH__ : import.meta.env.DEV
+  const useMock = typeof __MOCK_AUTH__ !== 'undefined' ? __MOCK_AUTH__ : import.meta.env.DEV
+  
+  // 开发环境下打印当前配置状态
+  if (isDevelopment() && typeof window !== 'undefined') {
+    const mode = useMock ? '🧪 模拟模式' : '🔗 真实API模式'
+    console.log(`%c[开发工具] ${mode}`, 'color: #10b981; font-weight: bold;')
+  }
+  
+  return useMock
 }
 
 /**
@@ -224,18 +246,62 @@ export const mockVerifySms = async (phone: string, code: string): Promise<any> =
 }
 
 /**
- * 开发模式提示信息
+ * 显示开发模式信息
+ * @description 在控制台显示开发环境的配置和测试数据
  */
 export const showDevModeInfo = (): void => {
-  if (isDevelopment()) {
-    console.log('%c🚀 开发模式已启用', 'color: #10b981; font-weight: bold; font-size: 14px;')
-    console.log('%c📱 测试账号信息:', 'color: #3b82f6; font-weight: bold;')
-    console.log('%c超级管理员: 13800000001 / 123456', 'color: #6b7280;')
-    console.log('%c学校管理员: 13800000002 / 123456', 'color: #6b7280;')
-    console.log('%c教师: 13800000003 / 123456', 'color: #6b7280;')
-    console.log('%c学生: 13800000004 / 123456', 'color: #6b7280;')
-    console.log('%c📋 短信验证码: 123456', 'color: #6b7280;')
-    console.log('%c🔧 验证码已跳过', 'color: #6b7280;')
-    console.log('%c🔄 页面刷新后登录状态会自动保持', 'color: #10b981; font-weight: bold;')
+  if (!isDevelopment()) return
+  
+  const mockMode = shouldMockAuth()
+  
+  console.group('%c🚀 开发模式信息', 'color: #10b981; font-weight: bold; font-size: 14px;')
+  
+  // 当前配置状态
+  console.log(`%c📊 当前配置:`, 'color: #3b82f6; font-weight: bold;')
+  console.log(`%c  • API模式: ${mockMode ? '🧪 模拟数据' : '🔗 真实后端'}`, 'color: #6b7280;')
+  console.log(`%c  • 验证码: ${shouldSkipCaptcha() ? '🔧 已跳过' : '🔒 启用'}`, 'color: #6b7280;')
+  
+  // 测试账号信息
+  if (mockMode) {
+    console.log('%c📱 模拟测试账号:', 'color: #3b82f6; font-weight: bold;')
+  } else {
+    console.log('%c📱 后端测试账号:', 'color: #3b82f6; font-weight: bold;')
   }
-} 
+  
+  console.log('%c  • 超级管理员: 13800000001 / 123456', 'color: #6b7280;')
+  console.log('%c  • 学校管理员: 13800000002 / 123456', 'color: #6b7280;')
+  console.log('%c  • 教师: 13800000003 / 123456', 'color: #6b7280;')
+  console.log('%c  • 学生: 13800000004 / 123456', 'color: #6b7280;')
+  
+  // 开发提示
+  console.log('%c💡 开发提示:', 'color: #f59e0b; font-weight: bold;')
+  console.log('%c  • 短信验证码: 123456 (固定)', 'color: #6b7280;')
+  console.log('%c  • 登录状态会自动保持', 'color: #6b7280;')
+  console.log('%c  • 可以在登录页点击测试账号快速登录', 'color: #6b7280;')
+  
+  if (!mockMode) {
+    console.log('%c⚠️ 注意: 当前使用真实后端API，请确保后端服务已启动', 'color: #ef4444; font-weight: bold;')
+  }
+  
+  console.groupEnd()
+}
+
+/**
+ * 获取当前模式描述
+ * @returns {string} 当前开发模式的描述文字
+ */
+export const getCurrentModeDescription = (): string => {
+  if (!isDevelopment()) {
+    return '生产模式'
+  }
+  
+  const mockMode = shouldMockAuth()
+  const captchaSkipped = shouldSkipCaptcha()
+  
+  let description = mockMode ? '开发模式 (模拟数据)' : '开发模式 (真实API)'
+  if (captchaSkipped) {
+    description += ' + 跳过验证码'
+  }
+  
+  return description
+}

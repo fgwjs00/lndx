@@ -55,357 +55,278 @@ class SearchService {
     const { limit = 20, types = ['student', 'course', 'teacher'], includeInactive = false } = options
 
     try {
-      const results: SearchResult[] = []
-      const breakdown = { students: 0, courses: 0, teachers: 0 }
+      // 并行搜索所有类型
+      const [students, courses, teachers] = await Promise.all([
+        types.includes('student') ? this.searchStudents(keyword, { limit: Math.ceil(limit / types.length), includeInactive }) : [],
+        types.includes('course') ? this.searchCourses(keyword, { limit: Math.ceil(limit / types.length), includeInactive }) : [],
+        types.includes('teacher') ? this.searchTeachers(keyword, { limit: Math.ceil(limit / types.length), includeInactive }) : []
+      ])
 
-      // 如果使用PostgreSQL，使用全文搜索
-      if (process.env.DATABASE_URL?.includes('postgresql')) {
-        // 搜索学生
-        if (types.includes('student')) {
-          const students = await this.searchStudentsFullText(keyword, limit, includeInactive)
-          results.push(...students)
-          breakdown.students = students.length
-        }
-
-        // 搜索课程
-        if (types.includes('course')) {
-          const courses = await this.searchCoursesFullText(keyword, limit, includeInactive)
-          results.push(...courses)
-          breakdown.courses = courses.length
-        }
-
-        // 搜索教师
-        if (types.includes('teacher')) {
-          const teachers = await this.searchTeachersFullText(keyword, limit, includeInactive)
-          results.push(...teachers)
-          breakdown.teachers = teachers.length
-        }
-      } else {
-        // MySQL降级到LIKE查询
-        if (types.includes('student')) {
-          const students = await this.searchStudentsLike(keyword, limit, includeInactive)
-          results.push(...students)
-          breakdown.students = students.length
-        }
-
-        if (types.includes('course')) {
-          const courses = await this.searchCoursesLike(keyword, limit, includeInactive)
-          results.push(...courses)
-          breakdown.courses = courses.length
-        }
-
-        if (types.includes('teacher')) {
-          const teachers = await this.searchTeachersLike(keyword, limit, includeInactive)
-          results.push(...teachers)
-          breakdown.teachers = teachers.length
-        }
-      }
-
-      // 按相关度排序
-      results.sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0))
+      // 合并结果并按相关性排序
+      const allResults = [...students, ...courses, ...teachers]
+        .sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0))
+        .slice(0, limit)
 
       const searchTime = Date.now() - startTime
-      const stats: SearchStats = {
-        totalResults: results.length,
-        searchTime,
-        breakdown
+
+      return {
+        results: allResults,
+        stats: {
+          totalResults: allResults.length,
+          searchTime,
+          breakdown: {
+            students: students.length,
+            courses: courses.length,
+            teachers: teachers.length
+          }
+        }
       }
-
-      logger.info('全局搜索执行', {
-        keyword,
-        totalResults: results.length,
-        searchTime,
-        types
-      })
-
-      return { results: results.slice(0, limit), stats }
     } catch (error) {
-      logger.error('全局搜索失败', error)
+      logger.error('全局搜索失败:', error)
       throw error
     }
   }
 
   /**
-   * PostgreSQL全文搜索 - 学生
+   * 搜索学生
    */
-  private async searchStudentsFullText(
+  private async searchStudents(
     keyword: string,
-    limit: number,
-    includeInactive: boolean
+    options: { limit?: number; includeInactive?: boolean } = {}
   ): Promise<SearchResult[]> {
-    const query = `
-      SELECT s.id, s.real_name, s.student_code, s.contact_phone,
-             ts_rank(
-               to_tsvector('simple', s.real_name || ' ' || s.student_code || ' ' || s.contact_phone),
-               to_tsquery('simple', $1)
-             ) as rank
-      FROM students s
-      WHERE to_tsvector('simple', s.real_name || ' ' || s.student_code || ' ' || s.contact_phone) 
-            @@ to_tsquery('simple', $1)
-      ${includeInactive ? '' : 'AND s.is_active = true'}
-      ORDER BY rank DESC
-      LIMIT $2
-    `
-
-    const results = await prisma.$queryRaw<any[]>`${query}` 
-
-    return results.map(row => ({
-      type: 'student' as const,
-      id: row.id,
-      title: row.real_name,
-      subtitle: `学号: ${row.student_code}`,
-      description: `电话: ${row.contact_phone}`,
-      relevanceScore: parseFloat(row.rank)
-    }))
-  }
-
-  /**
-   * PostgreSQL全文搜索 - 课程
-   */
-  private async searchCoursesFullText(
-    keyword: string,
-    limit: number,
-    includeInactive: boolean
-  ): Promise<SearchResult[]> {
-    const query = `
-      SELECT c.id, c.name, c.course_code, c.category, c.description,
-             ts_rank(
-               to_tsvector('simple', c.name || ' ' || c.course_code || ' ' || c.category || ' ' || COALESCE(c.description, '')),
-               to_tsquery('simple', $1)
-             ) as rank
-      FROM courses c
-      WHERE to_tsvector('simple', c.name || ' ' || c.course_code || ' ' || c.category || ' ' || COALESCE(c.description, '')) 
-            @@ to_tsquery('simple', $1)
-      ${includeInactive ? '' : 'AND c.is_active = true'}
-      ORDER BY rank DESC
-      LIMIT $2
-    `
-
-    const results = await prisma.$queryRaw<any[]>`${query}`
-
-    return results.map(row => ({
-      type: 'course' as const,
-      id: row.id,
-      title: row.name,
-      subtitle: `课程编号: ${row.course_code} | ${row.category}`,
-      description: row.description,
-      relevanceScore: parseFloat(row.rank)
-    }))
-  }
-
-  /**
-   * PostgreSQL全文搜索 - 教师
-   */
-  private async searchTeachersFullText(
-    keyword: string,
-    limit: number,
-    includeInactive: boolean
-  ): Promise<SearchResult[]> {
-    const query = `
-      SELECT t.id, t.real_name, t.teacher_code, t.phone, 
-             array_to_string(t.specialties, ' ') as specialties_str,
-             ts_rank(
-               to_tsvector('simple', t.real_name || ' ' || t.teacher_code || ' ' || t.phone || ' ' || array_to_string(t.specialties, ' ')),
-               to_tsquery('simple', $1)
-             ) as rank
-      FROM teachers t
-      WHERE to_tsvector('simple', t.real_name || ' ' || t.teacher_code || ' ' || t.phone || ' ' || array_to_string(t.specialties, ' ')) 
-            @@ to_tsquery('simple', $1)
-      ${includeInactive ? '' : 'AND t.is_active = true'}
-      ORDER BY rank DESC
-      LIMIT $2
-    `
-
-    const results = await prisma.$queryRaw<any[]>`${query}`
-
-    return results.map(row => ({
-      type: 'teacher' as const,
-      id: row.id,
-      title: row.real_name,
-      subtitle: `工号: ${row.teacher_code}`,
-      description: `专业: ${row.specialties_str} | 电话: ${row.phone}`,
-      relevanceScore: parseFloat(row.rank)
-    }))
-  }
-
-  /**
-   * MySQL LIKE查询降级方案 - 学生
-   */
-  private async searchStudentsLike(
-    keyword: string,
-    limit: number,
-    includeInactive: boolean
-  ): Promise<SearchResult[]> {
-    const students = await prisma.student.findMany({
-      where: {
-        AND: [
-          {
-            OR: [
-              { realName: { contains: keyword } },
-              { studentCode: { contains: keyword } },
-              { contactPhone: { contains: keyword } }
-            ]
-          },
-          includeInactive ? {} : { isActive: true }
-        ]
-      },
-      take: limit,
-      orderBy: { createdAt: 'desc' }
-    })
-
-    return students.map(student => ({
-      type: 'student' as const,
-      id: student.id,
-      title: student.realName,
-      subtitle: `学号: ${student.studentCode}`,
-      description: `电话: ${student.contactPhone}`,
-      relevanceScore: 0.5 // 固定相关度
-    }))
-  }
-
-  /**
-   * MySQL LIKE查询降级方案 - 课程
-   */
-  private async searchCoursesLike(
-    keyword: string,
-    limit: number,
-    includeInactive: boolean
-  ): Promise<SearchResult[]> {
-    const courses = await prisma.course.findMany({
-      where: {
-        AND: [
-          {
-            OR: [
-              { name: { contains: keyword } },
-              { courseCode: { contains: keyword } },
-              { category: { contains: keyword } },
-              { description: { contains: keyword } }
-            ]
-          },
-          includeInactive ? {} : { isActive: true }
-        ]
-      },
-      take: limit,
-      orderBy: { createdAt: 'desc' }
-    })
-
-    return courses.map(course => ({
-      type: 'course' as const,
-      id: course.id,
-      title: course.name,
-      subtitle: `课程编号: ${course.courseCode} | ${course.category}`,
-      description: course.description,
-      relevanceScore: 0.5
-    }))
-  }
-
-  /**
-   * MySQL LIKE查询降级方案 - 教师
-   */
-  private async searchTeachersLike(
-    keyword: string,
-    limit: number,
-    includeInactive: boolean
-  ): Promise<SearchResult[]> {
-    const teachers = await prisma.teacher.findMany({
-      where: {
-        AND: [
-          {
-            OR: [
-              { realName: { contains: keyword } },
-              { teacherCode: { contains: keyword } },
-              { phone: { contains: keyword } }
-            ]
-          },
-          includeInactive ? {} : { isActive: true }
-        ]
-      },
-      take: limit,
-      orderBy: { createdAt: 'desc' }
-    })
-
-    return teachers.map(teacher => ({
-      type: 'teacher' as const,
-      id: teacher.id,
-      title: teacher.realName,
-      subtitle: `工号: ${teacher.teacherCode}`,
-      description: `电话: ${teacher.phone}`,
-      relevanceScore: 0.5
-    }))
-  }
-
-  /**
-   * 搜索建议
-   * @param keyword 关键词前缀
-   * @param limit 限制数量
-   */
-  async searchSuggestions(keyword: string, limit: number = 10): Promise<string[]> {
-    if (!keyword || keyword.length < 2) return []
+    const { limit = 10, includeInactive = false } = options
 
     try {
-      if (process.env.DATABASE_URL?.includes('postgresql')) {
-        // PostgreSQL三角相似度搜索
-        const query = `
-          SELECT DISTINCT suggestion, similarity(suggestion, $1) as sim
-          FROM (
-            SELECT real_name as suggestion FROM students WHERE real_name % $1
-            UNION
-            SELECT name as suggestion FROM courses WHERE name % $1
-            UNION
-            SELECT real_name as suggestion FROM teachers WHERE real_name % $1
-          ) suggestions
-          WHERE sim > 0.3
-          ORDER BY sim DESC
-          LIMIT $2
-        `
+      const students = await prisma.student.findMany({
+        where: {
+          AND: [
+            {
+              OR: [
+                { name: { contains: keyword } }, // Student模型使用name字段
+                { studentCode: { contains: keyword } },
+                { contactPhone: { contains: keyword } }
+              ]
+            },
+            includeInactive ? {} : { isActive: true }
+          ]
+        },
+        take: limit,
+        orderBy: {
+          updatedAt: 'desc'
+        }
+      })
 
-        const results = await prisma.$queryRaw<{ suggestion: string }[]>`${query}`
-        return results.map(r => r.suggestion)
-      } else {
-        // MySQL简单前缀匹配
-        const students = await prisma.student.findMany({
-          where: { realName: { startsWith: keyword } },
-          select: { realName: true },
-          take: Math.ceil(limit / 3)
-        })
-
-        const courses = await prisma.course.findMany({
-          where: { name: { startsWith: keyword } },
-          select: { name: true },
-          take: Math.ceil(limit / 3)
-        })
-
-        const teachers = await prisma.teacher.findMany({
-          where: { realName: { startsWith: keyword } },
-          select: { realName: true },
-          take: Math.ceil(limit / 3)
-        })
-
-        const suggestions = [
-          ...students.map(s => s.realName),
-          ...courses.map(c => c.name),
-          ...teachers.map(t => t.realName)
-        ]
-
-        return [...new Set(suggestions)].slice(0, limit)
-      }
+      return students.map(student => ({
+        type: 'student' as const,
+        id: student.id,
+        title: student.name, // Student模型使用name字段
+        subtitle: `学号: ${student.studentCode}`,
+        description: student.major || '暂无专业信息',
+        avatar: student.photo || undefined,
+        relevanceScore: this.calculateRelevanceScore(keyword, student.name)
+      }))
     } catch (error) {
-      logger.error('搜索建议失败', error)
+      logger.error('搜索学生失败:', error)
       return []
     }
   }
 
   /**
-   * 热门搜索词
+   * 搜索课程
+   */
+  private async searchCourses(
+    keyword: string,
+    options: { limit?: number; includeInactive?: boolean } = {}
+  ): Promise<SearchResult[]> {
+    const { limit = 10, includeInactive = false } = options
+
+    try {
+      const courses = await prisma.course.findMany({
+        where: {
+          AND: [
+            {
+              OR: [
+                { name: { contains: keyword } }, // Course模型使用name字段
+                { category: { contains: keyword } },
+                { description: { contains: keyword } }
+              ]
+            },
+            includeInactive ? {} : { isActive: true }
+          ]
+        },
+        take: limit,
+        orderBy: {
+          updatedAt: 'desc'
+        }
+      })
+
+      return courses.map(course => ({
+        type: 'course' as const,
+        id: course.id,
+        title: course.name, // Course模型使用name字段
+        subtitle: `分类: ${course.category}`,
+        description: course.description || undefined,
+        relevanceScore: this.calculateRelevanceScore(keyword, course.name)
+      }))
+    } catch (error) {
+      logger.error('搜索课程失败:', error)
+      return []
+    }
+  }
+
+  /**
+   * 搜索教师
+   */
+  private async searchTeachers(
+    keyword: string,
+    options: { limit?: number; includeInactive?: boolean } = {}
+  ): Promise<SearchResult[]> {
+    const { limit = 10, includeInactive = false } = options
+
+    try {
+      const teachers = await prisma.teacher.findMany({
+        where: {
+          AND: [
+            {
+              OR: [
+                { realName: { contains: keyword } }, // Teacher模型使用realName字段
+                { phone: { contains: keyword } },
+                { email: { contains: keyword } }
+              ]
+            },
+            includeInactive ? {} : { isActive: true }
+          ]
+        },
+        take: limit,
+        orderBy: {
+          updatedAt: 'desc'
+        }
+      })
+
+      return teachers.map(teacher => ({
+        type: 'teacher' as const,
+        id: teacher.id,
+        title: teacher.realName, // Teacher模型使用realName字段
+        subtitle: `工号: ${teacher.teacherCode}`,
+        description: teacher.specialties.join(', ') || '暂无专业信息',
+        relevanceScore: this.calculateRelevanceScore(keyword, teacher.realName)
+      }))
+    } catch (error) {
+      logger.error('搜索教师失败:', error)
+      return []
+    }
+  }
+
+  /**
+   * 搜索建议（自动完成）
+   */
+  async searchSuggestions(
+    keyword: string,
+    options: { limit?: number } = {}
+  ): Promise<string[]> {
+    const { limit = 10 } = options
+
+    if (!keyword || keyword.length < 2) {
+      return []
+    }
+
+    try {
+      // 并行搜索各类型的名称
+      const [students, courses, teachers] = await Promise.all([
+        prisma.student.findMany({
+          where: { name: { startsWith: keyword } }, // Student模型使用name字段
+          select: { name: true },
+          take: limit
+        }),
+        prisma.course.findMany({
+          where: { name: { startsWith: keyword } }, // Course模型使用name字段
+          select: { name: true },
+          take: limit
+        }),
+        prisma.teacher.findMany({
+          where: { realName: { startsWith: keyword } }, // Teacher模型使用realName字段
+          select: { realName: true },
+          take: limit
+        })
+      ])
+
+      // 合并并去重
+      const suggestions = Array.from(new Set([
+        ...students.map(s => s.name),
+        ...courses.map(c => c.name),
+        ...teachers.map(t => t.realName)
+      ])).slice(0, limit)
+
+      return suggestions
+    } catch (error) {
+      logger.error('搜索建议失败:', error)
+      return []
+    }
+  }
+
+  /**
+   * 计算相关性得分
+   */
+  private calculateRelevanceScore(keyword: string, text: string): number {
+    if (!keyword || !text) return 0
+
+    const lowerKeyword = keyword.toLowerCase()
+    const lowerText = text.toLowerCase()
+
+    // 完全匹配得分最高
+    if (lowerText === lowerKeyword) return 100
+
+    // 开头匹配得分较高
+    if (lowerText.startsWith(lowerKeyword)) return 80
+
+    // 包含匹配得分中等
+    if (lowerText.includes(lowerKeyword)) return 60
+
+    // 模糊匹配得分较低
+    const distance = this.levenshteinDistance(lowerKeyword, lowerText)
+    const maxLength = Math.max(lowerKeyword.length, lowerText.length)
+    const similarity = 1 - distance / maxLength
+
+    return Math.round(similarity * 40)
+  }
+
+  /**
+   * 计算编辑距离（Levenshtein距离）
+   */
+  private levenshteinDistance(str1: string, str2: string): number {
+    const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null))
+
+    for (let i = 0; i <= str1.length; i++) {
+      matrix[0][i] = i
+    }
+
+    for (let j = 0; j <= str2.length; j++) {
+      matrix[j][0] = j
+    }
+
+    for (let j = 1; j <= str2.length; j++) {
+      for (let i = 1; i <= str1.length; i++) {
+        const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1
+        matrix[j][i] = Math.min(
+          matrix[j][i - 1] + 1, // deletion
+          matrix[j - 1][i] + 1, // insertion
+          matrix[j - 1][i - 1] + indicator // substitution
+        )
+      }
+    }
+
+    return matrix[str2.length][str1.length]
+  }
+  /**
+   * 获取热门搜索词
    */
   async getHotSearchTerms(limit: number = 10): Promise<string[]> {
-    // 这里可以基于搜索日志统计
-    // 暂时返回固定的热门搜索词
-    return ['舞蹈', '钢琴', '声乐', '美术', '书法', '古筝', '小提琴', '架子鼓']
+    // 简化实现，返回一些常用搜索词
+    return [
+      '数学', '语文', '英语', '物理', '化学', 
+      '音乐', '美术', '体育', '计算机', '历史'
+    ].slice(0, limit)
   }
 }
 
-// 导出单例
 export const searchService = new SearchService()
-export default searchService
-

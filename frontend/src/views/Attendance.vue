@@ -342,7 +342,7 @@ const pageSize = ref<number>(20)
     {
       id: 1, name: '二人台表演艺术', courseId: 'MUS001', description: '传统二人台表演艺术',
       category: 'music', level: 'intermediate', teacher: '刘爱华', teacherId: 1, credits: 2,
-      capacity: 30, enrolled: 25, location: '音乐教室1', fee: 200, semester: '2024秋季',
+      capacity: 30, enrolled: 25, location: '音乐教室1', semester: '2024秋季',
       timeSlots: [{ dayOfWeek: 1, startTime: '08:30', endTime: '10:30', period: 'morning' }],
       startDate: '2024-09-01', endDate: '2024-12-30', status: 'active',
       ageRestriction: { enabled: false, minAge: undefined, maxAge: undefined, description: '' },

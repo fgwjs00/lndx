@@ -13,7 +13,7 @@ import { logger } from '@/utils/logger'
  */
 export const rateLimiter = rateLimit({
   windowMs: config.rateLimit.windowMs, // 时间窗口
-  max: config.rateLimit.maxRequests,   // 最大请求数
+  max: 1000,   // 临时增加到1000个请求 (开发调试用)
   message: {
     code: 429,
     message: '请求过于频繁，请稍后再试',

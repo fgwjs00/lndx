@@ -14,6 +14,28 @@ const routes: RouteRecordRaw[] = [
       hidden: true
     }
   },
+  // 强制修改密码页
+  {
+    path: '/change-password',
+    name: 'ChangePassword',
+    component: () => import('@/views/ChangePasswordPage.vue'),
+    meta: { 
+      title: '修改密码',
+      requiresAuth: true,
+      hidden: true
+    }
+  },
+  // 手机端报名页面
+  {
+    path: '/mobile-registration',
+    name: 'MobileRegistration',
+    component: () => import('@/views/MobileRegistration.vue'),
+    meta: { 
+      title: '学员报名',
+      requiresAuth: false, // 允许匿名访问，便于学员自主报名
+      hidden: true // 不显示在主导航菜单中
+    }
+  },
   // 主应用路由
   {
     path: '/',
@@ -151,6 +173,18 @@ const routes: RouteRecordRaw[] = [
           permissions: ['system:*'],
           icon: 'fas fa-user-shield'
         }
+      },
+      {
+        path: 'grade-management',
+        name: 'GradeManagement',
+        component: () => import('@/views/GradeManagementSimple.vue'),
+        meta: { 
+          title: '年级管理',
+          requiresAuth: true,
+          roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN, UserRole.TEACHER],
+          permissions: ['grade:read'],
+          icon: 'fas fa-graduation-cap'
+        }
       }
     ]
   },
@@ -180,14 +214,15 @@ router.beforeEach(async (to, from, next) => {
   
   // 如果还未初始化认证状态，先初始化
   if (!authStore.isAuthenticated && localStorage.getItem('token')) {
-    console.log('🔄 初始化认证状态...')
+    console.log('🔄 路由守卫：检测到未初始化的认证状态，重新初始化...')
     await authStore.initializeAuth()
   }
   
   const requiresAuth = to.meta.requiresAuth !== false
   const isAuthenticated = authStore.isAuthenticated
+  const mustChangePassword = authStore.mustChangePassword
   
-  console.log('🔍 权限检查:', { requiresAuth, isAuthenticated, userRole: authStore.user?.role })
+  console.log('🔍 权限检查:', { requiresAuth, isAuthenticated, mustChangePassword, userRole: authStore.user?.role })
   
   // 如果需要认证但用户未登录，跳转到登录页
   if (requiresAuth && !isAuthenticated) {
@@ -202,6 +237,20 @@ router.beforeEach(async (to, from, next) => {
   // 如果已登录但访问登录页，跳转到首页
   if (to.path === '/login' && isAuthenticated) {
     console.log('✅ 已登录用户访问登录页，跳转到首页')
+    next('/')
+    return
+  }
+  
+  // 检查是否需要强制修改密码
+  if (isAuthenticated && mustChangePassword && to.path !== '/change-password') {
+    console.log('🔒 用户需要强制修改密码，跳转到修改密码页面')
+    next('/change-password')
+    return
+  }
+  
+  // 如果在修改密码页面且不需要强制修改密码，跳转到首页
+  if (to.path === '/change-password' && isAuthenticated && !mustChangePassword) {
+    console.log('✅ 密码已修改，跳转到首页')
     next('/')
     return
   }

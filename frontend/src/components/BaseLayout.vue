@@ -69,7 +69,7 @@
             <a-dropdown placement="bottomRight" :trigger="['click']">
               <div class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors">
                 <img
-                  :src="authStore.userAvatar || 'https://randomuser.me/api/portraits/women/65.jpg'"
+                  :src="getAvatarUrl(authStore.userAvatar)"
                   alt="用户头像"
                   class="w-10 h-10 rounded-full border-2 border-gray-200"
                 />
@@ -118,17 +118,17 @@
     
     <!-- 弹窗组件 -->
     <UserProfileModal
-      v-model:visible="showProfile"
+      v-model:open="showProfile"
       @success="handleProfileSuccess"
     />
     
     <AccountSettingsModal
-      v-model:visible="showSettings"
+      v-model:open="showSettings"
       @success="handleSettingsSuccess"
     />
     
     <ChangePasswordModal
-      v-model:visible="showChangePassword"
+      v-model:open="showChangePassword"
       @success="handlePasswordSuccess"
     />
   </div>
@@ -150,6 +150,7 @@ import { shouldMockAuth } from '@/utils/dev'
 import UserProfileModal from '@/components/UserProfileModal.vue'
 import AccountSettingsModal from '@/components/AccountSettingsModal.vue'
 import ChangePasswordModal from '@/components/ChangePasswordModal.vue'
+import { getAvatarUrl } from '@/utils/imageUtils'
 
 // 菜单项配置
 interface MenuItem {
@@ -177,14 +178,13 @@ const menuItems: MenuItem[] = [
     roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN, UserRole.TEACHER],
     permissions: ['student:read']
   },
-
   { 
-    name: '用户管理', 
-    path: '/user', 
-    icon: 'fas fa-users', 
-    description: '用户账户管理',
-    roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN],
-    permissions: ['user:read']
+    name: '年级管理', 
+    path: '/grade-management', 
+    icon: 'fas fa-graduation-cap', 
+    description: '学生年级升级和毕业管理',
+    roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN, UserRole.TEACHER],
+    permissions: ['grade:read']
   },
   { 
     name: '课程管理', 
@@ -225,6 +225,14 @@ const menuItems: MenuItem[] = [
     description: '数据统计与分析',
     roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN, UserRole.TEACHER],
     permissions: ['analysis:read']
+  },
+  { 
+    name: '用户管理', 
+    path: '/user', 
+    icon: 'fas fa-users', 
+    description: '用户账户管理',
+    roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN],
+    permissions: ['user:read']
   },
   { 
     name: '系统日志', 

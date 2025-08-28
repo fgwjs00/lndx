@@ -37,28 +37,38 @@ export class ApplicationService {
 
   /**
    * 提交报名申请
-   * @param studentInfo 学员信息
-   * @param courseId 课程ID
+   * @param applicationData 报名申请数据
    * @returns 创建的报名申请
    */
-  static async submitApplication(studentInfo: Omit<StudentInfo, 'id' | 'createdAt' | 'updatedAt'>, courseId: number): Promise<ApiResponse<Application>> {
-    const applicationData = {
-      studentInfo,
-      courseId,
-      applicationDate: new Date().toISOString(),
-      status: 'pending' as ApplicationStatus
-    }
+  static async submitApplication(applicationData: any): Promise<ApiResponse<Application>> {
     return request.post<Application>('/applications', applicationData)
   }
 
   /**
-   * 更新报名申请
-   * @param id 申请ID
-   * @param data 更新数据
-   * @returns 更新后的报名申请
+   * 提交报名申请（V2版本，支持年级管理）
+   * @param applicationData 报名申请数据
+   * @returns 创建的报名申请
    */
-  static async updateApplication(id: number, data: Partial<Application>): Promise<ApiResponse<Application>> {
-    return request.put<Application>(`/applications/${id}`, data)
+  static async submitApplicationV2(applicationData: any): Promise<ApiResponse<Application>> {
+    return request.post<Application>('/applications-v2', applicationData)
+  }
+
+  /**
+   * 匿名提交报名申请（手机端）
+   * @param applicationData 报名申请数据
+   * @returns 创建的报名申请
+   */
+  static async submitAnonymousApplication(applicationData: any): Promise<ApiResponse<Application>> {
+    return request.post<Application>('/applications/anonymous', applicationData)
+  }
+
+  /**
+   * 匿名提交报名申请（V2版本，支持年级管理，手机端）
+   * @param applicationData 报名申请数据
+   * @returns 创建的报名申请
+   */
+  static async submitAnonymousApplicationV2(applicationData: any): Promise<ApiResponse<Application>> {
+    return request.post<Application>('/applications-v2/anonymous', applicationData)
   }
 
   /**
@@ -87,7 +97,7 @@ export class ApplicationService {
    * @returns 审核结果
    */
   static async reviewApplication(
-    id: number, 
+    id: string, 
     status: ApplicationStatus, 
     comments?: string
   ): Promise<ApiResponse<Application>> {
@@ -96,6 +106,16 @@ export class ApplicationService {
       comments,
       reviewDate: new Date().toISOString()
     })
+  }
+
+  /**
+   * 更新申请信息
+   * @param id 申请ID
+   * @param data 更新数据
+   * @returns 更新结果
+   */
+  static async updateApplication(id: string, data: any): Promise<ApiResponse<Application>> {
+    return request.put<Application>(`/applications/${id}`, data)
   }
 
   /**
@@ -175,12 +195,71 @@ export class ApplicationService {
   }
 
   /**
-   * 检查身份证号是否已存在
-   * @param idNumber 身份证号
-   * @returns 检查结果
+   * 上传身份证图片
+   * @param file 图片文件
+   * @returns 上传结果
    */
-  static async checkIdNumberExists(idNumber: string): Promise<ApiResponse<{ exists: boolean }>> {
-    return request.get<{ exists: boolean }>('/applications/check-id', { idNumber })
+  static async uploadIdCardImage(file: File): Promise<ApiResponse<{ 
+    url: string
+    fileName: string
+    fileSize: number 
+  }>> {
+    const formData = new FormData()
+    formData.append('image', file)
+    
+    // 注意：不要手动设置 Content-Type，让浏览器自动设置 boundary
+    return request.post('/applications/upload-image', formData)
+  }
+
+  /**
+   * 检查身份证号是否已存在并获取学员信息
+   * @param idNumber 身份证号
+   * @returns 检查结果和学员信息
+   */
+  static async checkIdNumberExists(idNumber: string): Promise<ApiResponse<{ 
+    exists: boolean,
+    activeEnrollmentsCount: number,
+    maxCoursesAllowed: number,
+    remainingCourseSlots: number,
+    studentInfo?: {
+      id: number
+      name: string
+      gender: string
+      birthDate: string
+      ethnicity: string
+      educationLevel: string
+      politicalStatus: string
+      contactPhone: string
+      idCardAddress: string
+      familyAddress: string
+      currentAddress: string
+      healthStatus: string
+      photo: string
+      idCardFront: string
+      idCardBack: string
+      major: string
+      currentGrade: string
+      semester: string
+      insuranceCompany: string
+      retirementCategory: string
+      studyPeriodStart: string
+      studyPeriodEnd: string
+      emergencyContact: string // 添加紧急联系人
+      emergencyPhone: string // 添加紧急联系电话
+      emergencyRelation: string // 添加紧急联系关系
+      enrollments?: Array<{
+        id: number
+        status: string
+        courseId: number
+        course: {
+          id: number
+          name: string
+          level: string
+        }
+      }>
+    }
+  }>> {
+    return request.get<{ exists: boolean, studentInfo?: any, activeEnrollmentsCount?: number, maxCoursesAllowed?: number, remainingCourseSlots?: number }>(`/applications/check-id/${idNumber}`)
   }
 
   /**
@@ -194,8 +273,13 @@ export class ApplicationService {
     teacher: string
     capacity: number
     enrolled: number
-    fee: number
     schedule: string
+    timeSlots: Array<{
+      dayOfWeek: number
+      startTime: string
+      endTime: string
+      period?: string
+    }>
     startDate: string
     endDate: string
   }>>> {

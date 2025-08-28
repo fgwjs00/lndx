@@ -1,11 +1,11 @@
 <template>
   <a-modal
-    :open="visible"
+    :open="props.open"
     title="个人资料"
     :width="800"
     @ok="handleSave"
     @cancel="handleCancel"
-    @update:open="(value) => emit('update:visible', value)"
+    @update:open="(value) => emit('update:open', value)"
     :confirm-loading="loading"
     ok-text="保存"
     cancel-text="取消"
@@ -15,7 +15,7 @@
       <div class="flex flex-col items-center mb-8">
         <div class="relative mb-4">
           <img
-            :src="formData.avatar || 'https://randomuser.me/api/portraits/women/65.jpg'"
+            :src="getAvatarUrl(formData.avatar)"
             alt="用户头像"
             class="w-24 h-24 rounded-full border-4 border-gray-200 shadow-lg"
           />
@@ -122,17 +122,18 @@ import { message } from 'ant-design-vue'
 import { useAuthStore } from '@/store/auth'
 import { getRoleName, getRoleColor } from '@/utils/auth'
 import type { UserInfo, UpdateProfileRequest } from '@/types/auth'
+import { getAvatarUrl } from '@/utils/imageUtils'
 
 // 组件属性
 interface Props {
-  visible: boolean
+  open: boolean
 }
 
 const props = defineProps<Props>()
 
 // 组件事件
 const emit = defineEmits<{
-  'update:visible': [visible: boolean]
+  'update:open': [open: boolean]
   success: []
 }>()
 
@@ -171,7 +172,7 @@ const formRules = {
 }
 
 // 监听弹窗显示状态
-watch(() => props.visible, (newValue) => {
+watch(() => props.open, (newValue) => {
   if (newValue && authStore.user) {
     // 弹窗打开时，填充用户数据
     Object.assign(formData, authStore.user)
@@ -254,7 +255,7 @@ const handleSave = async (): Promise<void> => {
     
     if (success) {
       emit('success')
-      emit('update:visible', false)
+      emit('update:open', false)
     }
   } catch (error) {
     console.error('保存失败:', error)
@@ -267,7 +268,7 @@ const handleSave = async (): Promise<void> => {
  * 处理取消
  */
 const handleCancel = (): void => {
-  emit('update:visible', false)
+  emit('update:open', false)
 }
 </script>
 

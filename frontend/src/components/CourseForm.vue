@@ -20,54 +20,50 @@
               />
             </a-form-item>
   
-            <a-form-item label="课程编号" name="courseId">
-              <a-input 
-                v-model:value="formData.courseId" 
-                placeholder="如：MUS001"
-                class="rounded-lg"
-              />
-            </a-form-item>
+            <!-- 课程编号字段已移除，数据库保留但前端不显示 -->
   
-            <a-form-item label="课程分类" name="category">
+            <a-form-item label="所属院系" name="category">
               <a-select 
                 v-model:value="formData.category" 
-                placeholder="请选择课程分类"
+                placeholder="请选择所属院系"
                 class="rounded-lg"
               >
-                <a-select-option value="music">音乐类</a-select-option>
-                <a-select-option value="instrument">器乐类</a-select-option>
-                <a-select-option value="art">艺术类</a-select-option>
-                <a-select-option value="literature">文学类</a-select-option>
-                <a-select-option value="practical">实用技能</a-select-option>
-                <a-select-option value="comprehensive">综合类</a-select-option>
+                <!-- 动态加载院系选项 -->
+                <a-select-option v-for="deptCode in departmentCodes" :key="deptCode" :value="deptCode">
+                  {{ deptCode }}
+                </a-select-option>
               </a-select>
             </a-form-item>
   
-            <a-form-item label="课程级别" name="level">
+            <!-- 年级管理配置 -->
+            <a-form-item label="年级管理" name="requiresGrades">
+              <a-radio-group v-model:value="formData.requiresGrades" @change="handleGradeTypeChange">
+                <a-radio :value="true">分年级教学</a-radio>
+                <a-radio :value="false">不分年级</a-radio>
+              </a-radio-group>
+            </a-form-item>
+
+            <a-form-item v-if="formData.requiresGrades" label="年级" name="level">
               <a-select 
                 v-model:value="formData.level" 
-                placeholder="请选择课程级别"
+                placeholder="请选择年级"
                 class="rounded-lg"
               >
-                <a-select-option value="beginner">入门</a-select-option>
-                <a-select-option value="intermediate">中级</a-select-option>
-                <a-select-option value="advanced">高级</a-select-option>
-                <a-select-option value="grade1">一年级</a-select-option>
-                <a-select-option value="grade2">二年级</a-select-option>
-                <a-select-option value="grade3">三年级</a-select-option>
-                <a-select-option value="foundation">基础班</a-select-option>
-                <a-select-option value="improvement">提高班</a-select-option>
-                <a-select-option value="senior">高级班</a-select-option>
+                <a-select-option value="一年级">一年级</a-select-option>
+                <a-select-option value="二年级">二年级</a-select-option>
+                <a-select-option value="三年级">三年级</a-select-option>
               </a-select>
             </a-form-item>
-  
-            <a-form-item label="任课教师" name="teacher">
+
+            <a-form-item v-if="!formData.requiresGrades" label="年级说明" name="gradeDescription">
               <a-input 
-                v-model:value="formData.teacher" 
-                placeholder="请输入教师姓名"
+                v-model:value="formData.gradeDescription" 
+                placeholder="如：不分年级，适合所有学员"
                 class="rounded-lg"
               />
             </a-form-item>
+  
+            <!-- 任课教师字段已移除显示，数据库字段保留 -->
   
             <a-form-item label="上课地点" name="location">
               <a-input 
@@ -82,54 +78,19 @@
           <div class="space-y-4">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">详细信息</h3>
             
-            <div class="grid grid-cols-2 gap-4">
-              <a-form-item label="课程容量" name="capacity">
-                <a-input-number 
-                  v-model:value="formData.capacity" 
-                  :min="1"
-                  :max="100"
-                  placeholder="人数"
-                  class="w-full rounded-lg"
-                />
-              </a-form-item>
-  
-              <a-form-item label="学分" name="credits">
-                <a-input-number 
-                  v-model:value="formData.credits" 
-                  :min="1"
-                  :max="10"
-                  placeholder="学分"
-                  class="w-full rounded-lg"
-                />
-              </a-form-item>
-            </div>
-  
-            <a-form-item label="课程费用" name="fee">
+            <a-form-item label="课程容量" name="capacity">
               <a-input-number 
-                v-model:value="formData.fee" 
-                :min="0"
-                placeholder="元/学期"
+                v-model:value="formData.capacity" 
+                :min="1"
+                :max="100"
+                placeholder="人数"
                 class="w-full rounded-lg"
               />
             </a-form-item>
   
-            <div class="grid grid-cols-2 gap-4">
-              <a-form-item label="开课日期" name="startDate">
-                <a-date-picker 
-                  v-model:value="formData.startDate" 
-                  placeholder="选择开课日期"
-                  class="w-full rounded-lg"
-                />
-              </a-form-item>
+            <!-- 课程费用字段已移除，数据库保留但前端不显示 -->
   
-              <a-form-item label="结课日期" name="endDate">
-                <a-date-picker 
-                  v-model:value="formData.endDate" 
-                  placeholder="选择结课日期"
-                  class="w-full rounded-lg"
-                />
-              </a-form-item>
-            </div>
+            <!-- 开课日期和结课日期字段已移除，数据库保留但前端不显示 -->
   
             <a-form-item label="学期" name="semester">
               <a-input 
@@ -145,10 +106,10 @@
                 placeholder="请选择课程状态"
                 class="rounded-lg"
               >
-                <a-select-option value="pending">待开课</a-select-option>
-                <a-select-option value="active">进行中</a-select-option>
-                <a-select-option value="completed">已结课</a-select-option>
-                <a-select-option value="cancelled">已取消</a-select-option>
+                <a-select-option value="DRAFT">草稿</a-select-option>
+                <a-select-option value="PUBLISHED">已发布</a-select-option>
+                <a-select-option value="SUSPENDED">暂停</a-select-option>
+                <a-select-option value="CANCELLED">已取消</a-select-option>
               </a-select>
             </a-form-item>
           </div>
@@ -195,7 +156,6 @@
               >
                 <a-select-option value="morning">上午</a-select-option>
                 <a-select-option value="afternoon">下午</a-select-option>
-                <a-select-option value="evening">晚上</a-select-option>
               </a-select>
   
               <a-button 
@@ -322,6 +282,67 @@
             </div>
           </div>
         </div>
+
+        <!-- 年级管理配置 -->
+        <div class="mt-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">年级管理配置</h3>
+          <div class="bg-gray-50 rounded-lg p-4 space-y-4">
+            <a-form-item label="需要年级管理" name="requiresGrades">
+              <a-switch 
+                v-model:checked="formData.requiresGrades"
+                checked-children="需要"
+                un-checked-children="不需要"
+              />
+              <span class="ml-2 text-sm text-gray-500">关闭后任何年级的学生都可以报名此课程</span>
+            </a-form-item>
+
+            <div v-if="!formData.requiresGrades" class="space-y-4">
+              <a-form-item label="课程说明" name="gradeDescription">
+                <a-textarea 
+                  v-model:value="formData.gradeDescription"
+                  placeholder="例如：这是一个不分年级的短期培训课程，适合所有年级的学员参加"
+                  :rows="2"
+                  class="rounded-lg"
+                />
+              </a-form-item>
+
+              <!-- 快速设置模板 -->
+              <div class="border-t pt-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">常用说明</label>
+                <div class="flex flex-wrap gap-2">
+                  <button 
+                    type="button"
+                    @click="formData.gradeDescription = '短期培训课程，不分年级，所有学员均可参加'"
+                    class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs hover:bg-blue-200 transition-colors"
+                  >
+                    短期培训
+                  </button>
+                  <button 
+                    type="button"
+                    @click="formData.gradeDescription = '专业技能课程，按能力水平分班，不按年级限制'"
+                    class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs hover:bg-green-200 transition-colors"
+                  >
+                    技能课程
+                  </button>
+                  <button 
+                    type="button"
+                    @click="formData.gradeDescription = '兴趣爱好课程，欢迎各年级学员参加'"
+                    class="px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs hover:bg-purple-200 transition-colors"
+                  >
+                    兴趣课程
+                  </button>
+                  <button 
+                    type="button"
+                    @click="formData.gradeDescription = ''"
+                    class="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs hover:bg-gray-200 transition-colors"
+                  >
+                    清除说明
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
   
         <!-- 表单按钮 -->
         <div class="flex justify-end gap-4 mt-8 pt-6 border-t border-gray-200">
@@ -350,7 +371,9 @@
   import { ref, reactive, watch, onMounted } from 'vue'
   import { message } from 'ant-design-vue'
   import dayjs from 'dayjs'
-  import type { Course, CourseCategory, CourseLevel, TimeSlot, AgeRestriction } from '@/types/index'
+  import type { Course, CourseLevel, AgeRestriction, CourseCategory } from '@/types/index'
+  import { getDepartmentCodes } from '@/config/departments'
+  import { CourseService } from '@/api/course'
   
   // Props
   interface Props {
@@ -375,6 +398,9 @@
   const formRef = ref()
   const loading = ref<boolean>(false)
   
+  // 院系选项
+  const departmentCodes = getDepartmentCodes()
+  
   // 表单数据
 const formData = reactive({
   name: '',
@@ -382,15 +408,18 @@ const formData = reactive({
   description: '',
   category: '' as CourseCategory,
   level: '' as CourseLevel,
-  teacher: '',
+  // teacher: '', // 已移除显示，数据库字段保留
   credits: 2,
   capacity: 30,
   location: '',
-  fee: 200,
-  startDate: null as any,
-  endDate: null as any,
+  // fee: 200, // 已移除，数据库保留
+  // startDate: null as any, // 已移除，数据库保留
+  // endDate: null as any, // 已移除，数据库保留
   semester: '2024秋季',
-  status: 'pending' as const,
+  status: 'DRAFT' as const,
+  // 年级管理配置
+  requiresGrades: true,
+  gradeDescription: '',
   ageRestriction: {
     enabled: false,
     minAge: undefined,
@@ -408,7 +437,7 @@ const formData = reactive({
     dayOfWeek: 1 | 2 | 3 | 4 | 5 | 6 | 7
     startTime: any
     endTime: any
-    period: 'morning' | 'afternoon' | 'evening'
+    period: 'morning' | 'afternoon'
   }>
 })
   
@@ -417,15 +446,12 @@ const formRules = {
   name: [
     { required: true, message: '请输入课程名称', trigger: 'blur' }
   ],
-  courseId: [
-    { required: true, message: '请输入课程编号', trigger: 'blur' },
-    { pattern: /^[A-Z]{2,3}\d{3}$/, message: '课程编号格式：如MUS001', trigger: 'blur' }
-  ],
+  // courseId 验证规则已移除
   category: [
-    { required: true, message: '请选择课程分类', trigger: 'change' }
+    { required: true, message: '请选择所属院系', trigger: 'change' }
   ],
   level: [
-    { required: true, message: '请选择课程级别', trigger: 'change' }
+    { required: true, message: '请选择年级', trigger: 'change' }
   ],
   teacher: [
     { required: true, message: '请输入任课教师', trigger: 'blur' }
@@ -436,18 +462,9 @@ const formRules = {
   capacity: [
     { required: true, message: '请输入课程容量', trigger: 'blur' }
   ],
-  credits: [
-    { required: true, message: '请输入学分', trigger: 'blur' }
-  ],
-  fee: [
-    { required: true, message: '请输入课程费用', trigger: 'blur' }
-  ],
-  startDate: [
-    { required: true, message: '请选择开课日期', trigger: 'change' }
-  ],
-  endDate: [
-    { required: true, message: '请选择结课日期', trigger: 'change' }
-  ],
+  // credits 验证规则已移除
+  // fee 验证规则已移除
+  // startDate, endDate 验证规则已移除
   semester: [
     { required: true, message: '请输入学期', trigger: 'blur' }
   ],
@@ -465,25 +482,28 @@ const formRules = {
 const resetForm = (): void => {
   Object.assign(formData, {
     name: '',
-    courseId: '',
+    // courseId: '', // 已移除
     description: '',
     category: '',
     level: '',
-    teacher: '',
-    credits: 2,
+    // teacher: '', // 已移除显示，数据库字段保留
+    // credits: 2, // 已移除
     capacity: 30,
     location: '',
-    fee: 200,
-    startDate: null,
-    endDate: null,
+    // fee: 200, // 已移除
+    // startDate: null, // 已移除
+    // endDate: null, // 已移除
     semester: '2024秋季',
-    status: 'pending',
+    status: 'DRAFT',
     ageRestriction: {
       enabled: false,
       minAge: undefined,
       maxAge: undefined,
       description: ''
     },
+    // 年级管理配置
+    requiresGrades: true,        // 默认需要年级管理
+    gradeDescription: '',        // 年级说明
     timeSlots: [
       {
         dayOfWeek: 1 as 1,
@@ -495,7 +515,7 @@ const resetForm = (): void => {
       dayOfWeek: 1 | 2 | 3 | 4 | 5 | 6 | 7
       startTime: any
       endTime: any
-      period: 'morning' | 'afternoon' | 'evening'
+      period: 'morning' | 'afternoon'
     }>
   })
   
@@ -531,13 +551,14 @@ watch(() => props.course, (newCourse) => {
     // 编辑模式，填充表单数据
     Object.assign(formData, {
       ...newCourse,
-      startDate: newCourse.startDate ? dayjs(newCourse.startDate) : null,
-      endDate: newCourse.endDate ? dayjs(newCourse.endDate) : null,
-      timeSlots: newCourse.timeSlots.map(slot => ({
-        ...slot,
-        startTime: dayjs(slot.startTime, 'HH:mm'),
-        endTime: dayjs(slot.endTime, 'HH:mm')
-      }))
+      // startDate, endDate 字段已移除
+      timeSlots: Array.isArray(newCourse.timeSlots) 
+        ? newCourse.timeSlots.map(slot => ({
+            ...slot,
+            startTime: dayjs(slot.startTime, 'HH:mm'),
+            endTime: dayjs(slot.endTime, 'HH:mm')
+          }))
+        : [] // 如果不是数组，则使用空数组
     })
   } else {
     // 新增模式，重置表单
@@ -567,6 +588,31 @@ const addTimeSlot = (): void => {
   }
   
   /**
+   * 处理年级类型变化
+   */
+  const handleGradeTypeChange = (): void => {
+    if (!formData.requiresGrades) {
+      // 不分年级时清空年级字段
+      formData.level = ''
+      formData.gradeDescription = '不分年级，适合所有学员'
+    } else {
+      // 分年级时清空年级说明
+      formData.gradeDescription = ''
+    }
+  }
+
+  /**
+   * 生成课程编号
+   * 格式：DEPT-YYYY-XXXXXX (院系-年份-6位随机数)
+   */
+  const generateCourseCode = (): string => {
+    const year = new Date().getFullYear()
+    const random = Math.floor(100000 + Math.random() * 900000) // 6位随机数
+    const deptCode = formData.category.replace(/[系部]/g, '').substring(0, 4) // 提取院系缩写
+    return `${deptCode}-${year}-${random}`
+  }
+
+  /**
    * 处理表单提交
    */
   const handleSubmit = async (): Promise<void> => {
@@ -583,29 +629,56 @@ const addTimeSlot = (): void => {
         return
       }
       
-      // 构造课程数据
-      const courseData: Partial<Course> = {
-        ...formData,
-        startDate: formData.startDate?.format('YYYY-MM-DD'),
-        endDate: formData.endDate?.format('YYYY-MM-DD'),
+      // 构造符合后端API格式的课程数据
+      const courseData = {
+        courseCode: generateCourseCode(), // 🔧 修复：自动生成课程编号
+        name: formData.name,
+        description: formData.description || '',
+        category: formData.category,
+        level: formData.level.toUpperCase(), // 后端期望大写格式
+        duration: 120, // 默认2小时
+        maxStudents: formData.capacity,
+        // 🔥 修复：添加缺失的字段
+        // teacher: formData.teacher,        // 任课教师字段已移除显示
+        location: formData.location,         // 上课地点
+        status: formData.status,             // 课程状态
+        semester: formData.semester,         // 学期
+        // 年龄限制
+        hasAgeRestriction: formData.ageRestriction.enabled,
+        minAge: formData.ageRestriction.enabled ? formData.ageRestriction.minAge : null,
+        maxAge: formData.ageRestriction.enabled ? formData.ageRestriction.maxAge : null,
+        ageDescription: formData.ageRestriction.enabled ? formData.ageRestriction.description : null,
+        // 年级管理配置
+        requiresGrades: formData.requiresGrades,
+        gradeDescription: formData.gradeDescription || null,
+        // 上课时间安排 - 转换为后端期望的格式
         timeSlots: validTimeSlots.map(slot => ({
           dayOfWeek: slot.dayOfWeek,
           startTime: slot.startTime.format('HH:mm'),
           endTime: slot.endTime.format('HH:mm'),
           period: slot.period
         })),
-        enrolled: props.course?.enrolled || 0,
-        teacherId: props.course?.teacherId || Math.floor(Math.random() * 1000),
-        id: props.course?.id || Date.now(),
-        createdAt: props.course?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        // 其他字段
+        tags: [],
+        teacherIds: [] // 暂时为空，后期可以实现教师选择
       }
       
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // 🔥 使用真实的API调用，而不是模拟数据
+      let response
+      if (props.course) {
+        // 更新课程
+        response = await CourseService.updateCourse(props.course.id.toString(), courseData as any)
+      } else {
+        // 创建课程  
+        response = await CourseService.createCourse(courseData as any)
+      }
       
-      message.success(props.course ? '课程更新成功' : '课程创建成功')
-      emit('success', courseData as Course)
+      if (response.code === 200) {
+        message.success(props.course ? '课程更新成功' : '课程创建成功')
+        emit('success', response.data as any)
+      } else {
+        throw new Error(response.message || '操作失败')
+      }
       
     } catch (error) {
       console.error('提交课程失败:', error)

@@ -21,7 +21,7 @@
             <i class="fas fa-users text-blue-600 text-xl"></i>
           </div>
           <div>
-            <h3 class="text-2xl font-bold text-gray-800">1,842</h3>
+            <h3 class="text-2xl font-bold text-gray-800">{{ studentStats.totalStudents.toLocaleString() }}</h3>
             <p class="text-gray-500 text-sm">总学生数</p>
           </div>
         </div>
@@ -33,8 +33,8 @@
             <i class="fas fa-user-check text-green-600 text-xl"></i>
           </div>
           <div>
-            <h3 class="text-2xl font-bold text-gray-800">1,756</h3>
-            <p class="text-gray-500 text-sm">在校学生</p>
+            <h3 class="text-2xl font-bold text-gray-800">{{ studentStats.activeStudents.toLocaleString() }}</h3>
+            <p class="text-gray-500 text-sm">已通过学生</p>
           </div>
         </div>
       </div>
@@ -45,7 +45,7 @@
             <i class="fas fa-user-plus text-yellow-600 text-xl"></i>
           </div>
           <div>
-            <h3 class="text-2xl font-bold text-gray-800">86</h3>
+            <h3 class="text-2xl font-bold text-gray-800">{{ studentStats.newStudentsThisMonth }}</h3>
             <p class="text-gray-500 text-sm">新增学生</p>
           </div>
         </div>
@@ -53,12 +53,12 @@
       
       <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
         <div class="flex items-center">
-          <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-4">
-            <i class="fas fa-user-graduate text-red-600 text-xl"></i>
+          <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
+            <i class="fas fa-user-clock text-yellow-600 text-xl"></i>
           </div>
           <div>
-            <h3 class="text-2xl font-bold text-gray-800">324</h3>
-            <p class="text-gray-500 text-sm">毕业学生</p>
+            <h3 class="text-2xl font-bold text-gray-800">{{ studentStats.newStudentsThisMonth }}</h3>
+            <p class="text-gray-500 text-sm">本月新增</p>
           </div>
         </div>
       </div>
@@ -82,25 +82,70 @@
         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
           <!-- 筛选区域 -->
           <div class="flex flex-col sm:flex-row gap-3">
-            <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 min-w-0">
-              <option value="">所有专业</option>
-              <option value="computer">计算机科学</option>
-              <option value="engineering">工程技术</option>
-              <option value="business">工商管理</option>
+            <select 
+              v-model="selectedSemester"
+              @change="handleFilterChange"
+              class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 min-w-0"
+            >
+              <option value="">所有学期</option>
+              <option v-for="semester in availableSemesters" :key="semester" :value="semester">
+                {{ semester }}
+              </option>
             </select>
             
-            <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 min-w-0">
+            <select 
+              v-model="selectedMajor"
+              @change="handleFilterChange"
+              class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 min-w-0"
+            >
+              <option value="">所有院系</option>
+              <option v-for="major in availableMajors" :key="major" :value="major">
+                {{ major }}
+              </option>
+            </select>
+            
+            <select 
+              v-model="selectedGrade"
+              @change="handleFilterChange"
+              class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 min-w-0"
+            >
+              <option value="">所有年级</option>
+              <option v-for="grade in availableGrades" :key="grade" :value="grade">
+                {{ grade }}
+              </option>
+            </select>
+            
+            <select 
+              v-model="selectedCourse"
+              @change="handleFilterChange"
+              class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 min-w-0"
+            >
+              <option value="">所有课程</option>
+              <option v-for="course in availableCourses" :key="course.id" :value="course.id">
+                {{ course.name }}
+              </option>
+            </select>
+            
+            <select 
+              v-model="selectedStatus"
+              @change="handleFilterChange"
+              class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 min-w-0"
+            >
               <option value="">所有状态</option>
-              <option value="active">在校</option>
-              <option value="inactive">休学</option>
-              <option value="graduated">毕业</option>
+              <option value="APPROVED">已通过</option>
+              <option value="PENDING">待审核</option>
+              <option value="REJECTED">已拒绝</option>
+              <option value="CANCELLED">已取消</option>
             </select>
           </div>
           
           <!-- 操作按钮 -->
           <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            <button class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0">
-              <i class="fas fa-plus mr-2"></i>
+            <button 
+              @click="handleAddStudent"
+              class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0"
+            >
+              <i class="fas fa-user-plus mr-2"></i>
               <span class="whitespace-nowrap">添加学生</span>
             </button>
             
@@ -109,7 +154,10 @@
               <span class="whitespace-nowrap">批量导入</span>
             </button>
             
-            <button class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0">
+            <button 
+              @click="handleExportStudents"
+              :disabled="loading"
+              class="bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0">
               <i class="fas fa-download mr-2"></i>
               <span class="whitespace-nowrap">导出数据</span>
             </button>
@@ -162,10 +210,11 @@
                 <input type="checkbox" class="rounded">
               </th>
               <th class="text-left py-4 px-6 text-gray-600 font-semibold">学生信息</th>
-              <th class="text-left py-4 px-6 text-gray-600 font-semibold">学号</th>
-              <th class="text-left py-4 px-6 text-gray-600 font-semibold">专业</th>
-              <th class="text-left py-4 px-6 text-gray-600 font-semibold">班级</th>
-              <th class="text-left py-4 px-6 text-gray-600 font-semibold">联系方式</th>
+              <th class="text-left py-4 px-6 text-gray-600 font-semibold">手机号</th>
+              <th class="text-left py-4 px-6 text-gray-600 font-semibold">学期</th>
+              <th class="text-left py-4 px-6 text-gray-600 font-semibold">院系</th>
+              <th class="text-left py-4 px-6 text-gray-600 font-semibold">年级</th>
+              <th class="text-left py-4 px-6 text-gray-600 font-semibold">报名课程</th>
               <th class="text-left py-4 px-6 text-gray-600 font-semibold">状态</th>
               <th class="text-left py-4 px-6 text-gray-600 font-semibold">操作</th>
             </tr>
@@ -176,18 +225,26 @@
                 <input type="checkbox" class="rounded">
               </td>
               <td class="py-4 px-6">
-                <div class="flex items-center">
-                  <img :src="student.avatar" :alt="student.name" class="w-10 h-10 rounded-full mr-3">
-                  <div>
-                    <p class="font-medium text-gray-800">{{ student.name }}</p>
-                    <p class="text-sm text-gray-500">{{ student.email }}</p>
-                  </div>
+                <div>
+                  <p class="font-semibold text-gray-800 text-lg">{{ student.name }}</p>
+                  <p class="text-sm text-gray-500 font-mono">{{ student.idNumber || student.studentCode }}</p>
                 </div>
               </td>
-              <td class="py-4 px-6 text-gray-800 font-mono">{{ student.studentId }}</td>
-              <td class="py-4 px-6 text-gray-600">{{ student.major }}</td>
-              <td class="py-4 px-6 text-gray-600">{{ student.class }}</td>
-              <td class="py-4 px-6 text-gray-600">{{ student.phone }}</td>
+              <td class="py-4 px-6 text-gray-600">{{ student.contactPhone || student.phone || '未设置' }}</td>
+              <td class="py-4 px-6 text-gray-600">{{ student.semester }}</td>
+              <td class="py-4 px-6 text-gray-600">{{ student.major || '未设置' }}</td>
+              <td class="py-4 px-6 text-gray-600">{{ student.currentGrade || '未设置' }}</td>
+              <td class="py-4 px-6">
+                <div class="space-y-1">
+                  <div v-if="student.enrollments && student.enrollments.length > 0">
+                    <span v-for="enrollment in student.enrollments" :key="enrollment.id" 
+                          class="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs mr-1 mb-1">
+                      {{ enrollment.course?.name || '未知课程' }}
+                    </span>
+                  </div>
+                  <div v-else class="text-gray-400 text-sm">未报名</div>
+                </div>
+              </td>
               <td class="py-4 px-6">
                 <span 
                   :class="getStatusClass(student.status)"
@@ -199,30 +256,22 @@
               <td class="py-4 px-6">
                 <div class="flex items-center gap-3">
                   <button 
+                    @click="handleEditStudent(student)"
                     class="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors flex items-center justify-center min-w-0" 
                     title="编辑"
                   >
                     <i class="fas fa-edit text-sm"></i>
                   </button>
                   <button 
+                    @click="handleViewStudent(student)"
                     class="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors flex items-center justify-center min-w-0" 
                     title="查看详情"
                   >
                     <i class="fas fa-eye text-sm"></i>
                   </button>
+
                   <button 
-                    class="p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200 transition-colors flex items-center justify-center min-w-0" 
-                    title="重置密码"
-                  >
-                    <i class="fas fa-key text-sm"></i>
-                  </button>
-                  <button 
-                    class="p-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 transition-colors flex items-center justify-center min-w-0" 
-                    title="状态切换"
-                  >
-                    <i class="fas fa-toggle-on text-sm"></i>
-                  </button>
-                  <button 
+                    @click="handleDeleteStudent(student)"
                     class="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center min-w-0" 
                     title="删除"
                   >
@@ -239,28 +288,42 @@
       <div class="p-6 border-t border-gray-200">
         <div class="flex items-center justify-between">
           <div class="text-sm text-gray-500">
-            显示 1-10 条，共{{ students.length }} 条记录
+            显示 {{ (pagination.current - 1) * pagination.pageSize + 1 }}-{{ Math.min(pagination.current * pagination.pageSize, pagination.total) }} 条，共 {{ pagination.total }} 条记录
           </div>
-          <div class="flex items-center space-x-2">
-            <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors">
-              上一页
-            </button>
-            <button class="px-3 py-1 bg-emerald-500 text-white rounded">
-              1
-            </button>
-            <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors">
-              2
-            </button>
-            <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors">
-              3
-            </button>
-            <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors">
-              下一页
-            </button>
-          </div>
+          <a-pagination
+            v-model:current="pagination.current"
+            v-model:page-size="pagination.pageSize"
+            :total="pagination.total"
+            :show-size-changer="true"
+            :show-quick-jumper="true"
+            :page-size-options="['10', '20', '50', '100']"
+            :show-total="(total: number) => `共 ${total} 条记录`"
+            @change="handlePageChange"
+            @show-size-change="handlePageChange"
+            class="ant-pagination-custom"
+          />
         </div>
       </div>
     </div>
+
+    <!-- 学生详情查看弹窗 -->
+    <StudentDetailModal 
+      v-model:open="showDetailModal"
+      :student="viewingStudent"
+    />
+    
+    <!-- 学生编辑弹窗 -->
+    <StudentEditModal 
+      v-model:open="showEditModal"
+      :student="editingStudent"
+      @success="handleStudentUpdate"
+    />
+    
+    <!-- 添加学生弹窗 -->
+    <StudentAddModal 
+      v-model:open="showAddModal"
+      @success="handleStudentAdd"
+    />
   </div>
 </template>
 
@@ -270,119 +333,446 @@
  * @component Student
  * @description 学生信息的增删改查管理
  */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { message, Modal } from 'ant-design-vue'
+import { StudentService, type Student } from '@/api/student'
+import { CourseService } from '@/api/course'
+import StudentDetailModal from '@/components/StudentDetailModal.vue'
+import StudentEditModal from '@/components/StudentEditModal.vue'
+import StudentAddModal from '@/components/StudentAddModal.vue'
 
-// 学生数据类型定义
-interface Student {
-  id: number
-  name: string
-  studentId: string
-  email: string
-  major: string
-  class: string
-  phone: string
-  avatar: string
-  status: 'active' | 'inactive' | 'graduated'
+// 学生统计数据类型
+interface StudentStats {
+  totalStudents: number
+  activeStudents: number      // 已通过学生
+  inactiveStudents: number    // 待审核学生
+  graduatedStudents: number   // 被拒绝学生（重用字段）
+  newStudentsThisMonth: number
 }
 
 // 响应式数据
 const searchQuery = ref<string>('')
-const students = ref<Student[]>([
-  {
-    id: 1,
-    name: '陈雨',
-    studentId: '20231001',
-    email: 'chenyutong@example.com',
-    major: '计算机科学',
-    class: 'CS2023A',
-    phone: '138****1234',
-    avatar: 'https://randomuser.me/api/portraits/women/1.jpg',
-    status: 'active'
-  },
-  {
-    id: 2,
-    name: '杨天',
-    studentId: '20231002',
-    email: 'yangtianyu@example.com',
-    major: '电子信息工程',
-    class: 'EE2023B',
-    phone: '139****5678',
-    avatar: 'https://randomuser.me/api/portraits/men/2.jpg',
-    status: 'active'
-  },
-  {
-    id: 3,
-    name: '周欣',
-    studentId: '20231003',
-    email: 'zhouxinran@example.com',
-    major: '工商管理',
-    class: 'BA2023C',
-    phone: '137****9012',
-    avatar: 'https://randomuser.me/api/portraits/women/3.jpg',
-    status: 'inactive'
-  },
-  {
-    id: 4,
-    name: '吴宇',
-    studentId: '20231004',
-    email: 'wuyuhang@example.com',
-    major: '机械工程',
-    class: 'ME2023D',
-    phone: '136****3456',
-    avatar: 'https://randomuser.me/api/portraits/men/4.jpg',
-    status: 'graduated'
-  }
-])
+const selectedMajor = ref<string>('')
+const selectedGrade = ref<string>('')
+const selectedCourse = ref<string>('')
+const selectedStatus = ref<string>('')
+const selectedSemester = ref<string>('')
+const students = ref<Student[]>([])
+const loading = ref<boolean>(false)
+const availableMajors = ref<string[]>([])
+const availableGrades = ref<string[]>(['一年级', '二年级', '三年级', '不分年级'])
+const availableCourses = ref<Array<{id: string, name: string}>>([])
+const availableSemesters = ref<string[]>([])
+const studentStats = ref<StudentStats>({
+  totalStudents: 0,
+  activeStudents: 0,      // 已通过学生
+  inactiveStudents: 0,    // 待审核学生
+  graduatedStudents: 0,   // 被拒绝学生
+  newStudentsThisMonth: 0
+})
+const pagination = ref({
+  current: 1,
+  pageSize: 10,
+  total: 0
+})
 
-// 计算属性 - 过滤学生列表
-const filteredStudents = computed<Student[]>(() => {
-  if (!searchQuery.value) {
-    return students.value
+// 表单相关
+
+const showDetailModal = ref<boolean>(false)
+const showEditModal = ref<boolean>(false)
+const showAddModal = ref<boolean>(false)
+const editingStudent = ref<Student | null>(null)
+const viewingStudent = ref<Student | null>(null)
+
+// API调用方法
+/**
+ * 获取学生列表
+ */
+const fetchStudents = async (): Promise<void> => {
+  try {
+    loading.value = true
+    const params: any = {
+      page: pagination.value.current,
+      pageSize: pagination.value.pageSize,
+    }
+    
+    // 搜索关键词
+    if (searchQuery.value && searchQuery.value.trim()) {
+      params.keyword = searchQuery.value.trim()
+    }
+    
+    // 院系筛选
+    if (selectedMajor.value) {
+      params.major = selectedMajor.value
+    }
+    
+    // 年级筛选
+    if (selectedGrade.value) {
+      params.currentGrade = selectedGrade.value
+    }
+    
+    // 课程筛选
+    if (selectedCourse.value) {
+      params.courseId = selectedCourse.value
+    }
+    
+    // 状态筛选
+    if (selectedStatus.value) {
+      params.status = selectedStatus.value
+    }
+    
+    // 学期筛选
+    if (selectedSemester.value) {
+      params.semester = selectedSemester.value
+    }
+
+    const response = await StudentService.getStudents(params)
+    students.value = response.data?.list || []
+    pagination.value.total = response.data?.total || 0
+    
+    console.log('获取学生列表成功:', response.data)
+  } catch (error) {
+    console.error('获取学生列表失败:', error)
+    message.error('获取学生列表失败')
+  } finally {
+    loading.value = false
   }
+}
+
+/**
+ * 获取学生统计数据
+ */
+const fetchStudentStats = async (): Promise<void> => {
+  try {
+    const response = await StudentService.getStudentStats()
+    studentStats.value = response.data
+    console.log('获取学生统计成功:', response.data)
+  } catch (error) {
+    console.error('获取学生统计失败:', error)
+    message.error('获取学生统计失败')
+  }
+}
+
+/**
+ * 获取院系列表
+ */
+const fetchMajors = async (): Promise<void> => {
+  try {
+    const response = await StudentService.getMajors()
+    availableMajors.value = response.data || []
+    console.log('获取院系列表成功:', response.data)
+  } catch (error) {
+    console.error('获取院系列表失败:', error)
+    // 失败时使用默认院系选项
+    availableMajors.value = ['音乐学院', '器乐学院', '艺术学院', '文学院', '技术学院', '综合学院']
+  }
+}
+
+/**
+ * 获取课程列表
+ */
+const fetchCourses = async (): Promise<void> => {
+  try {
+    // 使用最大分页限制100来获取课程
+    const response = await CourseService.getCourses({
+      page: 1,
+      pageSize: 100, // 修复：使用API允许的最大值100
+      status: 'PUBLISHED'
+    })
+    availableCourses.value = (response.data?.list || []).map((course: any) => ({
+      id: course.id,
+      name: course.name
+    }))
+    console.log('获取课程列表成功:', availableCourses.value)
+  } catch (error) {
+    console.error('获取课程列表失败:', error)
+    message.error('获取课程列表失败')
+    // 设置空数组避免筛选框报错
+    availableCourses.value = []
+  }
+}
+
+/**
+ * 获取当前年份学期
+ */
+const getCurrentYearSemester = (): string => {
+  const currentYear = new Date().getFullYear()
+  return `${currentYear}年秋季`
+}
+
+/**
+ * 设置默认学期
+ */
+const setDefaultSemester = (): void => {
+  const currentSemester = getCurrentYearSemester()
+  if (availableSemesters.value.includes(currentSemester)) {
+    selectedSemester.value = currentSemester
+    console.log(`设置默认学期为: ${currentSemester}`)
+  } else if (availableSemesters.value.length > 0) {
+    selectedSemester.value = availableSemesters.value[0]
+    console.log(`当年学期不存在，设置默认学期为: ${selectedSemester.value}`)
+  }
+}
+
+/**
+ * 获取学期列表
+ */
+const fetchSemesters = async (): Promise<void> => {
+  try {
+    const response = await StudentService.getSemesters()
+    availableSemesters.value = response.data || []
+    console.log('获取学期列表成功:', response.data)
+    setDefaultSemester()
+  } catch (error) {
+    console.error('获取学期列表失败:', error)
+    // 失败时使用默认学期选项
+    const currentYear = new Date().getFullYear()
+    availableSemesters.value = [`${currentYear}年秋季`, `${currentYear-1}年秋季`, '2025年春季', '2024年秋季']
+    setDefaultSemester()
+  }
+}
+
+/**
+ * 处理筛选条件变化
+ */
+const handleFilterChange = (): void => {
+  pagination.value.current = 1
+  fetchStudents()
+}
+
+/**
+ * 查看学生详情
+ */
+const handleViewStudent = async (student: Student): Promise<void> => {
+  try {
+    console.log('查看学生详情:', student.id)
+    
+    // 获取完整的学生详细信息
+    const response = await StudentService.getStudentDetail(student.id)
+    if (response.code === 200 && response.data) {
+      viewingStudent.value = response.data
+      showDetailModal.value = true
+    } else {
+      message.error('获取学生详情失败')
+    }
+  } catch (error) {
+    console.error('查看学生详情失败:', error)
+    message.error('获取学生详情失败')
+  }
+}
+
+/**
+ * 编辑学生信息
+ */
+const handleEditStudent = (student: Student): void => {
+  console.log('编辑学生:', student.id)
+  editingStudent.value = { ...student }
+  showEditModal.value = true
+}
+
+/**
+ * 删除学生
+ */
+const handleDeleteStudent = (student: Student): void => {
+  console.log('删除学生:', student.id)
   
-  return students.value.filter(student => 
-    student.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-    student.studentId.includes(searchQuery.value)
-  )
+  // 显示确认对话框
+  Modal.confirm({
+    title: '确认删除',
+    content: `确定要删除学生"${student.name}"吗？此操作不可逆！`,
+    okText: '确定删除',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        const response = await StudentService.deleteStudent(student.id)
+        if (response.code === 200) {
+          message.success('学生删除成功')
+          fetchStudents() // 重新获取学生列表
+          fetchStudentStats() // 重新获取统计数据
+        } else {
+          message.error(response.message || '删除学生失败')
+        }
+      } catch (error) {
+        console.error('删除学生失败:', error)
+        message.error('删除学生失败')
+      }
+    }
+  })
+}
+
+/**
+ * 处理学生信息更新
+ */
+const handleStudentUpdate = (): void => {
+  showEditModal.value = false
+  editingStudent.value = null
+  fetchStudents() // 重新获取学生列表
+  fetchStudentStats() // 重新获取统计数据
+  message.success('学生信息更新成功')
+}
+
+/**
+ * 打开添加学生弹窗
+ */
+const handleAddStudent = (): void => {
+  showAddModal.value = true
+}
+
+/**
+ * 处理添加学生成功
+ */
+const handleStudentAdd = (): void => {
+  showAddModal.value = false
+  
+  // 清空所有筛选条件，确保新添加的学生能显示
+  searchQuery.value = ''
+  selectedMajor.value = ''
+  selectedGrade.value = ''
+  selectedCourse.value = ''
+  selectedStatus.value = ''
+  selectedSemester.value = ''
+  
+  // 重置分页到第一页
+  pagination.value.current = 1
+  
+  fetchStudents() // 重新获取学生列表
+  fetchStudentStats() // 重新获取统计数据
+  message.success('学生添加成功！已清空筛选条件以显示新学生')
+}
+
+/**
+ * 🔧 导出学生数据
+ */
+const handleExportStudents = async (): Promise<void> => {
+  try {
+    console.log('🔄 开始导出学生数据...')
+    message.loading('正在导出数据，请稍候...', 1)
+    
+    // 构建导出参数（使用当前的筛选条件）
+    const exportParams: any = {}
+    
+    if (searchQuery.value) {
+      exportParams.keyword = searchQuery.value
+    }
+    if (selectedMajor.value) {
+      exportParams.major = selectedMajor.value
+    }
+    if (selectedSemester.value) {
+      exportParams.semester = selectedSemester.value
+    }
+    if (selectedStatus.value) {
+      exportParams.status = selectedStatus.value
+    }
+    if (selectedCourse.value) {
+      exportParams.courseId = selectedCourse.value
+    }
+    
+    console.log('📋 导出参数:', exportParams)
+    
+    // 调用导出API
+    const blob = await StudentService.exportStudents(exportParams)
+    
+    // 创建下载链接
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    
+    // 生成文件名
+    const timestamp = new Date().toLocaleString('zh-CN').replace(/[/:]/g, '-').replace(/\s/g, '_')
+    link.download = `学员数据导出_${timestamp}.csv`
+    
+    // 触发下载
+    document.body.appendChild(link)
+    link.click()
+    
+    // 清理
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    
+    console.log('✅ 学生数据导出完成')
+    message.success('学生数据导出成功！')
+    
+  } catch (error) {
+    console.error('导出学生数据失败:', error)
+    message.error('导出失败，请重试')
+  }
+}
+
+// 计算属性 - 过滤学生列表（服务端分页时不需要前端过滤）
+const filteredStudents = computed<Student[]>(() => {
+  return students.value
 })
 
 /**
- * 获取状态样式类
+ * 获取状态样式类（基于报名状态）
  */
 const getStatusClass = (status: string): string => {
   switch (status) {
-    case 'active':
+    case 'APPROVED':
       return 'bg-green-100 text-green-600'
-    case 'inactive':
+    case 'PENDING':
       return 'bg-yellow-100 text-yellow-600'
-    case 'graduated':
-      return 'bg-blue-100 text-blue-600'
+    case 'REJECTED':
+      return 'bg-red-100 text-red-600'
+    case 'CANCELLED':
+      return 'bg-gray-100 text-gray-600'
     default:
       return 'bg-gray-100 text-gray-600'
   }
 }
 
 /**
- * 获取状态文本
+ * 获取状态文本（基于报名状态）
  */
 const getStatusText = (status: string): string => {
   switch (status) {
-    case 'active':
-      return '在校'
-    case 'inactive':
-      return '休学'
-    case 'graduated':
-      return '毕业'
+    case 'APPROVED':
+      return '已通过'
+    case 'PENDING':
+      return '待审核'
+    case 'REJECTED':
+      return '已拒绝'
+    case 'CANCELLED':
+      return '已取消'
     default:
       return '未知'
   }
 }
 
 /**
+ * 处理分页变化
+ */
+const handlePageChange = async (page: number, pageSize: number): Promise<void> => {
+  pagination.value.current = page
+  pagination.value.pageSize = pageSize
+  await fetchStudents()
+}
+
+// 这些函数已被删除，因为它们没有被使用
+// 实际的删除、编辑功能在handleDeleteStudent、handleEditStudent中实现
+
+// 监听器
+watch(searchQuery, () => {
+  pagination.value.current = 1
+  fetchStudents()
+})
+
+watch(selectedSemester, () => {
+  pagination.value.current = 1
+  fetchStudents()
+})
+
+/**
  * 组件挂载时初始化数据
  */
 onMounted((): void => {
   console.log('Student 组件已挂载')
+  fetchStudentStats()  // 获取统计数据
+  fetchMajors()        // 获取院系列表
+  fetchCourses()       // 获取课程列表
+  fetchSemesters()     // 获取学期列表
+  fetchStudents()      // 获取学生列表
 })
 </script>
 
@@ -392,4 +782,18 @@ onMounted((): void => {
   flex-direction: column;
   gap: 1.5rem;
 }
-</style> 
+
+/* 分页组件自定义样式 */
+
+/* 响应式分页 */
+@media (max-width: 768px) {
+  .ant-pagination-custom :deep(.ant-pagination-options) {
+    display: none !important;
+  }
+  
+  .ant-pagination-custom :deep(.ant-pagination-simple-pager) {
+    display: flex !important;
+  }
+}
+</style>
+

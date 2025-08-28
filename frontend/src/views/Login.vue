@@ -112,18 +112,51 @@
           </p>
         </div>
 
-        <!-- 开发模式提�?-->
+        <!-- 开发模式提示-->
         <div v-if="shouldSkipCaptcha()" class="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
-          <p class="text-xs text-green-700 text-center font-medium mb-2">
-            <i class="fas fa-code mr-1"></i>
-            开发模式已启用
-          </p>
-          <div class="text-xs text-green-600 space-y-1">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-xs text-green-700 font-medium">
+              <i class="fas fa-code mr-1"></i>
+              开发模式
+            </p>
+            <a-button 
+              type="text" 
+              size="small" 
+              @click="showTestAccounts = !showTestAccounts"
+              class="text-green-600 text-xs p-0 h-auto"
+            >
+              {{ showTestAccounts ? '隐藏' : '显示' }}测试账号
+            </a-button>
+          </div>
+          <div v-show="showTestAccounts" class="text-xs text-green-600 space-y-1">
             <p><strong>测试账号：</strong></p>
-            <p>超级管理员: 13800000001 / 123456</p>
-            <p>学校管理员: 13800000002 / 123456</p>
-            <p>教师: 13800000003 / 123456</p>
-            <p>学生: 13800000004 / 123456</p>
+            <div class="grid grid-cols-1 gap-1">
+              <p 
+                class="cursor-pointer hover:bg-green-100 px-2 py-1 rounded transition-colors"
+                @click="quickLogin('13800000001', '123456')"
+              >
+                超级管理员: 13800000001 / 123456
+              </p>
+              <p 
+                class="cursor-pointer hover:bg-green-100 px-2 py-1 rounded transition-colors"
+                @click="quickLogin('13800000002', '123456')"
+              >
+                学校管理员: 13800000002 / 123456
+              </p>
+              <p 
+                class="cursor-pointer hover:bg-green-100 px-2 py-1 rounded transition-colors"
+                @click="quickLogin('13800000003', '123456')"
+              >
+                教师: 13800000003 / 123456
+              </p>
+              <p 
+                class="cursor-pointer hover:bg-green-100 px-2 py-1 rounded transition-colors"
+                @click="quickLogin('13800000004', '123456')"
+              >
+                学生: 13800000004 / 123456
+              </p>
+            </div>
+            <p class="text-gray-500 mt-2 text-center">点击账号快速登录</p>
           </div>
         </div>
       </div>
@@ -174,11 +207,11 @@
 import { ref, reactive, computed, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { PhoneOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons-vue'
+import { PhoneOutlined, LockOutlined } from '@ant-design/icons-vue'
 import { useAuthStore } from '@/store/auth'
 import { AuthService } from '@/api/auth'
 import { validatePhone } from '@/utils/auth'
-import { shouldSkipCaptcha, shouldMockAuth, showDevModeInfo } from '@/utils/dev'
+import { shouldSkipCaptcha, showDevModeInfo, isDevelopment } from '@/utils/dev'
 import RegisterForm from '@/components/RegisterForm.vue'
 import ForgotPasswordForm from '@/components/ForgotPasswordForm.vue'
 import type { LoginRequest } from '@/types/auth'
@@ -192,6 +225,7 @@ const captchaImage = ref<string>('')
 const captchaId = ref<string>('')
 const showRegister = ref<boolean>(false)
 const showForgotPassword = ref<boolean>(false)
+const showTestAccounts = ref<boolean>(false)
 const formRef = ref()
 
 // 表单数据
@@ -344,6 +378,24 @@ const handleRegisterSuccess = (): void => {
 }
 
 /**
+ * 快速登录（开发模式）
+ */
+const quickLogin = async (phone: string, password: string): Promise<void> => {
+  if (!isDevelopment()) return
+  
+  formData.phone = phone
+  formData.password = password
+  formData.captcha = '123456' // 开发模式固定验证码
+  
+  await handleLogin({
+    phone,
+    password,
+    captcha: '123456',
+    rememberMe: false
+  })
+}
+
+/**
  * 处理忘记密码成功
  */
 const handleForgotPasswordSuccess = (): void => {
@@ -470,4 +522,42 @@ onMounted(() => {
     max-width: 95vw !important;
   }
 }
-</style> 
+
+:deep(.register-modal .ant-modal-close) {
+  color: white;
+  top: 16px;
+  right: 16px;
+}
+
+:deep(.register-modal .ant-modal-close:hover) {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+:deep(.forgot-password-modal .ant-modal-content) {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+:deep(.forgot-password-modal .ant-modal-header) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-bottom: none;
+  padding: 20px 24px;
+}
+
+:deep(.forgot-password-modal .ant-modal-title) {
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+:deep(.forgot-password-modal .ant-modal-close) {
+  color: white;
+  top: 16px;
+  right: 16px;
+}
+
+:deep(.forgot-password-modal .ant-modal-close:hover) {
+  color: rgba(255, 255, 255, 0.8);
+}
+</style>

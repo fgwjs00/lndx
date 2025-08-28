@@ -39,7 +39,7 @@ router.get('/', requireTeacher, asyncHandler(async (req, res) => {
 router.post('/', asyncHandler(async (req, res) => {
   // TODO: 实现学生报名
   res.json({
-    code: 201,
+    code: 200,
     message: '报名成功',
     data: {}
   })

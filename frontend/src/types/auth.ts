@@ -53,6 +53,7 @@ export interface LoginResponse {
   refreshToken: string
   user: UserInfo
   permissions: string[]
+  mustChangePassword?: boolean
   expiresIn: number
 }
 
@@ -67,6 +68,7 @@ export interface UserInfo {
   realName?: string
   department?: string
   lastLoginTime?: string
+  mustChangePassword?: boolean
   createdAt: string
   updatedAt: string
 }

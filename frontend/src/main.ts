@@ -9,6 +9,7 @@ import './style.css'
 import Antd from 'ant-design-vue'
 import 'ant-design-vue/dist/reset.css'
 import router from './router'
+import { useAuthStore } from './store/auth'
 
 // 清理旧版本的缓存数据（权限系统升级后）
 const clearOldCache = () => {
@@ -63,5 +64,32 @@ app.use(pinia)
 app.use(Antd)
 app.use(router)
 
-// 挂载应用
-app.mount('#app') 
+// 初始化应用
+const initializeApp = async () => {
+  try {
+    // 初始化认证状态（从localStorage恢复登录状态）
+    const authStore = useAuthStore()
+    const token = localStorage.getItem('token')
+    
+    if (token) {
+      console.log('🔄 应用启动：检测到token，初始化认证状态...')
+      await authStore.initializeAuth()
+      console.log('✅ 认证状态初始化完成:', {
+        isAuthenticated: authStore.isAuthenticated,
+        userRole: authStore.user?.role,
+        userName: authStore.user?.realName
+      })
+    } else {
+      console.log('🔍 应用启动：未检测到token，保持未登录状态')
+    }
+  } catch (error) {
+    console.error('❌ 初始化认证状态失败:', error)
+  } finally {
+    // 无论是否成功，都挂载应用
+    app.mount('#app')
+    console.log('🚀 Vue应用已挂载')
+  }
+}
+
+// 启动应用
+initializeApp() 

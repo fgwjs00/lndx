@@ -72,7 +72,8 @@
         </h4>
         
         <!-- 权限操作栏 -->
-        <div class="bg-gray-50 rounded-lg p-4 mb-4">
+        <div class="bg-gray-50 rounded-lg p-4 mb-4 space-y-4">
+          <!-- 第一行：基本操作 -->
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-4">
               <a-checkbox 
@@ -87,6 +88,23 @@
               </span>
             </div>
             <div class="flex items-center gap-2">
+              <a-button 
+                size="small" 
+                :type="viewMode === 'compact' ? 'primary' : 'default'"
+                @click="viewMode = 'compact'"
+              >
+                <i class="fas fa-list mr-1"></i>
+                紧凑视图
+              </a-button>
+              <a-button 
+                size="small" 
+                :type="viewMode === 'detailed' ? 'primary' : 'default'"
+                @click="viewMode = 'detailed'"
+              >
+                <i class="fas fa-th-large mr-1"></i>
+                详细视图
+              </a-button>
+              <a-divider type="vertical" />
               <a-button size="small" @click="expandAll">
                 <i class="fas fa-expand-arrows-alt mr-1"></i>
                 展开全部
@@ -97,12 +115,61 @@
               </a-button>
             </div>
           </div>
+
+          <!-- 第二行：搜索和模板 -->
+          <div class="flex items-center gap-4">
+            <!-- 权限搜索 -->
+            <div class="flex-1 max-w-md">
+              <a-input
+                v-model:value="searchQuery"
+                placeholder="搜索权限（支持权限名称、资源、操作类型）"
+                allow-clear
+                class="w-full"
+              >
+                <template #prefix>
+                  <i class="fas fa-search text-gray-400"></i>
+                </template>
+              </a-input>
+            </div>
+
+            <!-- 权限模板 -->
+            <a-select
+              v-model:value="selectedTemplate"
+              placeholder="选择权限模板"
+              style="width: 200px"
+              allow-clear
+              @change="applyTemplate"
+            >
+              <a-select-option value="admin">管理员模板</a-select-option>
+              <a-select-option value="teacher">教师模板</a-select-option>
+              <a-select-option value="student">学生模板</a-select-option>
+              <a-select-option value="readonly">只读模板</a-select-option>
+            </a-select>
+
+            <!-- 智能展开 -->
+            <a-button size="small" @click="smartExpand" title="只展开有选中权限的分组">
+              <i class="fas fa-magic mr-1"></i>
+              智能展开
+            </a-button>
+          </div>
         </div>
   
+        <!-- 搜索无结果提示 -->
+        <div v-if="searchQuery && Object.keys(filteredGroupedPermissions).length === 0" 
+             class="text-center py-12 text-gray-500 bg-white rounded-lg border border-gray-200">
+          <i class="fas fa-search text-4xl mb-4"></i>
+          <h3 class="text-lg font-medium mb-2">没有找到匹配的权限</h3>
+          <p>尝试更改搜索关键词或清除搜索条件</p>
+          <a-button type="link" @click="searchQuery = ''" class="mt-2">
+            <i class="fas fa-times mr-1"></i>
+            清除搜索
+          </a-button>
+        </div>
+
         <!-- 权限分组 -->
         <div class="space-y-4">
           <div 
-            v-for="(perms, resource) in groupedPermissions" 
+            v-for="(perms, resource) in searchQuery ? filteredGroupedPermissions : groupedPermissions" 
             :key="resource"
             class="border border-gray-200 rounded-lg overflow-hidden"
           >
@@ -135,15 +202,16 @@
               </div>
             </div>
   
-                      <!-- 权限列表 -->
+                                <!-- 权限列表 -->
           <div v-show="expandedGroups[resource]" class="p-6 bg-white">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- 详细视图 -->
+            <div v-if="viewMode === 'detailed'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div 
-                v-for="permission in perms" 
+                v-for="permission in getFilteredPermissions(perms)" 
                 :key="permission"
                 class="relative group"
               >
-                                  <div 
+                <div 
                     class="flex items-start p-5 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200"
                     :class="{
                       'border-blue-400 bg-blue-50': selectedPermissions.includes(permission),
@@ -161,23 +229,66 @@
                         <span class="font-semibold text-gray-800">
                           {{ getPermissionDisplayName(permission) }}
                         </span>
-                      <a-tag 
-                        :color="getPermissionColor(permission)" 
-                        size="small"
-                        class="ml-2"
-                      >
-                        {{ getPermissionLevel(permission) }}
-                      </a-tag>
+                        <a-tag 
+                          :color="getPermissionColor(permission)" 
+                          size="small"
+                          class="ml-2"
+                        >
+                          {{ getPermissionLevel(permission) }}
+                        </a-tag>
+                      </div>
+                      <div class="text-xs text-gray-500 font-mono">
+                        {{ permission }}
+                      </div>
+                      <div class="text-xs text-gray-600 mt-1">
+                        {{ getPermissionDescription(permission) }}
+                      </div>
                     </div>
-                    <div class="text-xs text-gray-500 font-mono">
-                      {{ permission }}
-                    </div>
-                    <div class="text-xs text-gray-600 mt-1">
-                      {{ getPermissionDescription(permission) }}
-                    </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 紧凑视图 -->
+            <div v-else class="space-y-2">
+              <div 
+                v-for="permission in getFilteredPermissions(perms)" 
+                :key="permission"
+                class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-all duration-200"
+                :class="{
+                  'border-blue-400 bg-blue-50': selectedPermissions.includes(permission),
+                  'bg-white': !selectedPermissions.includes(permission)
+                }"
+              >
+                <a-checkbox
+                  :value="permission"
+                  :checked="selectedPermissions.includes(permission)"
+                  @change="(e: any) => handlePermissionChange(permission, e.target.checked)"
+                  class="mr-3"
+                />
+                <div class="flex-1 flex items-center justify-between min-w-0">
+                  <div class="flex items-center gap-3">
+                    <span class="font-medium text-gray-800">
+                      {{ getPermissionDisplayName(permission) }}
+                    </span>
+                    <a-tag 
+                      :color="getPermissionColor(permission)" 
+                      size="small"
+                    >
+                      {{ getPermissionLevel(permission) }}
+                    </a-tag>
+                  </div>
+                  <div class="text-xs text-gray-500 font-mono">
+                    {{ permission }}
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- 搜索无结果 -->
+            <div v-if="searchQuery && getFilteredPermissions(perms).length === 0" 
+                 class="text-center py-8 text-gray-500">
+              <i class="fas fa-search text-2xl mb-2"></i>
+              <p>该分组下没有匹配"{{ searchQuery }}"的权限</p>
             </div>
           </div>
           </div>
@@ -270,6 +381,8 @@
    */
   import { reactive, ref, computed, watch } from 'vue'
   import { message } from 'ant-design-vue'
+  import { RoleService } from '@/api/role'
+  import type { CreateRoleRequest } from '@/api/role'
   
   // 角色接口定义
   interface Role {
@@ -301,6 +414,9 @@
   const submitting = ref<boolean>(false)
   const selectedPermissions = ref<string[]>([])
   const expandedGroups = ref<Record<string, boolean>>({})
+  const searchQuery = ref<string>('')
+  const selectedTemplate = ref<string | undefined>(undefined)
+  const viewMode = ref<'detailed' | 'compact'>('detailed')
   
   const formData = reactive({
     name: '',
@@ -323,6 +439,38 @@
       groups[resource].push(permission)
     })
     return groups
+  })
+
+  // 过滤后的分组权限
+  const filteredGroupedPermissions = computed(() => {
+    if (!searchQuery.value) {
+      return groupedPermissions.value
+    }
+
+    const filtered: Record<string, string[]> = {}
+    const query = searchQuery.value.toLowerCase()
+
+    Object.entries(groupedPermissions.value).forEach(([resource, perms]) => {
+      const matchedPerms = perms.filter(permission => {
+        const resourceName = getResourceName(resource).toLowerCase()
+        const permissionName = getPermissionDisplayName(permission).toLowerCase()
+        const permissionCode = permission.toLowerCase()
+        const permissionLevel = getPermissionLevel(permission).toLowerCase()
+        const permissionDesc = getPermissionDescription(permission).toLowerCase()
+
+        return resourceName.includes(query) ||
+               permissionName.includes(query) ||
+               permissionCode.includes(query) ||
+               permissionLevel.includes(query) ||
+               permissionDesc.includes(query)
+      })
+
+      if (matchedPerms.length > 0) {
+        filtered[resource] = matchedPerms
+      }
+    })
+
+    return filtered
   })
   
   const isAllSelected = computed(() => 
@@ -363,13 +511,44 @@ const selectedGroupedPermissions = computed(() => {
   
     submitting.value = true
     try {
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      message.success(props.role ? '角色更新成功' : '角色创建成功')
-      emit('success')
-    } catch (error) {
-      message.error('操作失败，请重试')
+      const roleData: CreateRoleRequest = {
+        name: formData.name.trim(),
+        key: formData.key.trim(),
+        description: formData.description.trim(),
+        icon: formData.icon || 'fas fa-user',
+        permissions: selectedPermissions.value,
+        status: formData.active ? 'active' : 'inactive'
+      }
+
+      if (props.role) {
+        // 更新角色
+        console.log('🔄 更新角色:', props.role.id, roleData)
+        const response = await RoleService.updateRole(props.role.id, roleData)
+        if (response.code === 200) {
+          message.success(response.message || '角色更新成功')
+          emit('success')
+        } else {
+          message.error(response.message || '角色更新失败')
+        }
+      } else {
+        // 创建角色
+        console.log('➕ 创建角色:', roleData)
+        const response = await RoleService.createRole(roleData)
+        if (response.code === 200) {
+          if (response.data) {
+            message.success('角色创建成功')
+            emit('success')
+          } else {
+            // 系统不支持创建自定义角色的情况
+            message.info(response.message || '系统暂不支持创建自定义角色')
+          }
+        } else {
+          message.error(response.message || '角色创建失败')
+        }
+      }
+    } catch (error: any) {
+      console.error('角色操作失败:', error)
+      message.error(error.response?.data?.message || '操作失败，请重试')
     } finally {
       submitting.value = false
     }
@@ -447,6 +626,71 @@ const selectedGroupedPermissions = computed(() => {
       selectedPermissions.value.splice(index, 1)
     }
   }
+
+  // 获取过滤后的权限列表
+  const getFilteredPermissions = (perms: string[]): string[] => {
+    if (!searchQuery.value) {
+      return perms
+    }
+
+    const query = searchQuery.value.toLowerCase()
+    return perms.filter(permission => {
+      const [resource] = permission.split(':')
+      const resourceName = getResourceName(resource).toLowerCase()
+      const permissionName = getPermissionDisplayName(permission).toLowerCase()
+      const permissionCode = permission.toLowerCase()
+      const permissionLevel = getPermissionLevel(permission).toLowerCase()
+      const permissionDesc = getPermissionDescription(permission).toLowerCase()
+
+      return resourceName.includes(query) ||
+             permissionName.includes(query) ||
+             permissionCode.includes(query) ||
+             permissionLevel.includes(query) ||
+             permissionDesc.includes(query)
+    })
+  }
+
+  // 应用权限模板
+  const applyTemplate = (template: string | undefined): void => {
+    if (!template) return
+
+    const templates: Record<string, string[]> = {
+      admin: [
+        'system:*', 'user:*', 'student:*', 'teacher:*', 
+        'course:*', 'application:*', 'grade:*', 'analysis:*', 'setting:*', 'logs:*', 'school:*'
+      ],
+      teacher: [
+        'student:read', 'student:create', 'student:update', 'student:delete',
+        'course:read', 'course:create', 'course:update', 'course:import', 'course:export',
+        'application:read', 'application:approve',
+        'grade:read', 'grade:manage', 'grade:upgrade', 'grade:graduate',
+        'analysis:read', 'attendance:manage'
+      ],
+      student: [
+        'profile:read', 'profile:update',
+        'course:read', 'application:create', 'application:read'
+      ],
+      readonly: [
+        'system:read', 'user:read', 'student:read', 'teacher:read',
+        'course:read', 'application:read', 'grade:read', 'analysis:read'
+      ]
+    }
+
+    selectedPermissions.value = [...(templates[template] || [])]
+    selectedTemplate.value = undefined // 重置选择
+  }
+
+  // 智能展开：只展开有选中权限或搜索匹配的分组
+  const smartExpand = (): void => {
+    Object.keys(groupedPermissions.value).forEach(resource => {
+      const resourcePerms = groupedPermissions.value[resource] || []
+      const hasSelected = resourcePerms.some(perm => selectedPermissions.value.includes(perm))
+      const hasMatched = searchQuery.value ? 
+        (filteredGroupedPermissions.value[resource]?.length || 0) > 0 : false
+      
+      expandedGroups.value[resource] = hasSelected || hasMatched || !searchQuery.value
+    })
+  }
   
   const getResourceName = (resource: string): string => {
     const nameMap: Record<string, string> = {
@@ -484,19 +728,7 @@ const selectedGroupedPermissions = computed(() => {
     return iconMap[resource] || 'fas fa-key'
   }
   
-  const getPermissionName = (permission: string): string => {
-    const [, action] = permission.split(':')
-    const actionMap: Record<string, string> = {
-      read: '查看',
-      create: '创建',
-      update: '编辑',
-      delete: '删除',
-      approve: '审批',
-      manage: '管理',
-      '*': '全部权限'
-    }
-    return actionMap[action] || action
-  }
+
   
   const getPermissionDisplayName = (permission: string): string => {
     const [resource, action] = permission.split(':')
@@ -580,6 +812,8 @@ const getPermissionDescription = (permission: string): string => {
       create: '创建新课程',
       update: '修改课程信息和安排',
       delete: '删除课程',
+      import: '批量导入课程数据',
+      export: '导出课程数据',
       '*': '课程完全管理权限'
     },
     application: {
@@ -589,6 +823,13 @@ const getPermissionDescription = (permission: string): string => {
       delete: '删除报名记录',
       approve: '审批报名申请',
       '*': '报名完全管理权限'
+    },
+    grade: {
+      read: '查看学生年级信息',
+      manage: '管理学生年级分配',
+      upgrade: '执行学生升级操作',
+      graduate: '执行学生毕业操作',
+      '*': '年级完全管理权限'
     },
     analysis: {
       read: '查看统计分析报表',
@@ -644,12 +885,23 @@ const getPermissionDescription = (permission: string): string => {
     }
   }, { immediate: true })
   
-  // 初始化展开状态
+  // 初始化展开状态 - 默认收起，提升性能
   watch(() => props.permissions, () => {
     Object.keys(groupedPermissions.value).forEach(resource => {
-      expandedGroups.value[resource] = true
+      expandedGroups.value[resource] = false // 改为默认收起
     })
+    // 如果有已选权限，展开对应分组
+    setTimeout(() => {
+      smartExpand()
+    }, 100)
   }, { immediate: true })
+
+  // 搜索变化时自动智能展开
+  watch(searchQuery, () => {
+    if (searchQuery.value) {
+      smartExpand()
+    }
+  })
   </script>
   
   <style scoped>

@@ -117,16 +117,24 @@ export const authMiddleware = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    console.log('🔐 认证中间件开始处理:', req.method, req.url)
+    
     // 提取Token
     const token = extractToken(req)
+    console.log('🔍 Token提取结果:', token ? `存在(${token.substring(0, 20)}...)` : '不存在')
+    
     if (!token) {
+      console.log('❌ 认证失败: 缺少Token')
       throw new AuthError('缺少认证Token，请先登录')
     }
 
     // 验证Token
+    console.log('🔍 开始验证Token...')
     const payload = verifyToken(token)
+    console.log('✅ Token验证成功, 用户ID:', payload.userId)
 
     // 从数据库获取最新用户信息
+    console.log('🔍 开始查询用户信息...')
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
       select: {
@@ -141,15 +149,22 @@ export const authMiddleware = async (
     })
 
     if (!user) {
+      console.log('❌ 认证失败: 用户不存在')
       throw new AuthError('用户不存在，请重新登录')
     }
 
     if (!user.isActive) {
+      console.log('❌ 认证失败: 账号已被禁用')
       throw new AuthError('账号已被禁用，请联系管理员')
     }
 
+    console.log('✅ 用户信息验证成功:', user.realName, user.role)
+
     // 将用户信息附加到请求对象
-    req.user = user
+    req.user = {
+      ...user,
+      email: user.email || undefined
+    }
 
     // 记录用户访问日志
     businessLogger.userAction(user.id, 'API_ACCESS', {
@@ -159,8 +174,10 @@ export const authMiddleware = async (
       userAgent: req.get('User-Agent')
     })
 
+    console.log('✅ 认证中间件处理完成，传递给下一个处理器')
     next()
   } catch (error) {
+    console.log('❌ 认证中间件发生错误:', error instanceof Error ? error.message : String(error))
     next(error)
   }
 }
@@ -191,7 +208,10 @@ export const optionalAuthMiddleware = async (
       })
 
       if (user && user.isActive) {
-        req.user = user
+        req.user = {
+          ...user,
+          email: user.email || undefined
+        }
       }
     }
     next()
@@ -345,15 +365,15 @@ export const requireOwnerOrAdmin = (
  * @returns Token字符串
  */
 export const generateToken = (user: { id: string; phone: string; role: UserRole }): string => {
-  const payload: Omit<JwtPayload, 'iat' | 'exp'> = {
+  const payload = {
     userId: user.id,
     phone: user.phone,
     role: user.role
   }
 
-  return jwt.sign(payload, config.jwtSecret, {
+  return jwt.sign(payload, config.jwtSecret as any, {
     expiresIn: config.jwtExpiresIn
-  })
+  } as any)
 }
 
 /**
@@ -362,14 +382,14 @@ export const generateToken = (user: { id: string; phone: string; role: UserRole 
  * @returns 刷新Token字符串
  */
 export const generateRefreshToken = (user: { id: string; phone: string; role: UserRole }): string => {
-  const payload: Omit<JwtPayload, 'iat' | 'exp'> = {
+  const payload = {
     userId: user.id,
     phone: user.phone,
     role: user.role
   }
 
-  return jwt.sign(payload, config.jwtSecret, {
+  return jwt.sign(payload, config.jwtSecret as any, {
     expiresIn: config.jwtRefreshExpiresIn
-  })
+  } as any)
 }
 

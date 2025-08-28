@@ -434,6 +434,12 @@ export const validatePaginationData = (data: any) => {
       .messages({
         'string.max': '搜索关键词不能超过50个字符'
       }),
+    role: Joi.string()
+      .valid('SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER', 'STUDENT')
+      .optional()
+      .messages({
+        'any.only': '角色类型无效，支持的角色：SUPER_ADMIN, SCHOOL_ADMIN, TEACHER, STUDENT'
+      }),
     sortField: Joi.string()
       .max(50)
       .optional()
