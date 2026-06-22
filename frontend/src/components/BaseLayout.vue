@@ -202,6 +202,21 @@ const menuItems: MenuItem[] = [
     roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN, UserRole.TEACHER, UserRole.STUDENT],
     permissions: ['application:read']
   },
+  {
+    name: '花名册管理',
+    path: '/rosters',
+    icon: 'fas fa-clipboard-list',
+    description: '班级花名册状态和冻结管理',
+    roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN, UserRole.TEACHER],
+    permissions: ['application:read']
+  },
+  {
+    name: '保险审核',
+    path: '/insurance-review',
+    icon: 'fas fa-shield-alt',
+    description: '学员保险凭证审核',
+    roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN, UserRole.TEACHER]
+  },
   { 
     name: '报名登记', 
     path: '/registration', 

@@ -121,12 +121,12 @@
           <!-- 操作按钮 -->
           <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <button 
-              @click="handleBatchReview"
+              @click="handleBatchApprove"
               :disabled="selectedApplications.length === 0"
               class="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0"
             >
               <i class="fas fa-check mr-2"></i>
-              <span class="whitespace-nowrap">批量审核</span>
+              <span class="whitespace-nowrap">批量批准</span>
             </button>
             
             <button 
@@ -290,25 +290,30 @@
           <div class="text-sm text-gray-500">
             显示 {{ (pagination.current - 1) * pagination.pageSize + 1 }}-{{ Math.min(pagination.current * pagination.pageSize, pagination.total) }} 条，共{{ pagination.total }} 条记录
           </div>
-          <div class="flex items-center space-x-2">
-            <button 
-              @click="handlePageChange(pagination.current - 1, pagination.pageSize)"
-              :disabled="pagination.current <= 1"
-              class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              上一页
-            </button>
-            <span class="px-3 py-1 bg-orange-500 text-white rounded">
-              {{ pagination.current }}
-            </span>
-            <button 
-              @click="handlePageChange(pagination.current + 1, pagination.pageSize)"
-              :disabled="pagination.current * pagination.pageSize >= pagination.total"
-              class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              下一页
-            </button>
-          </div>
+          <a-pagination
+            v-model:current="pagination.current"
+            v-model:page-size="pagination.pageSize"
+            :total="pagination.total"
+            :show-size-changer="true"
+            :show-quick-jumper="true"
+            :show-total="(total: number, range: [number, number]) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`"
+            :page-size-options="['10', '20', '50', '100']"
+            :locale="{
+              items_per_page: '条/页',
+              jump_to: '跳至',
+              jump_to_confirm: '确定',
+              page: '页',
+              prev_page: '上一页',
+              next_page: '下一页',
+              prev_5: '向前 5 页',
+              next_5: '向后 5 页',
+              prev_3: '向前 3 页',
+              next_3: '向后 3 页'
+            }"
+            @change="handlePageChange"
+            @show-size-change="handlePageSizeChange"
+            class="flex-1 flex justify-center"
+          />
         </div>
       </div>
     </div>
@@ -444,7 +449,7 @@ const fetchStatistics = async (): Promise<void> => {
  */
 const reviewApplication = async (application: any, status: 'approved' | 'rejected'): Promise<void> => {
   try {
-    await ApplicationService.reviewApplication(application.id.toString(), status, '')
+    await ApplicationService.reviewApplicationTarget(application, status, '')
     const statusText = status === 'approved' ? '批准' : '拒绝'
     message.success(`${statusText}申请成功`)
     
@@ -468,6 +473,15 @@ const reviewApplication = async (application: any, status: 'approved' | 'rejecte
 const handlePageChange = async (page: number, pageSize: number): Promise<void> => {
   pagination.value.current = page
   pagination.value.pageSize = pageSize
+  await fetchApplications()
+}
+
+/**
+ * 处理每页条数变化
+ */
+const handlePageSizeChange = async (current: number, size: number): Promise<void> => {
+  pagination.value.current = 1 // 重置到第一页
+  pagination.value.pageSize = size
   await fetchApplications()
 }
 
@@ -546,18 +560,15 @@ const handleSelectApplication = (applicationId: string): void => {
 /**
  * 批量审核处理
  */
-const handleBatchReview = (): void => {
-  if (selectedApplications.value.length === 0) {
-    message.warning('请先选择要审核的申请')
-    return
-  }
-  // 这里可以打开批量审核对话框
-  message.info('批量审核功能开发中...')
+const getSelectedReviewTargets = (): Array<{ id: string, targetType: 'legacyEnrollment' | 'phase2Application' }> => {
+  return applications.value
+    .filter(application => selectedApplications.value.includes(String(application.id)))
+    .map(application => ({
+      id: String(application.id),
+      targetType: application.targetType === 'phase2Application' ? 'phase2Application' : 'legacyEnrollment'
+    }))
 }
 
-/**
- * 批量批准
- */
 const handleBatchApprove = async (): Promise<void> => {
   if (selectedApplications.value.length === 0) {
     message.warning('请先选择要批准的申请')
@@ -565,13 +576,12 @@ const handleBatchApprove = async (): Promise<void> => {
   }
   
   try {
-    const promises = selectedApplications.value.map(id => 
-      ApplicationService.reviewApplication(id, 'approved')
-    )
-    await Promise.all(promises)
+    const reviewTargets = getSelectedReviewTargets()
+    await ApplicationService.batchReviewApplications(reviewTargets, 'approved')
     message.success(`成功批准 ${selectedApplications.value.length} 个申请`)
     selectedApplications.value = []
     await fetchApplications()
+    await fetchStatistics()
   } catch (error) {
     console.error('批量批准失败:', error)
     message.error('批量批准失败')
@@ -588,13 +598,12 @@ const handleBatchReject = async (): Promise<void> => {
   }
   
   try {
-    const promises = selectedApplications.value.map(id => 
-      ApplicationService.reviewApplication(id, 'rejected')
-    )
-    await Promise.all(promises)
+    const reviewTargets = getSelectedReviewTargets()
+    await ApplicationService.batchReviewApplications(reviewTargets, 'rejected')
     message.success(`成功拒绝 ${selectedApplications.value.length} 个申请`)
     selectedApplications.value = []
     await fetchApplications()
+    await fetchStatistics()
   } catch (error) {
     console.error('批量拒绝失败:', error)
     message.error('批量拒绝失败')
@@ -750,6 +759,8 @@ const getStatusClass = (status: string): string => {
       return 'bg-green-100 text-green-600'
     case 'REJECTED':
       return 'bg-red-100 text-red-600'
+    case 'CANCELLED':
+      return 'bg-gray-100 text-gray-600'
     default:
       return 'bg-gray-100 text-gray-600'
   }
@@ -767,6 +778,8 @@ const getStatusText = (status: string): string => {
       return '已批准'
     case 'REJECTED':
       return '已拒绝'
+    case 'CANCELLED':
+      return '已取消'
     default:
       return '未知'
   }

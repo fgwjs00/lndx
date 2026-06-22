@@ -66,8 +66,12 @@ assertNotIncludes(migrationChecker, 'db execute', 'migration checker must not ex
 
 assertIncludes(copyChecker, 'COPY_EXCLUDE_PATTERNS', 'copy checker must define Baota exclude patterns')
 for (const entry of [
+  'node_modules/',
   'backend/node_modules/',
   'frontend/node_modules/',
+  'backend/dist/',
+  'frontend/dist/',
+  'logs/',
   'backend/logs/',
   'backend/uploads/',
   'backend/.env',
@@ -80,7 +84,14 @@ for (const entry of [
   assertIncludes(rootGitignore, entry === '.git/' ? '.git' : entry, `gitignore should protect ${entry}`)
 }
 assertIncludes(copyChecker, 'baota-source-manifest', 'copy checker must write a source manifest for Baota copy review')
+assertIncludes(copyChecker, 'baota-build-manifest', 'copy checker must write a build artifact manifest for Baota copy review')
+assertIncludes(copyChecker, 'baota-forbidden-local-paths', 'copy checker must write a forbidden local path report')
+assertIncludes(copyChecker, 'REQUIRED_BUILD_ARTIFACTS', 'copy checker must identify required build artifacts')
+assertIncludes(copyChecker, 'localForbiddenPathCount', 'copy checker must report local forbidden paths that must not be copied')
 assertIncludes(copyChecker, 'git ls-files', 'copy checker must derive deployable source files from Git tracking')
+assertIncludes(copyChecker, 'git ls-files --others --exclude-standard', 'copy checker must inspect untracked deployable source files')
+assertIncludes(copyChecker, 'untrackedDeployableSources', 'copy checker must report untracked deployable sources before Baota copy')
+assertIncludes(copyChecker, 'Baota copy boundary failed: untracked deployable source files exist.', 'copy checker must fail when deployable source files are not tracked')
 
 assertIncludes(baotaDeploy, 'proxy_pass http://127.0.0.1:3001/uploads/;', 'Baota deploy template must proxy uploads through backend auth')
 assertNotIncludes(baotaDeploy, 'alias /www/wwwroot/lndx/uploads/;', 'Baota deploy template must not publish uploads directly')
@@ -111,6 +122,10 @@ assertIncludes(runbook, 'npx prisma db execute', 'runbook must document manual S
 assertIncludes(runbook, 'pg_dump', 'runbook must require production backup')
 assertIncludes(runbook, 'pg_restore', 'runbook must require local restore rehearsal')
 assertIncludes(runbook, 'check-baota-copy-boundary.js', 'runbook must require copy boundary verification')
+assertIncludes(runbook, 'baota-build-manifest.txt', 'runbook must document the build artifact manifest')
+assertIncludes(runbook, 'baota-forbidden-local-paths.txt', 'runbook must document forbidden local path report')
+assertIncludes(runbook, 'frontend/dist/', 'runbook must keep frontend build output separate from source')
+assertIncludes(runbook, 'backend/dist/', 'runbook must keep backend build output separate from source')
 assertIncludes(phase2Readme, 'docs/deployment/baota-migration-runbook.md', 'phase 2 README must point to the deployment runbook')
 assertIncludes(phase2Readme, 'backend/uploads/', 'phase 2 README must exclude uploaded runtime files from Baota copy')
 assertIncludes(phase2Readme, 'check-baota-copy-boundary.js', 'phase 2 README must require copy boundary verification')

@@ -362,7 +362,7 @@
       course: '课程管理',
       application: '报名管理',
       grade: '年级管理',
-      analysis: '数据分析',
+      // analysis: '数据分析', // 功能暂时屏蔽
       setting: '系统设置',
       logs: '日志管理',
       attendance: '签到管理',
@@ -381,7 +381,7 @@
       course: 'fas fa-book',
       application: 'fas fa-file-alt',
       grade: 'fas fa-graduation-cap',
-      analysis: 'fas fa-chart-bar',
+      // analysis: 'fas fa-chart-bar', // 功能暂时屏蔽
       setting: 'fas fa-cog',
       logs: 'fas fa-list-alt',
       attendance: 'fas fa-check-circle',

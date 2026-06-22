@@ -89,11 +89,9 @@ export class UserService {
   /**
    * 重置用户密码
    * @param id 用户ID
-   * @param newPassword 新密码
    * @returns 重置结果
    */
-  static async resetPassword(id: string, newPassword: string): Promise<ApiResponse<null>> {
-    return request.post<null>(`/users/${id}/reset-password`, { newPassword })
+  static async resetPassword(id: string): Promise<ApiResponse<{ temporaryPassword: string }>> {
+    return request.post<{ temporaryPassword: string }>(`/users/${id}/reset-password`, {})
   }
 }
-

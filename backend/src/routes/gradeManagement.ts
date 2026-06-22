@@ -4,10 +4,14 @@
  */
 
 import { Router } from 'express'
-import { PrismaClient } from '@prisma/client'
-import { authMiddleware, requireAdmin } from '../middleware/auth'
+import { prisma } from '@/lib/prisma'
+import { requireAdmin, requireTeacher } from '../middleware/auth'
 import { ValidationError, BusinessError } from '../middleware/errorHandler'
 import { businessLogger } from '../utils/logger'
+import {
+  recordStudentAcademicEvent,
+  STUDENT_ACADEMIC_EVENT_TYPES
+} from '@/services/studentAcademicEventService'
 import { 
   getCurrentSemester, 
   calculateCurrentGrade, 
@@ -19,13 +23,12 @@ import {
 } from '../utils/gradeManagement'
 
 const router = Router()
-const prisma = new PrismaClient()
 
 /**
  * 获取年级统计信息
  * GET /api/grade-management/statistics
  */
-router.get('/statistics', async (req, res, next) => {
+router.get('/statistics', requireTeacher, async (req, res, next) => {
   try {
     console.log('📊 开始获取年级统计信息...')
     
@@ -133,6 +136,85 @@ router.get('/statistics', async (req, res, next) => {
     
   } catch (error) {
     console.error('获取年级统计失败:', error)
+    next(error)
+  }
+})
+
+/**
+ * 获取年级管理学生列表
+ * GET /api/grade-management/students
+ */
+router.get('/students', requireTeacher, async (req, res, next) => {
+  try {
+    const { keyword, currentGrade, graduationStatus, academicStatus, major } = req.query
+
+    const where: any = {
+      isActive: true
+    }
+
+    if (keyword && typeof keyword === 'string') {
+      where.OR = [
+        { name: { contains: keyword, mode: 'insensitive' } },
+        { studentCode: { contains: keyword, mode: 'insensitive' } },
+        { contactPhone: { contains: keyword, mode: 'insensitive' } }
+      ]
+    }
+
+    if (currentGrade && typeof currentGrade === 'string') {
+      where.currentGrade = currentGrade
+    }
+
+    if (graduationStatus && typeof graduationStatus === 'string') {
+      where.graduationStatus = graduationStatus
+    }
+
+    if (academicStatus && typeof academicStatus === 'string') {
+      where.academicStatus = academicStatus
+    }
+
+    if (major && typeof major === 'string') {
+      where.major = major
+    }
+
+    const students = await prisma.student.findMany({
+      where,
+      select: {
+        id: true,
+        studentCode: true,
+        name: true,
+        age: true,
+        contactPhone: true,
+        major: true,
+        semester: true,
+        currentGrade: true,
+        enrollmentYear: true,
+        enrollmentSemester: true,
+        graduationStatus: true,
+        graduationDate: true,
+        academicStatus: true,
+        updatedAt: true
+      },
+      orderBy: [
+        { currentGrade: 'asc' },
+        { studentCode: 'asc' }
+      ]
+    })
+
+    businessLogger.userAction(req.user!.id, 'GRADE_STUDENT_LIST_QUERY', {
+      total: students.length,
+      filters: { keyword, currentGrade, graduationStatus, academicStatus, major }
+    })
+
+    res.json({
+      code: 200,
+      data: {
+        list: students,
+        total: students.length
+      },
+      message: '获取年级管理学生列表成功'
+    })
+  } catch (error) {
+    console.error('获取年级管理学生列表失败:', error)
     next(error)
   }
 })
@@ -357,7 +439,7 @@ router.post('/reset/:studentId', requireAdmin, async (req, res, next) => {
  * 获取年级升级预览
  * GET /api/grade-management/upgrade-preview
  */
-router.get('/upgrade-preview', async (req, res, next) => {
+router.get('/upgrade-preview', requireTeacher, async (req, res, next) => {
   try {
     console.log('🔍 获取年级升级预览...')
     
@@ -443,7 +525,7 @@ router.get('/upgrade-preview', async (req, res, next) => {
  * 获取学生年级详情
  * GET /api/grade-management/student/:studentId
  */
-router.get('/student/:studentId', async (req, res, next) => {
+router.get('/student/:studentId', requireTeacher, async (req, res, next) => {
   try {
     const { studentId } = req.params
     
@@ -541,12 +623,26 @@ router.post('/adjust/:studentId', requireAdmin, async (req, res, next) => {
     const oldGrade = student.currentGrade
     
     // 更新年级
-    await prisma.student.update({
-      where: { id: studentId },
-      data: {
-        currentGrade: newGrade,
-        updatedAt: new Date()
-      }
+    await prisma.$transaction(async (tx) => {
+      await tx.student.update({
+        where: { id: studentId },
+        data: {
+          currentGrade: newGrade,
+          updatedAt: new Date()
+        }
+      })
+
+      await recordStudentAcademicEvent(tx, {
+        studentId,
+        eventType: STUDENT_ACADEMIC_EVENT_TYPES.GRADE_ADJUSTMENT,
+        fromValue: oldGrade,
+        toValue: newGrade,
+        reason: reason || 'Manual grade adjustment',
+        operatorId: req.user!.id,
+        metadata: {
+          route: 'grade-management/adjust'
+        }
+      })
     })
     
     console.log(`✅ 学生 ${student.name} 年级已调整: ${oldGrade} -> ${newGrade}`)

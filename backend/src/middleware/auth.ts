@@ -5,12 +5,12 @@
 
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
-import { PrismaClient, UserRole } from '@prisma/client'
+import { UserRole } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { config } from '@/config'
 import { AuthError, PermissionError } from '@/middleware/errorHandler'
 import { logger, businessLogger } from '@/utils/logger'
 
-const prisma = new PrismaClient()
 
 // 扩展Request接口，添加用户信息
 declare global {
@@ -39,6 +39,14 @@ interface JwtPayload {
   exp: number
 }
 
+interface AssetTokenPayload {
+  type: 'asset'
+  scope: 'uploads'
+  userId: string
+  iat: number
+  exp: number
+}
+
 /**
  * 权限配置映射
  */
@@ -55,7 +63,7 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'setting:read', 'setting:update'
   ],
   TEACHER: [
-    'student:read', 'student:create', 'student:update',
+    'student:read', 'student:update', 'student:export',
     'course:read',
     'enrollment:read', 'enrollment:create', 'enrollment:update',
     'attendance:*',
@@ -92,6 +100,10 @@ const verifyToken = (token: string): JwtPayload => {
  * @param req Express请求对象
  * @returns Token字符串或null
  */
+export const sanitizeAuthUrl = (url: string): string => {
+  return url.replace(/([?&](token|assetToken|refreshToken|accessToken)=)[^&]+/gi, '$1[REDACTED]')
+}
+
 const extractToken = (req: Request): string | null => {
   // 从Authorization header中提取
   const authHeader = req.headers.authorization
@@ -100,11 +112,35 @@ const extractToken = (req: Request): string | null => {
   }
   
   // 从查询参数中提取（用于某些特殊场景）
-  if (req.query.token && typeof req.query.token === 'string') {
-    return req.query.token
-  }
-  
   return null
+}
+
+export const generateAssetToken = (user: { id: string }): string => {
+  return jwt.sign({
+    type: 'asset',
+    scope: 'uploads',
+    userId: user.id
+  }, config.jwtSecret as any, {
+    expiresIn: process.env.ASSET_TOKEN_EXPIRES_IN || '10m'
+  } as any)
+}
+
+const verifyAssetToken = (token: string): AssetTokenPayload => {
+  try {
+    const payload = jwt.verify(token, config.jwtSecret) as AssetTokenPayload
+    if (payload.type !== 'asset' || payload.scope !== 'uploads' || !payload.userId) {
+      throw new AuthError('Asset token invalid')
+    }
+    return payload
+  } catch (error) {
+    if (error instanceof AuthError) {
+      throw error
+    }
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new AuthError('Asset token expired')
+    }
+    throw new AuthError('Asset token verification failed')
+  }
 }
 
 /**
@@ -117,11 +153,12 @@ export const authMiddleware = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    console.log('🔐 认证中间件开始处理:', req.method, req.url)
+    const safeUrl = sanitizeAuthUrl(req.url)
+    console.log('🔐 认证中间件开始处理:', req.method, safeUrl)
     
     // 提取Token
     const token = extractToken(req)
-    console.log('🔍 Token提取结果:', token ? `存在(${token.substring(0, 20)}...)` : '不存在')
+    console.log('🔍 Token提取结果:', token ? '存在' : '不存在')
     
     if (!token) {
       console.log('❌ 认证失败: 缺少Token')
@@ -169,7 +206,7 @@ export const authMiddleware = async (
     // 记录用户访问日志
     businessLogger.userAction(user.id, 'API_ACCESS', {
       method: req.method,
-      url: req.url,
+      url: safeUrl,
       ip: req.ip,
       userAgent: req.get('User-Agent')
     })
@@ -186,6 +223,24 @@ export const authMiddleware = async (
  * 可选认证中间件
  * @description 如果有Token则验证，没有则继续执行（不抛出错误）
  */
+export const assetAuthMiddleware = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const assetToken = req.query.assetToken
+    if (typeof assetToken === 'string' && assetToken) {
+      verifyAssetToken(assetToken)
+      return next()
+    }
+
+    return authMiddleware(req, res, next)
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const optionalAuthMiddleware = async (
   req: Request,
   res: Response,

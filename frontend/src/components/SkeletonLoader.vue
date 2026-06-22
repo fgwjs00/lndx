@@ -117,6 +117,8 @@ const animationClass = computed(() => {
 </script>
 
 <style scoped>
+@reference "../style.css";
+
 .skeleton {
   @apply bg-gray-200 rounded;
   background: linear-gradient(90deg, #f0f0f0 25%, transparent 37%, transparent 63%, #f0f0f0 75%);

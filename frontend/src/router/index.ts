@@ -103,6 +103,29 @@ const routes: RouteRecordRaw[] = [
         }
       },
       {
+        path: 'rosters',
+        name: 'RosterManagement',
+        component: () => import('@/views/RosterManagement.vue'),
+        meta: {
+          title: '花名册管理',
+          requiresAuth: true,
+          roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN, UserRole.TEACHER],
+          permissions: ['application:read'],
+          icon: 'fas fa-clipboard-list'
+        }
+      },
+      {
+        path: 'insurance-review',
+        name: 'InsuranceReview',
+        component: () => import('@/views/InsuranceReview.vue'),
+        meta: {
+          title: '保险审核',
+          requiresAuth: true,
+          roles: [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN, UserRole.TEACHER],
+          icon: 'fas fa-shield-alt'
+        }
+      },
+      {
         path: 'registration',
         name: 'Registration',
         component: () => import('@/views/Registration.vue'),

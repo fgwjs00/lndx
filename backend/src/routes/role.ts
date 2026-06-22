@@ -4,13 +4,13 @@
  */
 
 import { Router, Request, Response } from 'express'
-import { PrismaClient, UserRole } from '@prisma/client'
+import { UserRole } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { asyncHandler, BusinessError } from '@/middleware/errorHandler'
-import { requireAdmin, authMiddleware } from '@/middleware/auth'
+import { requireAdmin } from '@/middleware/auth'
 import { businessLogger } from '@/utils/logger'
 
 const router = Router()
-const prisma = new PrismaClient()
 
 // 角色配置数据 - 基于固定角色的权限系统
 const ROLE_CONFIGS = {
@@ -53,15 +53,15 @@ const ROLE_CONFIGS = {
     icon: 'fas fa-chalkboard-teacher',
     permissions: [
       // 学生管理权限
-      'student:read', 'student:create', 'student:update', 'student:delete',
+      'student:read', 'student:update', 'student:export', 'student:delete',
       // 课程管理权限
       'course:read', 'course:create', 'course:update', 'course:delete', 'course:import', 'course:export',
       // 报名管理权限
       'application:read', 'application:create', 'application:update', 'application:approve',
       // 年级管理权限
       'grade:read', 'grade:manage', 'grade:upgrade', 'grade:graduate',
-      // 数据分析权限
-      'analysis:read',
+      // 数据分析权限 - 已屏蔽
+      // 'analysis:read',
       // 考勤管理权限
       'attendance:read', 'attendance:manage',
       // 个人资料权限
@@ -110,7 +110,7 @@ const ALL_PERMISSIONS = [
  * 获取角色列表
  * GET /api/roles
  */
-router.get('/', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+router.get('/', requireAdmin, asyncHandler(async (req: Request, res: Response) => {
   try {
     // 记录用户操作
     businessLogger.userAction(
@@ -137,7 +137,7 @@ router.get('/', authMiddleware, asyncHandler(async (req: Request, res: Response)
  * 获取所有可用权限
  * GET /api/roles/permissions
  */
-router.get('/permissions', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+router.get('/permissions', requireAdmin, asyncHandler(async (req: Request, res: Response) => {
   try {
     // 记录用户操作
     businessLogger.userAction(
@@ -161,7 +161,7 @@ router.get('/permissions', authMiddleware, asyncHandler(async (req: Request, res
  * 获取角色详情
  * GET /api/roles/:id
  */
-router.get('/:id', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+router.get('/:id', requireAdmin, asyncHandler(async (req: Request, res: Response) => {
   try {
     const { id } = req.params
     

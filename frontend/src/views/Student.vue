@@ -105,6 +105,17 @@
             </select>
             
             <select 
+              v-model="selectedPoliticalStatus"
+              @change="handleFilterChange"
+              class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 min-w-0"
+            >
+              <option value="">所有政治面貌</option>
+              <option v-for="status in availablePoliticalStatus" :key="status" :value="status">
+                {{ status }}
+              </option>
+            </select>
+            
+            <select 
               v-model="selectedGrade"
               @change="handleFilterChange"
               class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 min-w-0"
@@ -141,7 +152,9 @@
           
           <!-- 操作按钮 -->
           <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <!-- 添加学生按钮 - 只有学校管理员可见 -->
             <button 
+              v-if="hasPermission('student:create')"
               @click="handleAddStudent"
               class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0"
             >
@@ -149,12 +162,17 @@
               <span class="whitespace-nowrap">添加学生</span>
             </button>
             
-            <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0">
+            <!-- 批量导入按钮 - 只有学校管理员可见 -->
+            <button 
+              v-if="hasPermission('student:import')"
+              class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0">
               <i class="fas fa-upload mr-2"></i>
               <span class="whitespace-nowrap">批量导入</span>
             </button>
             
+            <!-- 导出数据按钮 - 只有学校管理员可见 -->
             <button 
+              v-if="hasPermission('student:export')"
               @click="handleExportStudents"
               :disabled="loading"
               class="bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0">
@@ -214,7 +232,15 @@
               <th class="text-left py-4 px-6 text-gray-600 font-semibold">学期</th>
               <th class="text-left py-4 px-6 text-gray-600 font-semibold">院系</th>
               <th class="text-left py-4 px-6 text-gray-600 font-semibold">年级</th>
+              <th class="text-left py-4 px-6 text-gray-600 font-semibold">政治面貌</th>
               <th class="text-left py-4 px-6 text-gray-600 font-semibold">报名课程</th>
+              <th class="text-left py-4 px-6 text-gray-600 font-semibold cursor-pointer hover:bg-gray-100" @click="toggleSort('enrollmentDate')">
+                报名时间
+                <i v-if="sortField === 'enrollmentDate'" 
+                   :class="sortOrder === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'"
+                   class="ml-1 text-emerald-500"></i>
+                <i v-else class="fas fa-sort ml-1 text-gray-400"></i>
+              </th>
               <th class="text-left py-4 px-6 text-gray-600 font-semibold">状态</th>
               <th class="text-left py-4 px-6 text-gray-600 font-semibold">操作</th>
             </tr>
@@ -233,17 +259,24 @@
               <td class="py-4 px-6 text-gray-600">{{ student.contactPhone || student.phone || '未设置' }}</td>
               <td class="py-4 px-6 text-gray-600">{{ student.semester }}</td>
               <td class="py-4 px-6 text-gray-600">{{ student.major || '未设置' }}</td>
-              <td class="py-4 px-6 text-gray-600">{{ student.currentGrade || '未设置' }}</td>
+              <td class="py-4 px-6 text-gray-600">{{ getStudentGradeDisplay(student) }}</td>
+              <td class="py-4 px-6 text-gray-600">{{ student.politicalStatus || '未设置' }}</td>
               <td class="py-4 px-6">
                 <div class="space-y-1">
                   <div v-if="student.enrollments && student.enrollments.length > 0">
                     <span v-for="enrollment in student.enrollments" :key="enrollment.id" 
                           class="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs mr-1 mb-1">
-                      {{ enrollment.course?.name || '未知课程' }}
+                      {{ getCourseDisplayName(enrollment.course) }}
                     </span>
                   </div>
                   <div v-else class="text-gray-400 text-sm">未报名</div>
                 </div>
+              </td>
+              <td class="py-4 px-6">
+                <div v-if="student.firstEnrollmentDate" class="text-gray-600">
+                  <div class="text-sm">{{ formatDate(student.firstEnrollmentDate) }}</div>
+                </div>
+                <div v-else class="text-gray-400 text-sm">未报名</div>
               </td>
               <td class="py-4 px-6">
                 <span 
@@ -298,6 +331,18 @@
             :show-quick-jumper="true"
             :page-size-options="['10', '20', '50', '100']"
             :show-total="(total: number) => `共 ${total} 条记录`"
+            :locale="{
+              items_per_page: '条/页',
+              jump_to: '跳至',
+              jump_to_confirm: '确定',
+              page: '页',
+              prev_page: '上一页',
+              next_page: '下一页',
+              prev_5: '向前 5 页',
+              next_5: '向后 5 页',
+              prev_3: '向前 3 页',
+              next_3: '向后 3 页'
+            }"
             @change="handlePageChange"
             @show-size-change="handlePageChange"
             class="ant-pagination-custom"
@@ -337,6 +382,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import { StudentService, type Student } from '@/api/student'
 import { CourseService } from '@/api/course'
+import { useAuthStore } from '@/store/auth'
 import StudentDetailModal from '@/components/StudentDetailModal.vue'
 import StudentEditModal from '@/components/StudentEditModal.vue'
 import StudentAddModal from '@/components/StudentAddModal.vue'
@@ -351,18 +397,24 @@ interface StudentStats {
 }
 
 // 响应式数据
+const authStore = useAuthStore()
 const searchQuery = ref<string>('')
 const selectedMajor = ref<string>('')
 const selectedGrade = ref<string>('')
 const selectedCourse = ref<string>('')
 const selectedStatus = ref<string>('')
 const selectedSemester = ref<string>('')
+const selectedPoliticalStatus = ref<string>('')
 const students = ref<Student[]>([])
 const loading = ref<boolean>(false)
+// 排序相关
+const sortField = ref<string>('createdAt')
+const sortOrder = ref<'asc' | 'desc'>('desc')
 const availableMajors = ref<string[]>([])
 const availableGrades = ref<string[]>(['一年级', '二年级', '三年级', '不分年级'])
 const availableCourses = ref<Array<{id: string, name: string}>>([])
 const availableSemesters = ref<string[]>([])
+const availablePoliticalStatus = ref<string[]>([])
 const studentStats = ref<StudentStats>({
   totalStudents: 0,
   activeStudents: 0,      // 已通过学生
@@ -376,8 +428,39 @@ const pagination = ref({
   total: 0
 })
 
-// 表单相关
+// 权限检查
+const hasPermission = (permission: string): boolean => {
+  const result = authStore.hasPermission(permission)
+  // 调试信息
+  console.log(`🔍 权限检查: ${permission} = ${result}`)
+  console.log(`👤 当前用户权限:`, authStore.permissions)
+  console.log(`👤 当前用户角色:`, authStore.user?.role)
+  
+  // 检查权限来源
+  console.log(`🔍 权限来源分析:`)
+  console.log(`   - localStorage权限:`, localStorage.getItem('permissions'))
+  console.log(`   - authStore权限长度:`, authStore.permissions.length)
+  console.log(`   - 是否使用模拟认证:`, typeof __MOCK_AUTH__ !== 'undefined' ? __MOCK_AUTH__ : import.meta.env.DEV)
+  
+  // 手动检查特定权限
+  if (permission === 'student:create') {
+    console.log(`🔍 手动检查 student:create:`)
+    console.log(`   - 直接匹配: ${authStore.permissions.includes('student:create')}`)
+    console.log(`   - 通配符匹配: ${authStore.permissions.includes('student:*')}`)
+    console.log(`   - 超级管理员: ${authStore.permissions.includes('system:*')}`)
+  }
+  
+  if (permission === 'student:export') {
+    console.log(`🔍 手动检查 student:export:`)
+    console.log(`   - 直接匹配: ${authStore.permissions.includes('student:export')}`)
+    console.log(`   - 通配符匹配: ${authStore.permissions.includes('student:*')}`)
+    console.log(`   - 超级管理员: ${authStore.permissions.includes('system:*')}`)
+  }
+  
+  return result
+}
 
+// 表单相关
 const showDetailModal = ref<boolean>(false)
 const showEditModal = ref<boolean>(false)
 const showAddModal = ref<boolean>(false)
@@ -406,6 +489,13 @@ const fetchStudents = async (): Promise<void> => {
       params.major = selectedMajor.value
     }
     
+    // 政治面貌筛选
+    // 政治面貌筛选 - 简单直接的实现
+    if (selectedPoliticalStatus.value) {
+      params.politicalStatus = selectedPoliticalStatus.value
+      console.log('✅ 前端发送政治面貌参数:', selectedPoliticalStatus.value)
+    }
+    
     // 年级筛选
     if (selectedGrade.value) {
       params.currentGrade = selectedGrade.value
@@ -425,12 +515,33 @@ const fetchStudents = async (): Promise<void> => {
     if (selectedSemester.value) {
       params.semester = selectedSemester.value
     }
+    
+    // 排序参数
+    if (sortField.value) {
+      params.sortField = sortField.value
+      params.sortOrder = sortOrder.value
+    }
 
     const response = await StudentService.getStudents(params)
     students.value = response.data?.list || []
     pagination.value.total = response.data?.total || 0
     
     console.log('获取学生列表成功:', response.data)
+    // 🔧 调试：检查报名时间字段
+    if (students.value.length > 0) {
+      const firstStudent = students.value[0]
+      console.log('📅 第一个学生的时间字段调试:', {
+        name: firstStudent.name,
+        enrollmentDate: firstStudent.enrollmentDate,
+        firstEnrollmentDate: firstStudent.firstEnrollmentDate,
+        createdAt: firstStudent.createdAt,
+        enrollments: firstStudent.enrollments?.map(e => ({
+          courseId: e.courseId,
+          courseName: e.course?.name,
+          createdAt: e.createdAt
+        }))
+      })
+    }
   } catch (error) {
     console.error('获取学生列表失败:', error)
     message.error('获取学生列表失败')
@@ -465,6 +576,21 @@ const fetchMajors = async (): Promise<void> => {
     console.error('获取院系列表失败:', error)
     // 失败时使用默认院系选项
     availableMajors.value = ['音乐学院', '器乐学院', '艺术学院', '文学院', '技术学院', '综合学院']
+  }
+}
+
+/**
+ * 获取政治面貌选项列表
+ */
+const fetchPoliticalStatus = async (): Promise<void> => {
+  try {
+    const response = await StudentService.getPoliticalStatusOptions()
+    availablePoliticalStatus.value = response.data || []
+    console.log('✅ 获取政治面貌选项成功:', response.data)
+  } catch (error) {
+    console.error('❌ 获取政治面貌选项失败:', error)
+    // 失败时使用默认政治面貌选项
+    availablePoliticalStatus.value = ['群众', '团员', '中共党员', '民革党员', '民盟盟员', '民建会员', '民进会员', '农工党员', '致公党员', '九三学社社员', '台盟盟员', '无党派人士']
   }
 }
 
@@ -536,6 +662,7 @@ const fetchSemesters = async (): Promise<void> => {
  * 处理筛选条件变化
  */
 const handleFilterChange = (): void => {
+  // 政治面貌筛选日志已移除
   pagination.value.current = 1
   fetchStudents()
 }
@@ -628,6 +755,7 @@ const handleStudentAdd = (): void => {
   // 清空所有筛选条件，确保新添加的学生能显示
   searchQuery.value = ''
   selectedMajor.value = ''
+  selectedPoliticalStatus.value = ''
   selectedGrade.value = ''
   selectedCourse.value = ''
   selectedStatus.value = ''
@@ -640,6 +768,123 @@ const handleStudentAdd = (): void => {
   fetchStudentStats() // 重新获取统计数据
   message.success('学生添加成功！已清空筛选条件以显示新学生')
 }
+
+/**
+ * 🔧 获取课程显示名称（包含年级信息）
+ * @param course 课程对象
+ * @returns 格式化的课程显示名称
+ */
+const getCourseDisplayName = (course: any): string => {
+  if (!course) return '未知课程'
+  
+  const courseName = course.name || '未知课程'
+  
+  // 如果课程不需要年级管理，显示"不分班级"
+  if (course.requiresGrades === false) {
+    return `${courseName} (不分班级)`
+  }
+  
+  // 如果课程需要年级管理，显示年级信息
+  if (course.level) {
+    return `${courseName} (${course.level})`
+  }
+  
+  // 如果没有年级信息，显示课程名称
+  return courseName
+}
+
+/**
+ * 🔧 获取学生年级显示信息（智能判断）
+ * @param student 学生对象
+ * @returns 格式化的年级显示信息
+ */
+const getStudentGradeDisplay = (student: any): string => {
+  if (!student) return '未设置'
+  
+  // 如果学生没有报名任何课程，显示未设置
+  if (!student.enrollments || student.enrollments.length === 0) {
+    return '未设置'
+  }
+  
+  // 检查学生所报课程的情况
+  const hasGradeCourses = student.enrollments.some((enrollment: any) => 
+    enrollment.course?.requiresGrades === true
+  )
+  
+  const hasNonGradeCourses = student.enrollments.some((enrollment: any) => 
+    enrollment.course?.requiresGrades === false
+  )
+  
+  // 如果学生只报了不分年级的课程，显示"不分年级"
+  if (hasNonGradeCourses && !hasGradeCourses) {
+    return '不分年级'
+  }
+  
+  // 如果学生报了分年级的课程，显示对应的年级
+  if (hasGradeCourses) {
+    // 获取分年级课程的年级信息
+    const gradeCourses = student.enrollments.filter((enrollment: any) => 
+      enrollment.course?.requiresGrades === true
+    )
+    
+    if (gradeCourses.length > 0) {
+      // 如果所有分年级课程都是同一个年级，显示该年级
+      const grades = [...new Set(gradeCourses.map((e: any) => e.course.level))]
+      if (grades.length === 1) {
+        return (grades[0] as string) || '未设置'
+      } else {
+        // 如果有多个年级，显示"混合年级"
+        return '混合年级'
+      }
+    }
+  }
+  
+  // 如果学生报了混合类型的课程，显示"混合年级"
+  if (hasGradeCourses && hasNonGradeCourses) {
+    return '混合年级'
+  }
+  
+  // 默认情况
+  return student.currentGrade || '未设置'
+}
+
+/**
+ * 🔧 切换排序
+ * @param field 排序字段
+ */
+const toggleSort = (field: string): void => {
+  if (sortField.value === field) {
+    // 如果是同一字段，切换排序方向
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    // 如果是新字段，设置为降序
+    sortField.value = field
+    sortOrder.value = 'desc'
+  }
+  
+  // 重新获取数据
+  fetchStudents()
+}
+
+/**
+ * 🔧 格式化日期
+ * @param dateString 日期字符串
+ * @returns 格式化的日期
+ */
+const formatDate = (dateString: string): string => {
+  try {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+  } catch {
+    return '无效日期'
+  }
+}
+
+
 
 /**
  * 🔧 导出学生数据
@@ -657,6 +902,9 @@ const handleExportStudents = async (): Promise<void> => {
     }
     if (selectedMajor.value) {
       exportParams.major = selectedMajor.value
+    }
+    if (selectedPoliticalStatus.value) {
+      exportParams.politicalStatus = selectedPoliticalStatus.value
     }
     if (selectedSemester.value) {
       exportParams.semester = selectedSemester.value
@@ -768,11 +1016,12 @@ watch(selectedSemester, () => {
  */
 onMounted((): void => {
   console.log('Student 组件已挂载')
-  fetchStudentStats()  // 获取统计数据
-  fetchMajors()        // 获取院系列表
-  fetchCourses()       // 获取课程列表
-  fetchSemesters()     // 获取学期列表
-  fetchStudents()      // 获取学生列表
+  fetchStudentStats()     // 获取统计数据
+  fetchMajors()           // 获取院系列表
+  fetchPoliticalStatus()  // 获取政治面貌选项
+  fetchCourses()          // 获取课程列表
+  fetchSemesters()        // 获取学期列表
+  fetchStudents()         // 获取学生列表
 })
 </script>
 

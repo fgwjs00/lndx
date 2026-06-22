@@ -98,9 +98,39 @@ npm run build
 node backend/scripts/check-baota-copy-boundary.js
 ```
 
-The script writes `local-db-backups/baota-source-manifest.txt` for review. Copy
-tracked source and verified build output only. Do not copy local `.env`, logs,
-dependencies, uploaded files, backup dumps, or `.git`.
+The script writes three local review files:
+
+- `local-db-backups/baota-source-manifest.txt`: tracked source files that may be
+  copied after review.
+- `local-db-backups/baota-build-manifest.txt`: generated build output under
+  `backend/dist/` and `frontend/dist/`. This list is valid only after both
+  backend and frontend builds pass.
+- `local-db-backups/baota-forbidden-local-paths.txt`: local-only paths currently
+  present in the workspace. These paths are expected during development but must
+  not be copied by a whole-directory upload.
+
+Copy source and build output as separate categories. Do not copy local `.env`,
+logs, dependencies, uploaded files, backup dumps, `.git`, or the
+`local-db-backups/` review folder.
+
+## Copy Boundary
+
+Use this as the practical Baota upload boundary:
+
+| Category | Local path | Baota handling |
+| --- | --- | --- |
+| Backend source | files listed in `baota-source-manifest.txt` | Copy reviewed source only, excluding local runtime data. |
+| Backend build | `backend/dist/` | Copy after `npm run build` succeeds. |
+| Frontend build | `frontend/dist/` | Copy as the static site bundle. |
+| Dependencies | `node_modules/`, `backend/node_modules/`, `frontend/node_modules/` | Do not copy from local; install or reuse server dependencies on Baota. |
+| Environment | `.env`, `backend/.env`, `.env.*` | Do not copy local values; keep production values on Baota. |
+| Runtime uploads | `backend/uploads/` | Do not overwrite from local; these are production data and must be backed up/restored deliberately. |
+| Logs | `logs/`, `backend/logs/`, `*.log` | Do not copy. |
+| Backups | `local-db-backups/`, `lndx_backup_*/`, `*.dump`, `*.tar.gz`, `*.backup` | Do not copy into `/www/wwwroot/lndx`. Store backups under `/www/backup/lndx`. |
+
+Never upload the whole local project directory through the Baota file manager.
+Use the manifests to review the exact files, then upload the approved source and
+the two `dist` directories deliberately.
 
 ## Production Deployment Order
 
@@ -125,6 +155,9 @@ curl -i http://127.0.0.1:3000/uploads/id-cards/default-avatar.jpg
 
 The health endpoint must report database healthy. The uploads request without a
 token must return `401`; if Nginx serves it directly, the deployment is unsafe.
+Old upload guides that configure Nginx `alias` or `root` for `/uploads/` are not
+safe for the current system. `/uploads/` must be proxied to Express so
+`authMiddleware` can enforce access control.
 
 ## Rollback
 

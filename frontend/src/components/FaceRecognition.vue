@@ -181,7 +181,7 @@
   }
   
   const props = defineProps<Props>()
-  const emit = defineEmits<Emits>()
+  defineEmits<Emits>()
   
     // 响应式数据
   const videoRef = ref<HTMLVideoElement>()
@@ -253,24 +253,15 @@
    * 开始人脸检测
    */
   const startFaceDetection = (): void => {
-    // 模拟人脸检测（实际项目中需要使用真实的人脸检测库）
-    faceDetectionInterval = setInterval(() => {
-      if (videoRef.value && cameraActive.value && !isPhotoTaken.value) {
-        // 模拟检测到人脸
-        const detected = Math.random() > 0.3 // 70%概率检测到人脸
-        faceDetected.value = detected
-        
-        if (detected) {
-          // 模拟人脸框位
-          faceBoxStyle.value = {
-            left: '30%',
-            top: '25%',
-            width: '40%',
-            height: '50%'
-          }
-        }
-      }
-    }, 1000)
+    if (faceDetectionInterval) {
+      clearInterval(faceDetectionInterval)
+      faceDetectionInterval = null
+    }
+
+    faceDetected.value = false
+    faceBoxStyle.value = {}
+    recognitionStatus.value = 'error'
+    message.warning('FACE_RECOGNITION_NOT_IMPLEMENTED: 人脸识别服务尚未接入，请使用手动签到')
   }
   
   /**
@@ -315,43 +306,13 @@
     recognitionStatus.value = 'processing'
     
     try {
-      // 模拟API调用延迟
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // 模拟识别结果
-      const success = Math.random() > 0.2 // 80%成功
-      
-      if (success) {
-        const mockStudents = [
-          { id: 1, name: '张三' },
-          { id: 2, name: '李四' },
-          { id: 3, name: '王五' },
-          { id: 4, name: '赵六' }
-        ]
-        
-        const randomStudent = mockStudents[Math.floor(Math.random() * mockStudents.length)]
-        const confidence = 0.85 + Math.random() * 0.1 // 85%-95%置信度
-        
-        recognitionResult.value = {
-          success: true,
-          confidence,
-          studentId: randomStudent.id,
-          studentName: randomStudent.name
-        }
-        
-        recognitionStatus.value = 'success'
-        emit('recognition-success', recognitionResult.value)
-        message.success(`识别成功: ${randomStudent.name}`)
-      } else {
-        recognitionResult.value = {
-          success: false,
-          confidence: 0,
-          error: '人脸特征不清晰或未在数据库中找到匹配'
-        }
-        
-        recognitionStatus.value = 'error'
-        message.error('人脸识别失败')
+      recognitionResult.value = {
+        success: false,
+        confidence: 0,
+        error: 'FACE_RECOGNITION_NOT_IMPLEMENTED: 人脸识别服务尚未接入，请使用手动签到'
       }
+      recognitionStatus.value = 'error'
+      message.warning('FACE_RECOGNITION_NOT_IMPLEMENTED: 人脸识别服务尚未接入，请使用手动签到')
     } catch (error) {
       console.error('人脸识别错误:', error)
       recognitionResult.value = {
@@ -371,17 +332,7 @@
    */
   const confirmAttendance = (): void => {
     if (recognitionResult.value?.success && recognitionResult.value.studentId) {
-      emit('attendance-confirmed', {
-        studentId: recognitionResult.value.studentId,
-        confidence: recognitionResult.value.confidence
-      })
-      
-      message.success('签到成功')
-      
-      // 重置状态
-      setTimeout(() => {
-        retakePhoto()
-      }, 1500)
+      message.warning('FACE_RECOGNITION_NOT_IMPLEMENTED: 人脸识别签到尚未接入真实服务')
     }
   }
   

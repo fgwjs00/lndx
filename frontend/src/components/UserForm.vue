@@ -293,6 +293,8 @@ const handleCancel = (): void => {
 </script>
 
 <style scoped>
+@reference "../style.css";
+
 .user-form-container {
   @apply p-2;
 }

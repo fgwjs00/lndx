@@ -23,7 +23,6 @@ export default defineConfig({
   define: {
     // 开发模式配置
     __DEV_MODE__: JSON.stringify(process.env.NODE_ENV === 'development'),
-    __SKIP_CAPTCHA__: JSON.stringify(process.env.NODE_ENV === 'development'), // 开发环境跳过验证码
     __MOCK_AUTH__: JSON.stringify(false)     // 关闭模拟认证，使用真实API
   }
 }) 

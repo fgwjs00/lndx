@@ -6,17 +6,17 @@
 import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { PrismaClient, UserRole } from '@prisma/client'
+import { UserRole } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { config } from '@/config'
 import { asyncHandler, ValidationError, BusinessError } from '@/middleware/errorHandler'
 import { generateToken, generateRefreshToken } from '@/middleware/auth'
 import { loginLimiter, smsLimiter } from '@/middleware/rateLimiter'
 import { logger, businessLogger, errorLogger } from '@/utils/logger'
 import { validateLoginData, validateSmsData, validateRegisterData } from '@/utils/validation'
-import { sendSms, generateSmsCode } from '@/services/smsService'
+import { sendSms, generateSmsCode, verifySms as verifySmsCode } from '@/services/smsService'
 
 const router = Router()
-const prisma = new PrismaClient()
 
 /**
  * @swagger
@@ -177,15 +177,15 @@ router.post('/login', loginLimiter, asyncHandler(async (req, res) => {
       ],
       'TEACHER': [
         // 学生管理权限
-        'student:read', 'student:create', 'student:update', 'student:delete',
+        'student:read', 'student:update', 'student:export', 'student:delete',
         // 课程管理权限
         'course:read', 'course:create', 'course:update', 'course:delete', 'course:import', 'course:export',
         // 报名管理权限
         'application:read', 'application:create', 'application:update', 'application:approve',
         // 年级管理权限
         'grade:read', 'grade:manage', 'grade:upgrade', 'grade:graduate',
-        // 数据分析权限
-        'analysis:read',
+        // 数据分析权限 - 已屏蔽
+        // 'analysis:read',
         // 考勤管理权限
         'attendance:read', 'attendance:manage',
         // 个人资料权限
@@ -271,7 +271,6 @@ router.post('/send-sms', smsLimiter, asyncHandler(async (req, res) => {
     businessLogger.systemAction('SMS_SENT', {
       phone: value.phone,
       type: value.type,
-      code, // 生产环境中不应该记录验证码
       ip: req.ip
     })
 
@@ -304,18 +303,16 @@ router.post('/verify-sms', asyncHandler(async (req, res) => {
     throw new ValidationError('缺少必要参数')
   }
 
-  // TODO: 从Redis中验证验证码
-  // 这里暂时使用模拟验证
-  const isValidCode = code === '123456' // 模拟验证码
+  const value = { phone, code, type }
+  const smsResult = verifySmsCode(value.phone, value.code, value.type)
 
-  if (!isValidCode) {
+  if (!smsResult.success) {
     businessLogger.systemAction('SMS_VERIFY_FAILED', {
       phone,
-      code,
       type,
       ip: req.ip
     })
-    throw new BusinessError('验证码错误或已过期', 400, 'INVALID_SMS_CODE')
+    throw new BusinessError(smsResult.message || '验证码错误或已过期', 400, 'INVALID_SMS_CODE')
   }
 
   businessLogger.systemAction('SMS_VERIFY_SUCCESS', {
@@ -347,9 +344,18 @@ router.post('/register', asyncHandler(async (req, res) => {
     throw new ValidationError('参数验证失败', error.details)
   }
 
-  // TODO: 验证短信验证码
-  if (!smsCode || smsCode !== '123456') {
+  if (!smsCode) {
     throw new BusinessError('请先进行短信验证', 400, 'SMS_NOT_VERIFIED')
+  }
+
+  const smsResult = verifySmsCode(value.phone, smsCode, 'register')
+  if (!smsResult.success) {
+    businessLogger.systemAction('SMS_VERIFY_FAILED', {
+      phone: value.phone,
+      type: 'register',
+      ip: req.ip
+    })
+    throw new BusinessError(smsResult.message || '请先进行短信验证', 400, 'SMS_NOT_VERIFIED')
   }
 
   // 检查用户是否已存在
@@ -520,11 +526,7 @@ router.post('/logout', asyncHandler(async (req, res) => {
   // TODO: 将Token加入黑名单（Redis）
   // 这里暂时只记录日志
   
-  const authHeader = req.headers.authorization
-  const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null
-  
   businessLogger.systemAction('USER_LOGOUT', {
-    token: token ? token.substring(0, 20) + '...' : 'unknown',
     ip: req.ip
   })
 

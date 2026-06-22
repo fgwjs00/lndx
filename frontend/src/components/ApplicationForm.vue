@@ -622,7 +622,7 @@ const handleSubmit = async (values: any): Promise<void> => {
       status: 'pending' as const
     }
 
-    const response = await ApplicationService.submitApplication(submitData, 1) // 假设课程ID为1
+    const response = await ApplicationService.submitApplicationV2(submitData)
 
     if (response.code === 200) {
       message.success('报名提交成功，请等待审核')

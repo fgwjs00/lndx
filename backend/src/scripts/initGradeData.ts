@@ -3,10 +3,9 @@
  * @description 为现有学生数据添加年级管理信息
  */
 
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { getCurrentSemester } from '../utils/gradeManagement'
 
-const prisma = new PrismaClient()
 
 async function initializeGradeData() {
   console.log('🚀 开始初始化学生年级数据...')

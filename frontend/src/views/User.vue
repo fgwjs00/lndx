@@ -404,7 +404,7 @@
  * @description 统一管理所有用户账户，包括管理员、教师、学生的账户管理
  */
 import { ref, computed, onMounted, watch } from 'vue'
-import { message } from 'ant-design-vue'
+import { Modal, message } from 'ant-design-vue'
 import UserForm from '@/components/UserForm.vue'
 import { useAuthStore } from '@/store/auth'
 import { UserService, type User, type UserRole } from '@/api/user'
@@ -623,8 +623,12 @@ const resetPassword = withErrorHandling(async (user: User): Promise<void> => {
   setButtonLoading(buttonKey, true)
   
   try {
-    await UserService.resetPassword(user.id, '123456')
-    message.success(`已重置用户 ${user.realName} 的密码为默认密码`)
+    const response = await UserService.resetPassword(user.id)
+    const temporaryPassword = response.data?.temporaryPassword || ''
+    Modal.success({
+      title: '密码已重置',
+      content: `用户 ${user.realName} 的临时密码为：${temporaryPassword}。请通知用户登录后立即修改密码。`
+    })
   } finally {
     setButtonLoading(buttonKey, false)
   }

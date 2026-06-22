@@ -68,6 +68,10 @@ export class AuthService {
     return request.get<UserInfo>('/auth/me')
   }
 
+  static async getAssetToken(): Promise<ApiResponse<{ assetToken: string; expiresInSeconds: number }>> {
+    return request.get<{ assetToken: string; expiresInSeconds: number }>('/assets/token')
+  }
+
   /**
    * 刷新访问令牌
    * @param data 刷新令牌数据

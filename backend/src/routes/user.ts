@@ -4,14 +4,21 @@
  */
 
 import { Router, Request, Response } from 'express'
-import { PrismaClient, UserRole } from '@prisma/client'
+import { UserRole } from '@prisma/client'
+import crypto from 'crypto'
+import { prisma } from '@/lib/prisma'
 import { asyncHandler, BusinessError, ValidationError } from '@/middleware/errorHandler'
 import { requireAdmin, requireOwnerOrAdmin } from '@/middleware/auth'
 import { validatePaginationData, validateIdParam } from '@/utils/validation'
 import { businessLogger } from '@/utils/logger'
 
 const router = Router()
-const prisma = new PrismaClient()
+
+function generateTemporaryPassword(): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'
+  const bytes = crypto.randomBytes(12)
+  return Array.from(bytes, byte => alphabet[byte % alphabet.length]).join('')
+}
 
 /**
  * @swagger
@@ -250,17 +257,18 @@ router.post('/', requireAdmin, asyncHandler(async (req: Request, res: Response) 
  * GET /api/users/:id
  */
 router.get('/:id', requireOwnerOrAdmin(async (req) => {
-  return req.params.id
+  return req.params.id === 'me' ? req.user!.id : req.params.id
 }), asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.params.id === 'me' ? req.user!.id : req.params.id
   // 参数验证
-  const { error: idError } = validateIdParam(req.params.id)
+  const { error: idError } = validateIdParam(userId)
   if (idError) {
     throw new ValidationError('用户ID无效')
   }
 
   // 查询用户信息
   const user = await prisma.user.findUnique({
-    where: { id: req.params.id },
+    where: { id: userId },
     select: {
       id: true,
       phone: true,
@@ -631,13 +639,8 @@ router.post('/:id/reset-password', requireAdmin, asyncHandler(async (req: Reques
     throw new ValidationError('用户ID无效')
   }
 
-  const { newPassword } = req.body
   const userId = req.params.id
-
-  // 验证新密码
-  if (!newPassword || newPassword.length < 6) {
-    throw new ValidationError('密码长度至少6个字符')
-  }
+  const temporaryPassword = generateTemporaryPassword()
 
   // 检查用户是否存在
   const user = await prisma.user.findUnique({
@@ -650,7 +653,7 @@ router.post('/:id/reset-password', requireAdmin, asyncHandler(async (req: Reques
 
   // 密码加密
   const bcrypt = require('bcryptjs')
-  const hashedPassword = await bcrypt.hash(newPassword, 10)
+  const hashedPassword = await bcrypt.hash(temporaryPassword, 10)
 
   // 更新密码
   await prisma.user.update({
@@ -670,7 +673,9 @@ router.post('/:id/reset-password', requireAdmin, asyncHandler(async (req: Reques
   res.json({
     code: 200,
     message: '密码重置成功',
-    data: null
+    data: {
+      temporaryPassword
+    }
   })
 }))
 

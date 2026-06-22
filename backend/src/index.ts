@@ -5,19 +5,20 @@
  * @version 1.0.0
  */
 
-import express from 'express'
+import express, { Request, Response } from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import compression from 'compression'
 import morgan from 'morgan'
 import dotenv from 'dotenv'
 import path from 'path'
+import { prisma } from '@/lib/prisma'
 
 // 导入配置和中间件
 import { config } from '@/config'
 import { errorHandler } from '@/middleware/errorHandler'
 import { rateLimiter } from '@/middleware/rateLimiter'
-import { authMiddleware } from '@/middleware/auth'
+import { assetAuthMiddleware, authMiddleware, generateAssetToken, sanitizeAuthUrl } from '@/middleware/auth'
 import { logger } from '@/utils/logger'
 import { setupSwagger } from '@/utils/swagger'
 
@@ -35,6 +36,8 @@ import uploadRoutes from '@/routes/upload'
 import searchRoutes from '@/routes/search'
 import roleRoutes from '@/routes/role'
 import analysisRoutes from '@/routes/analysis'
+import publicRegistrationRoutes from '@/routes/publicRegistration'
+import insuranceRoutes from '@/routes/insurance'
 
 // 加载环境变量
 dotenv.config()
@@ -43,6 +46,8 @@ dotenv.config()
  * 创建Express应用实例
  */
 const app = express()
+
+const sanitizeMorganMessage = (message: string): string => sanitizeAuthUrl(message.trim())
 
 /**
  * 基础中间件配置
@@ -57,7 +62,7 @@ app.use(cors({
 })) // 跨域配置
 app.use(express.json({ limit: '10mb' })) // JSON解析
 app.use(express.urlencoded({ extended: true, limit: '10mb' })) // URL编码解析
-app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } })) // 日志记录
+app.use(morgan('combined', { stream: { write: message => logger.info(sanitizeMorganMessage(message)) } })) // 日志记录
 
 /**
  * 安全中间件
@@ -74,52 +79,72 @@ const apiPrefix = config.apiPrefix || '/api'
  */
 setupSwagger(app)
 
+const handleHealthCheck = async (_req: Request, res: Response) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      version: process.env.npm_package_version || '1.0.0',
+      services: {
+        database: 'healthy',
+        api: 'healthy'
+      }
+    })
+  } catch (error) {
+    res.status(503).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: process.env.npm_package_version || '1.0.0',
+      services: {
+        database: 'unhealthy',
+        api: 'healthy'
+      }
+    })
+  }
+}
+
 /**
  * 健康检查接口
  */
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    memory: process.memoryUsage(),
-    version: process.env.npm_package_version || '1.0.0'
-  })
-})
+app.get('/health', handleHealthCheck)
+app.get(`${apiPrefix}/health`, handleHealthCheck)
 
 // API前缀下的健康检查
-app.get(`${apiPrefix}/health`, (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    memory: process.memoryUsage(),
-    version: process.env.npm_package_version || '1.0.0',
-    services: {
-      database: 'healthy',
-      api: 'healthy'
-    }
-  })
-})
+app.get(`${apiPrefix}/health`, handleHealthCheck)
 
 /**
  * 静态文件服务 - 用于提供上传的图片文件
  */
-app.use('/uploads', cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', config.corsOrigin].filter(Boolean) as string[],
-  credentials: true,
-  methods: ['GET', 'HEAD', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
-}), express.static(path.join(__dirname, '../uploads')))
+app.get(`${apiPrefix}/assets/token`, authMiddleware, (req: Request, res: Response) => {
+  res.json({
+    code: 200,
+    message: 'Asset token issued',
+    data: {
+      assetToken: generateAssetToken({ id: req.user!.id }),
+      expiresInSeconds: 600
+    }
+  })
+})
+
+app.use('/uploads', assetAuthMiddleware, (req, res, next) => {
+  res.setHeader('Cache-Control', 'private, max-age=300')
+  next()
+}, express.static(path.join(__dirname, '../uploads')))
 
 // 公开路由（不需要认证）
 app.use(`${apiPrefix}/auth`, authRoutes)
+app.use(`${apiPrefix}/public-registration`, publicRegistrationRoutes)
 app.use(`${apiPrefix}/upload`, uploadRoutes) // 文件上传（身份证识别等）
 
 // 需要认证的路由
 app.use(`${apiPrefix}/users`, authMiddleware, userRoutes)
 app.use(`${apiPrefix}/students`, authMiddleware, studentRoutes)
 app.use(`${apiPrefix}/courses`, authMiddleware, courseRoutes)
+app.use(`${apiPrefix}/insurances`, authMiddleware, insuranceRoutes)
 app.use(`${apiPrefix}/enrollments`, authMiddleware, enrollmentRoutes)
 app.use(`${apiPrefix}/applications`, authMiddleware, applicationRoutes) // 报名申请路由
 app.use(`${apiPrefix}/applications-v2`, applicationV2Routes) // 新版报名申请路由（含年级管理）

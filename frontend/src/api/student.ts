@@ -59,6 +59,14 @@ export class StudentService {
   }
 
   /**
+   * 获取政治面貌选项列表
+   * @returns 政治面貌选项列表
+   */
+  static async getPoliticalStatusOptions(): Promise<ApiResponse<string[]>> {
+    return request.get('/students/political-status')
+  }
+
+  /**
    * 获取学生详情
    * @param id 学生ID
    * @returns 学生详情

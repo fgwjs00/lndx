@@ -77,9 +77,10 @@
             <a-checkbox v-model:checked="formData.rememberMe" :disabled="loading">
               记住我
             </a-checkbox>
-            <a-button type="link" size="small" @click="showForgotPassword = true">
+            <!-- 忘记密码功能已屏蔽 -->
+            <!-- <a-button type="link" size="small" @click="showForgotPassword = true">
               忘记密码？
-            </a-button>
+            </a-button> -->
           </div>
 
           <!-- 登录按钮 -->
@@ -97,12 +98,13 @@
         </a-form>
 
         <!-- 底部链接 -->
-        <div class="text-center mt-6">
+        <!-- 学生注册功能已屏蔽 -->
+        <!-- <div class="text-center mt-6">
           <span class="text-gray-500">学生用户？</span>
           <a-button type="link" @click="showRegister = true">
             立即注册
           </a-button>
-        </div>
+        </div> -->
         
         <!-- 提示信息 -->
         <div class="mt-4 p-3 bg-blue-50 rounded-lg">
@@ -112,53 +114,6 @@
           </p>
         </div>
 
-        <!-- 开发模式提示-->
-        <div v-if="shouldSkipCaptcha()" class="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
-          <div class="flex items-center justify-between mb-2">
-            <p class="text-xs text-green-700 font-medium">
-              <i class="fas fa-code mr-1"></i>
-              开发模式
-            </p>
-            <a-button 
-              type="text" 
-              size="small" 
-              @click="showTestAccounts = !showTestAccounts"
-              class="text-green-600 text-xs p-0 h-auto"
-            >
-              {{ showTestAccounts ? '隐藏' : '显示' }}测试账号
-            </a-button>
-          </div>
-          <div v-show="showTestAccounts" class="text-xs text-green-600 space-y-1">
-            <p><strong>测试账号：</strong></p>
-            <div class="grid grid-cols-1 gap-1">
-              <p 
-                class="cursor-pointer hover:bg-green-100 px-2 py-1 rounded transition-colors"
-                @click="quickLogin('13800000001', '123456')"
-              >
-                超级管理员: 13800000001 / 123456
-              </p>
-              <p 
-                class="cursor-pointer hover:bg-green-100 px-2 py-1 rounded transition-colors"
-                @click="quickLogin('13800000002', '123456')"
-              >
-                学校管理员: 13800000002 / 123456
-              </p>
-              <p 
-                class="cursor-pointer hover:bg-green-100 px-2 py-1 rounded transition-colors"
-                @click="quickLogin('13800000003', '123456')"
-              >
-                教师: 13800000003 / 123456
-              </p>
-              <p 
-                class="cursor-pointer hover:bg-green-100 px-2 py-1 rounded transition-colors"
-                @click="quickLogin('13800000004', '123456')"
-              >
-                学生: 13800000004 / 123456
-              </p>
-            </div>
-            <p class="text-gray-500 mt-2 text-center">点击账号快速登录</p>
-          </div>
-        </div>
       </div>
 
       <!-- 系统信息 -->
@@ -168,8 +123,8 @@
       </div>
     </div>
 
-    <!-- 注册弹窗 -->
-    <a-modal
+    <!-- 注册和忘记密码功能已屏蔽 -->
+    <!-- <a-modal
       v-model:open="showRegister"
       title="学生注册"
       :footer="null"
@@ -182,7 +137,6 @@
       <RegisterForm @success="handleRegisterSuccess" @cancel="showRegister = false" />
     </a-modal>
 
-    <!-- 忘记密码弹窗 -->
     <a-modal
       v-model:open="showForgotPassword"
       title="找回密码"
@@ -194,7 +148,7 @@
       class="forgot-password-modal"
     >
       <ForgotPasswordForm @success="handleForgotPasswordSuccess" @cancel="showForgotPassword = false" />
-    </a-modal>
+    </a-modal> -->
   </div>
 </template>
 
@@ -206,14 +160,14 @@
  */
 import { ref, reactive, computed, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
 import { PhoneOutlined, LockOutlined } from '@ant-design/icons-vue'
 import { useAuthStore } from '@/store/auth'
 import { AuthService } from '@/api/auth'
 import { validatePhone } from '@/utils/auth'
-import { shouldSkipCaptcha, showDevModeInfo, isDevelopment } from '@/utils/dev'
-import RegisterForm from '@/components/RegisterForm.vue'
-import ForgotPasswordForm from '@/components/ForgotPasswordForm.vue'
+import { shouldSkipCaptcha, showDevModeInfo } from '@/utils/dev'
+// 注册和忘记密码组件已屏蔽
+// import RegisterForm from '@/components/RegisterForm.vue'
+// import ForgotPasswordForm from '@/components/ForgotPasswordForm.vue'
 import type { LoginRequest } from '@/types/auth'
 
 const router = useRouter()
@@ -223,9 +177,9 @@ const authStore = useAuthStore()
 const loading = ref<boolean>(false)
 const captchaImage = ref<string>('')
 const captchaId = ref<string>('')
-const showRegister = ref<boolean>(false)
-const showForgotPassword = ref<boolean>(false)
-const showTestAccounts = ref<boolean>(false)
+// 注册和忘记密码功能已屏蔽
+// const showRegister = ref<boolean>(false)
+// const showForgotPassword = ref<boolean>(false)
 const formRef = ref()
 
 // 表单数据
@@ -312,7 +266,7 @@ const handleFormSubmit = async (): Promise<void> => {
  * 处理登录
  */
 const handleLogin = async (values: LoginRequest): Promise<void> => {
-  console.log('🚀 开始登录流程', values)
+  console.log('🚀 开始登录流程')
   try {
     loading.value = true
 
@@ -324,14 +278,12 @@ const handleLogin = async (values: LoginRequest): Promise<void> => {
         phone: values.phone,
         password: values.password
       }
-      console.log('📝 开发模式登录数据:', loginData)
     } else {
       // 生产模式添加验证码ID
       loginData = {
         ...values,
         captchaId: captchaId.value
       }
-      console.log('📝 生产模式登录数据:', loginData)
     }
 
     console.log('🔄 调用 authStore.login...')
@@ -370,38 +322,20 @@ const handleLogin = async (values: LoginRequest): Promise<void> => {
 }
 
 /**
- * 处理注册成功
+ * 处理注册成功 - 已屏蔽
  */
-const handleRegisterSuccess = (): void => {
-  showRegister.value = false
-  message.success('注册成功，请登录')
-}
+// const handleRegisterSuccess = (): void => {
+//   showRegister.value = false
+//   message.success('注册成功，请登录')
+// }
 
 /**
- * 快速登录（开发模式）
+ * 处理忘记密码成功 - 已屏蔽
  */
-const quickLogin = async (phone: string, password: string): Promise<void> => {
-  if (!isDevelopment()) return
-  
-  formData.phone = phone
-  formData.password = password
-  formData.captcha = '123456' // 开发模式固定验证码
-  
-  await handleLogin({
-    phone,
-    password,
-    captcha: '123456',
-    rememberMe: false
-  })
-}
-
-/**
- * 处理忘记密码成功
- */
-const handleForgotPasswordSuccess = (): void => {
-  showForgotPassword.value = false
-  message.success('密码重置短信已发送，请查收')
-}
+// const handleForgotPasswordSuccess = (): void => {
+//   showForgotPassword.value = false
+//   message.success('密码重置短信已发送，请查收')
+// }
 
 // 组件挂载时获取验证码
 onMounted(() => {

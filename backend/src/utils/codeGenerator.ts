@@ -3,9 +3,8 @@
  * @description 生成学生编号、申请编号等唯一标识码
  */
 
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 
-const prisma = new PrismaClient()
 
 /**
  * 生成唯一的申请编号

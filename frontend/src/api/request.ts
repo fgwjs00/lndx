@@ -53,8 +53,7 @@ class HttpRequest {
       console.log('📤 请求拦截器:', { 
         url: config.url, 
         method: config.method, 
-        hasToken: !!token,
-        tokenPrefix: token ? token.substring(0, 20) + '...' : 'none'
+        hasToken: !!token
       })
       
       if (token) {
@@ -128,18 +127,31 @@ class HttpRequest {
           
           // 检查是否真的是认证问题，还是网络问题
           const authErrorData = error.response?.data
-          const isTokenExpired = authErrorData?.code === 401 && authErrorData?.message?.includes('token')
+          const hasAuthError = error.response?.status === 401
           
-          // 只有明确是token问题才清除认证信息
-          if (isTokenExpired) {
-            console.log('🔑 Token确实已过期，清除认证信息')
-            // 通过authStore来处理logout，而不是直接操作localStorage
+          // 检查是否是明确的认证错误
+          const isTokenExpired = authErrorData?.code === 401 || 
+                                authErrorData?.message?.includes('token') || 
+                                authErrorData?.message?.includes('未授权') ||
+                                authErrorData?.message?.includes('Unauthorized')
+          
+          // 401状态码通常表示认证问题，应该清除认证信息
+          if (hasAuthError) {
+            console.log('🔑 收到401状态码，清除认证信息并跳转到登录页')
+            // 通过authStore来处理logout，并跳转到登录页面
             import('@/store/auth').then(({ useAuthStore }) => {
               const authStore = useAuthStore()
-              authStore.logout()
+              authStore.logout(true) // 参数true表示跳转到登录页
+            }).catch(() => {
+              // 如果动态导入失败，使用备用方案
+              console.warn('🔄 动态导入失败，使用备用跳转方案')
+              localStorage.removeItem('token')
+              localStorage.removeItem('refreshToken')
+              localStorage.removeItem('user')
+              window.location.href = '/login'
             })
           } else {
-            // 可能是网络问题或服务器问题，不要清除认证信息
+            // 这种情况不太可能发生，但保留作为备用
             console.log('🌐 可能是网络问题，保持认证状态')
             return Promise.reject(new Error('网络连接异常，请检查网络或稍后重试'))
           }
@@ -176,7 +188,7 @@ class HttpRequest {
    * 处理模拟请求
    */
   private async handleMockRequest<T>(config: RequestConfig): Promise<ApiResponse<T>> {
-    console.log(`[模拟模式] ${config.method} ${config.url}`, config.data)
+    console.log(`[模拟模式] ${config.method} ${config.url}`)
     
     // 根据URL路径处理不同的模拟请�?
     if (config.url === '/auth/login' && config.method === 'POST') {

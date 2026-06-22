@@ -11,7 +11,7 @@
     "declarationMap": false,
     "sourceMap": true,
     "removeComments": false,
-    "importHelpers": true,
+    "importHelpers": false,
     "downlevelIteration": true,
     "strict": false,
     "noImplicitAny": false,

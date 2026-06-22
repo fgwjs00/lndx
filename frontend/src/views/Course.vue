@@ -109,6 +109,23 @@
                 </option>
               </select>
 
+              <button
+                v-if="!isCurrentSemesterAvailable"
+                @click="handleCreateCurrentSemester"
+                :disabled="termActionLoading"
+                class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-300 text-white rounded-lg transition-colors whitespace-nowrap"
+              >
+                创建{{ currentYearSemester }}
+              </button>
+
+              <button
+                @click="handleSyncClassSections"
+                :disabled="!selectedSemester || classSectionSyncing"
+                class="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 text-white rounded-lg transition-colors whitespace-nowrap"
+              >
+                同步班次
+              </button>
+
               <select 
                 v-model="selectedCategory" 
                 class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -239,6 +256,25 @@
               <i class="fas fa-plus mr-2"></i>
               <span class="whitespace-nowrap">添加课程</span>
             </button>
+
+              <button
+                v-if="!isCurrentSemesterAvailable"
+                @click="handleCreateCurrentSemester"
+                :disabled="termActionLoading"
+                class="bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-300 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0"
+              >
+                <i class="fas fa-calendar-plus mr-2"></i>
+                <span class="whitespace-nowrap">创建{{ currentYearSemester }}</span>
+              </button>
+
+              <button
+                @click="handleSyncClassSections"
+                :disabled="!selectedSemester || classSectionSyncing"
+                class="bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0"
+              >
+                <i class="fas fa-layer-group mr-2"></i>
+                <span class="whitespace-nowrap">同步班次</span>
+              </button>
             
               <button 
                 @click="handleBatchImport"
@@ -401,6 +437,14 @@
                   >
                     <i class="fas fa-users text-sm"></i>
                   </button>
+                  <button
+                    v-if="course.classSectionId && course.rosterStatus !== 'PUBLISHED'"
+                    @click="handleFreezeRoster(course)"
+                    class="p-2 bg-amber-100 text-amber-600 rounded-lg hover:bg-amber-200 transition-colors flex items-center justify-center min-w-0"
+                    title="冻结花名册"
+                  >
+                    <i class="fas fa-lock text-sm"></i>
+                  </button>
                   <button 
                       @click="deleteCourse(course)"
                     class="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center min-w-0" 
@@ -429,6 +473,18 @@
             show-quick-jumper
             :show-total="(total: number, _range: [number, number]) => `共 ${total} 条记录`"
             :page-size-options="['10', '20', '50', '100']"
+            :locale="{
+              items_per_page: '条/页',
+              jump_to: '跳至',
+              jump_to_confirm: '确定',
+              page: '页',
+              prev_page: '上一页',
+              next_page: '下一页',
+              prev_5: '向前 5 页',
+              next_5: '向后 5 页',
+              prev_3: '向前 3 页',
+              next_3: '向后 3 页'
+            }"
             @change="handlePageChange"
             @show-size-change="handlePageSizeChange"
             class="text-right"
@@ -644,6 +700,8 @@
               <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">学员编号</th>
               <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">联系电话</th>
               <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">身份证号码</th>
+              <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">紧急联系人</th>
+              <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">紧急联系电话</th>
               <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">报名日期</th>
             </tr>
           </thead>
@@ -660,6 +718,12 @@
               </td>
               <td class="py-4 px-4 text-sm text-blue-600 font-mono">
                 {{ student.enrollmentCode }}
+              </td>
+              <td class="py-4 px-4 text-sm text-gray-500">
+                {{ student.emergencyContact || '未填写' }}
+              </td>
+              <td class="py-4 px-4 text-sm text-gray-500">
+                {{ student.emergencyPhone || '未填写' }}
               </td>
               <td class="py-4 px-4 text-sm text-gray-500">
                 {{ student.applicationDate }}
@@ -754,6 +818,8 @@ const currentCourseStudents = ref<{
     phone: string
     applicationDate: string
     enrollmentCode: string
+    emergencyContact: string
+    emergencyPhone: string
   }>
   total: number
 }>({
@@ -770,6 +836,8 @@ const exportingCourseStudents = ref<boolean>(false)
   const selectedSemester = ref<string>('')
   const availableSemesters = ref<string[]>([])
   const availableCategories = ref<string[]>([])
+const termActionLoading = ref<boolean>(false)
+const classSectionSyncing = ref<boolean>(false)
 const showCourseDetailModal = ref<boolean>(false)
 const selectedCourse = ref<Course | null>(null)
 const showCourseFormModal = ref<boolean>(false)
@@ -827,6 +895,9 @@ const getCurrentYearSemester = (): string => {
   return `${currentYear}年秋季`
 }
 
+const currentYearSemester = computed(() => getCurrentYearSemester())
+const isCurrentSemesterAvailable = computed(() => availableSemesters.value.includes(currentYearSemester.value))
+
 // API调用方法
 /**
  * 获取可用学期列表
@@ -841,8 +912,7 @@ const fetchSemesters = async (): Promise<void> => {
     setDefaultSemester()
   } catch (error) {
     console.error('获取学期列表失败:', error)
-    // 失败时使用默认学期选项
-    availableSemesters.value = ['2025年秋季',  '2024年秋季']
+    availableSemesters.value = []
     
     // 设置默认学期为当年学期
     setDefaultSemester()
@@ -859,10 +929,54 @@ const setDefaultSemester = (): void => {
   if (availableSemesters.value.includes(currentSemester)) {
     selectedSemester.value = currentSemester
     console.log(`设置默认学期为: ${currentSemester}`)
+  } else if (selectedSemester.value && availableSemesters.value.includes(selectedSemester.value)) {
+    return
   } else if (availableSemesters.value.length > 0) {
     // 如果当年学期不存在，则选择第一个可用学期
     selectedSemester.value = availableSemesters.value[0]
     console.log(`当年学期不存在，设置默认学期为: ${selectedSemester.value}`)
+  } else {
+    selectedSemester.value = ''
+  }
+}
+
+const handleCreateCurrentSemester = async (): Promise<void> => {
+  try {
+    termActionLoading.value = true
+    await CourseService.createSemester({
+      name: currentYearSemester.value,
+      isActive: true,
+      isEnrollmentOpen: false
+    })
+    message.success(`已创建${currentYearSemester.value}`)
+    await fetchSemesters()
+    selectedSemester.value = currentYearSemester.value
+    await fetchCourses()
+  } catch (error) {
+    console.error('创建学期失败:', error)
+    message.error('创建学期失败')
+  } finally {
+    termActionLoading.value = false
+  }
+}
+
+const handleSyncClassSections = async (): Promise<void> => {
+  if (!selectedSemester.value) {
+    message.warning('请先选择学期')
+    return
+  }
+
+  try {
+    classSectionSyncing.value = true
+    const response = await CourseService.syncSemesterClassSections(selectedSemester.value)
+    const result = response.data
+    message.success(`班次同步完成：新增 ${result?.createdCount || 0} 个，更新 ${result?.updatedCount || 0} 个`)
+    await fetchCourses()
+  } catch (error) {
+    console.error('同步班次失败:', error)
+    message.error('同步班次失败')
+  } finally {
+    classSectionSyncing.value = false
   }
 }
 
@@ -976,6 +1090,30 @@ const deleteCourse = (course: Course): void => {
 /**
  * 修改课程状态
  */
+const handleFreezeRoster = (course: Course): void => {
+  if (!course.classSectionId) {
+    message.warning('该课程尚未生成班次，不能冻结花名册')
+    return
+  }
+
+  Modal.confirm({
+    title: '冻结花名册',
+    content: `确认冻结「${course.name}」的花名册？冻结后将作为本学期正式名单。`,
+    okText: '确认冻结',
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        await CourseService.freezeRosterSnapshot(course.classSectionId!)
+        message.success('花名册已冻结')
+        await fetchCourses()
+      } catch (error) {
+        console.error('冻结花名册失败:', error)
+        message.error('冻结花名册失败')
+      }
+    }
+  })
+}
+
 const changeCourseStatus = async (course: Course, status: Course['status']): Promise<void> => {
   try {
     await CourseService.changeCourseStatus(course.id, status)
@@ -1267,7 +1405,9 @@ const showStudentList = async (course: Course): Promise<void> => {
         studentCode: app.studentInfo?.studentCode || '',
         phone: app.studentInfo?.phone || '', // 🔧 修复：使用正确的字段名
         applicationDate: app.applicationDate,
-        enrollmentCode: app.studentInfo?.idNumber || '' // 🔧 修复：显示身份证号码而不是报名编号
+        enrollmentCode: app.studentInfo?.idNumber || '', // 🔧 修复：显示身份证号码而不是报名编号
+        emergencyContact: app.studentInfo?.emergencyContact || '', // 添加紧急联系人
+        emergencyPhone: app.studentInfo?.emergencyPhone || '' // 添加紧急联系电话
       }))
       
       console.log('格式化的学员列表:', studentList)

@@ -128,10 +128,11 @@
             <i class="fas fa-clipboard-check text-purple-600 text-2xl mb-2"></i>
             <span class="text-gray-800 font-medium text-sm">审核申请</span>
           </button>
-          <button @click="navigateTo('/analysis')" class="flex flex-col items-center px-4 py-6 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors text-center">
+          <!-- 数据分析功能暂时屏蔽 -->
+          <!-- <button @click="navigateTo('/analysis')" class="flex flex-col items-center px-4 py-6 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors text-center">
             <i class="fas fa-chart-bar text-indigo-600 text-2xl mb-2"></i>
             <span class="text-gray-800 font-medium text-sm">数据分析</span>
-          </button>
+          </button> -->
         </div>
       </div>
 

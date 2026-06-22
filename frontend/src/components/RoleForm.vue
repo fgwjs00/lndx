@@ -140,7 +140,8 @@
               allow-clear
               @change="applyTemplate"
             >
-              <a-select-option value="admin">管理员模板</a-select-option>
+              <a-select-option value="admin">超级管理员模板</a-select-option>
+              <a-select-option value="school_admin">学校管理员模板</a-select-option>
               <a-select-option value="teacher">教师模板</a-select-option>
               <a-select-option value="student">学生模板</a-select-option>
               <a-select-option value="readonly">只读模板</a-select-option>
@@ -657,14 +658,19 @@ const selectedGroupedPermissions = computed(() => {
     const templates: Record<string, string[]> = {
       admin: [
         'system:*', 'user:*', 'student:*', 'teacher:*', 
-        'course:*', 'application:*', 'grade:*', 'analysis:*', 'setting:*', 'logs:*', 'school:*'
+        'course:*', 'application:*', 'grade:*', /* 'analysis:*', */ 'setting:*', 'logs:*', 'school:*'
+      ],
+      school_admin: [
+        'user:read', 'user:create', 'user:update',
+        'student:*', 'teacher:*', 'course:*', 'application:*', 'grade:*',
+        'attendance:manage', /* 'analysis:read', */ 'setting:read', 'setting:update'
       ],
       teacher: [
-        'student:read', 'student:create', 'student:update', 'student:delete',
+        'student:read', 'student:update', 'student:export', 'student:delete',
         'course:read', 'course:create', 'course:update', 'course:import', 'course:export',
         'application:read', 'application:approve',
         'grade:read', 'grade:manage', 'grade:upgrade', 'grade:graduate',
-        'analysis:read', 'attendance:manage'
+        /* 'analysis:read', */ 'attendance:manage'
       ],
       student: [
         'profile:read', 'profile:update',
@@ -672,7 +678,7 @@ const selectedGroupedPermissions = computed(() => {
       ],
       readonly: [
         'system:read', 'user:read', 'student:read', 'teacher:read',
-        'course:read', 'application:read', 'grade:read', 'analysis:read'
+        'course:read', 'application:read', 'grade:read' /* , 'analysis:read' */
       ]
     }
 
@@ -700,7 +706,7 @@ const selectedGroupedPermissions = computed(() => {
       teacher: '教师管理',
       course: '课程管理',
       application: '报名管理',
-      analysis: '数据分析',
+      // analysis: '数据分析', // 功能暂时屏蔽
       setting: '系统设置',
       logs: '日志管理',
       attendance: '签到管理',
@@ -718,7 +724,7 @@ const selectedGroupedPermissions = computed(() => {
       teacher: 'fas fa-chalkboard-teacher',
       course: 'fas fa-book',
       application: 'fas fa-file-alt',
-      analysis: 'fas fa-chart-bar',
+      // analysis: 'fas fa-chart-bar', // 功能暂时屏蔽
       setting: 'fas fa-cog',
       logs: 'fas fa-list-alt',
       attendance: 'fas fa-check-circle',
@@ -831,10 +837,10 @@ const getPermissionDescription = (permission: string): string => {
       graduate: '执行学生毕业操作',
       '*': '年级完全管理权限'
     },
-    analysis: {
-      read: '查看统计分析报表',
-      '*': '数据分析完全权限'
-    },
+    // analysis: { // 功能暂时屏蔽
+    //   read: '查看统计分析报表',
+    //   '*': '数据分析完全权限'
+    // },
     setting: {
       read: '查看系统设置',
       update: '修改系统设置',

@@ -4,19 +4,18 @@
  */
 
 import { Router, Request, Response } from 'express'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { asyncHandler, BusinessError } from '@/middleware/errorHandler'
-import { authMiddleware } from '@/middleware/auth'
+import { requireTeacher } from '@/middleware/auth'
 import { businessLogger } from '@/utils/logger'
 
 const router = Router()
-const prisma = new PrismaClient()
 
 /**
  * 获取系统统计概览
  * GET /api/analysis/overview
  */
-router.get('/overview', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+router.get('/overview', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
   try {
     // 获取基础统计数据
     const [
@@ -124,7 +123,7 @@ router.get('/overview', authMiddleware, asyncHandler(async (req: Request, res: R
  * 获取热门课程排行
  * GET /api/analysis/popular-courses
  */
-router.get('/popular-courses', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+router.get('/popular-courses', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 5
 
@@ -173,7 +172,7 @@ router.get('/popular-courses', authMiddleware, asyncHandler(async (req: Request,
  * 获取月度统计数据
  * GET /api/analysis/monthly-stats
  */
-router.get('/monthly-stats', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+router.get('/monthly-stats', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
   try {
     const now = new Date()
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -241,7 +240,7 @@ router.get('/monthly-stats', authMiddleware, asyncHandler(async (req: Request, r
  * 获取课程分类统计
  * GET /api/analysis/category-stats
  */
-router.get('/category-stats', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+router.get('/category-stats', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
   try {
     // 按分类统计课程和报名情况
     const categories = await prisma.course.findMany({
@@ -290,7 +289,7 @@ router.get('/category-stats', authMiddleware, asyncHandler(async (req: Request, 
  * 获取系统状态信息
  * GET /api/analysis/system-status
  */
-router.get('/system-status', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+router.get('/system-status', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
   try {
     // 获取数据库连接状态
     let dbStatus = 'normal'
@@ -337,7 +336,7 @@ router.get('/system-status', authMiddleware, asyncHandler(async (req: Request, r
  * 获取最近活动
  * GET /api/analysis/recent-activities
  */
-router.get('/recent-activities', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+router.get('/recent-activities', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
   try {
     const limit = Math.min(parseInt(req.query.limit as string) || 10, 50)
     
@@ -399,7 +398,7 @@ router.get('/recent-activities', authMiddleware, asyncHandler(async (req: Reques
  * 获取课程分类统计
  * GET /api/analysis/course-categories-stats
  */
-router.get('/course-categories-stats', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+router.get('/course-categories-stats', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
   try {
     // 获取课程分类统计
     const categoryStats = await prisma.course.groupBy({
@@ -457,5 +456,287 @@ router.get('/course-categories-stats', authMiddleware, asyncHandler(async (req: 
     throw new BusinessError('课程分类统计查询失败', 500, 'COURSE_CATEGORIES_STATS_ERROR')
   }
 }))
+
+/**
+ * 获取校区/教学点统计数据
+ * GET /api/analysis/campus-stats
+ */
+router.get('/campus-stats', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
+  try {
+    // 按课程地点统计
+    const locationStats = await prisma.course.groupBy({
+      by: ['location'],
+      where: {
+        isActive: true,
+        AND: [
+          { location: { not: null } },
+          { location: { not: '' } }
+        ]
+      },
+      _count: {
+        location: true
+      }
+    });
+
+    // 为每个地点获取详细统计
+    const detailedLocationStats = await Promise.all(
+      locationStats.map(async (stat) => {
+        const location = stat.location;
+        
+        // 统计该地点的报名人次
+        const enrollmentCount = await prisma.enrollment.count({
+          where: {
+            status: 'APPROVED',
+            course: {
+              isActive: true,
+              location: location
+            },
+            student: {
+              isActive: true
+            }
+          }
+        });
+
+        // 统计该地点的学生人数（去重）
+        const uniqueStudents = await prisma.enrollment.findMany({
+          where: {
+            status: 'APPROVED',
+            course: {
+              isActive: true,
+              location: location
+            },
+            student: {
+              isActive: true
+            }
+          },
+          select: {
+            studentId: true
+          },
+          distinct: ['studentId']
+        });
+
+        return {
+          location: location!,
+          courseCount: stat._count.location,
+          studentCount: uniqueStudents.length,
+          enrollmentCount: enrollmentCount,
+          averageEnrollment: uniqueStudents.length > 0 ? (enrollmentCount / uniqueStudents.length) : 0
+        };
+      })
+    );
+
+    // 按报名人次排序
+    detailedLocationStats.sort((a, b) => b.enrollmentCount - a.enrollmentCount);
+
+    console.log('校区统计查询成功', {
+      totalLocations: detailedLocationStats.length,
+      topLocation: detailedLocationStats[0]?.location || 'N/A'
+    });
+
+    res.json({
+      code: 200,
+      message: '校区统计查询成功',
+      data: detailedLocationStats
+    });
+  } catch (error) {
+    console.error('校区统计查询失败:', error);
+    throw new BusinessError('校区统计查询失败', 500, 'CAMPUS_STATS_ERROR');
+  }
+}));
+
+/**
+ * 获取专业分布统计数据
+ * GET /api/analysis/major-stats
+ */
+router.get('/major-stats', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
+  try {
+    // 按学生专业统计
+    const majorStats = await prisma.student.groupBy({
+      by: ['major'],
+      where: {
+        isActive: true,
+        AND: [
+          { major: { not: null } },
+          { major: { not: '' } }
+        ]
+      },
+      _count: {
+        major: true
+      }
+    });
+
+    // 为每个专业获取详细统计
+    const detailedMajorStats = await Promise.all(
+      majorStats.map(async (stat) => {
+        const major = stat.major;
+        
+        // 统计该专业的报名人次
+        const enrollmentCount = await prisma.enrollment.count({
+          where: {
+            status: 'APPROVED',
+            student: {
+              isActive: true,
+              major: major
+            }
+          }
+        });
+
+        return {
+          major: major!,
+          studentCount: stat._count.major,
+          enrollmentCount: enrollmentCount,
+          averageEnrollment: (enrollmentCount / stat._count.major)
+        };
+      })
+    );
+
+    // 按学生人数排序
+    detailedMajorStats.sort((a, b) => b.studentCount - a.studentCount);
+
+    res.json({
+      code: 200,
+      message: '专业统计查询成功',
+      data: detailedMajorStats
+    });
+  } catch (error) {
+    console.error('专业统计查询失败:', error);
+    throw new BusinessError('专业统计查询失败', 500, 'MAJOR_STATS_ERROR');
+  }
+}));
+
+/**
+ * 获取政治面貌统计数据
+ * GET /api/analysis/political-stats
+ */
+router.get('/political-stats', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const politicalStatusStats = await prisma.student.groupBy({
+      by: ['politicalStatus'],
+      where: {
+        isActive: true,
+        AND: [
+          { politicalStatus: { not: null } },
+          { politicalStatus: { not: '' } }
+        ]
+      },
+      _count: {
+        politicalStatus: true
+      },
+      orderBy: {
+        _count: {
+          politicalStatus: 'desc'
+        }
+      }
+    });
+
+    const totalStudents = await prisma.student.count({
+      where: {
+        isActive: true,
+        AND: [
+          { politicalStatus: { not: null } },
+          { politicalStatus: { not: '' } }
+        ]
+      }
+    });
+
+    const detailedPoliticalStats = politicalStatusStats.map((stat) => {
+      const status = stat.politicalStatus;
+      const count = stat._count.politicalStatus;
+      const percentage = ((count / totalStudents) * 100);
+      
+      // 判断是否为中共党员相关
+      const isPartyMember = status && (status.includes('中共党员') || status.includes('党员'));
+      
+      return {
+        politicalStatus: status!,
+        studentCount: count,
+        percentage: parseFloat(percentage.toFixed(1)),
+        isPartyMember: isPartyMember
+      };
+    });
+
+    // 计算中共党员总数
+    const partyMemberCount = detailedPoliticalStats
+      .filter(stat => stat.isPartyMember)
+      .reduce((sum, stat) => sum + stat.studentCount, 0);
+
+    res.json({
+      code: 200,
+      message: '政治面貌统计查询成功',
+      data: {
+        stats: detailedPoliticalStats,
+        summary: {
+          totalStudents,
+          partyMemberCount,
+          partyMemberPercentage: parseFloat(((partyMemberCount / totalStudents) * 100).toFixed(1))
+        }
+      }
+    });
+  } catch (error) {
+    console.error('政治面貌统计查询失败:', error);
+    throw new BusinessError('政治面貌统计查询失败', 500, 'POLITICAL_STATS_ERROR');
+  }
+}));
+
+/**
+ * 获取综合数据统计概览
+ * GET /api/analysis/comprehensive-stats
+ */
+router.get('/comprehensive-stats', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const [
+      totalStudents,
+      totalEnrollments,
+      totalCourses,
+      totalLocations,
+      avgEnrollmentPerStudent
+    ] = await Promise.all([
+      prisma.student.count({ where: { isActive: true } }),
+      prisma.enrollment.count({ 
+        where: { 
+          status: 'APPROVED',
+          student: { isActive: true }
+        } 
+      }),
+      prisma.course.count({ where: { isActive: true } }),
+      prisma.course.findMany({
+        where: { 
+          isActive: true,
+          AND: [
+            { location: { not: null } },
+            { location: { not: '' } }
+          ]
+        },
+        select: { location: true },
+        distinct: ['location']
+      }),
+      prisma.enrollment.count({ 
+        where: { 
+          status: 'APPROVED',
+          student: { isActive: true }
+        } 
+      })
+    ]);
+
+    const avgEnrollmentPerCourse = totalCourses > 0 ? (totalEnrollments / totalCourses) : 0;
+    const avgEnrollmentPerStudentCalc = totalStudents > 0 ? (totalEnrollments / totalStudents) : 0;
+
+    res.json({
+      code: 200,
+      message: '综合统计查询成功',
+      data: {
+        totalStudents,
+        totalEnrollments,
+        totalCourses,
+        totalLocations: totalLocations.length,
+        avgEnrollmentPerStudent: parseFloat(avgEnrollmentPerStudentCalc.toFixed(1)),
+        avgEnrollmentPerCourse: parseFloat(avgEnrollmentPerCourse.toFixed(1))
+      }
+    });
+  } catch (error) {
+    console.error('综合统计查询失败:', error);
+    throw new BusinessError('综合统计查询失败', 500, 'COMPREHENSIVE_STATS_ERROR');
+  }
+}));
 
 export default router

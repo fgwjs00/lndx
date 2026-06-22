@@ -153,6 +153,12 @@
               {{ record.currentGrade || '未分配' }}
             </a-tag>
           </template>
+
+          <template v-if="column.key === 'academicStatus'">
+            <a-tag :color="getAcademicStatusTagColor(record.academicStatus)">
+              {{ getAcademicStatusText(record.academicStatus) }}
+            </a-tag>
+          </template>
           
           <template v-if="column.key === 'graduationStatus'">
             <a-tag :color="getStatusTagColor(record.graduationStatus)">
@@ -176,6 +182,14 @@
               >
                 <i class="fas fa-graduation-cap"></i>
                 毕业
+              </button>
+              <button
+                @click="handleManualRetention(record)"
+                :disabled="record.graduationStatus !== 'IN_PROGRESS'"
+                class="bg-amber-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+              >
+                <i class="fas fa-undo-alt"></i>
+                留级
               </button>
               <button 
                 @click="handleViewDetails(record)"
@@ -219,6 +233,42 @@
         </a-form>
       </div>
     </a-modal>
+
+    <!-- 留级/年级调整对话框 -->
+    <a-modal
+      v-model:open="gradeAdjustmentModalVisible"
+      title="留级/调整年级"
+      :confirm-loading="gradeAdjustmentLoading"
+      @ok="handleConfirmGradeAdjustment"
+    >
+      <div v-if="selectedStudent">
+        <p style="margin-bottom: 16px;">
+          为学生 <strong>{{ selectedStudent.name }}</strong> 设置新的当前年级。
+        </p>
+
+        <a-form layout="vertical">
+          <a-form-item label="当前年级">
+            <a-input :value="selectedStudent.currentGrade || '未分配'" disabled />
+          </a-form-item>
+
+          <a-form-item label="调整后年级" required>
+            <a-select
+              v-model:value="gradeAdjustmentForm.newGrade"
+              :options="gradeOptions"
+              placeholder="请选择调整后的年级"
+            />
+          </a-form-item>
+
+          <a-form-item label="调整原因">
+            <a-textarea
+              v-model:value="gradeAdjustmentForm.reason"
+              placeholder="请输入留级或年级调整原因..."
+              :rows="3"
+            />
+          </a-form-item>
+        </a-form>
+      </div>
+    </a-modal>
   </div>
 </template>
 
@@ -256,6 +306,7 @@ interface GradeManagementStudent extends Student {
 const loading = ref<boolean>(false)
 const upgradeLoading = ref<boolean>(false)
 const graduationLoading = ref<boolean>(false)
+const gradeAdjustmentLoading = ref<boolean>(false)
 const statistics = ref<Partial<GradeStatistics>>({})
 const students = ref<GradeManagementStudent[]>([])
 const selectedGradeFilter = ref<string>()
@@ -263,6 +314,7 @@ const selectedStatusFilter = ref<string>()
 
 // 对话框状态
 const graduationModalVisible = ref<boolean>(false)
+const gradeAdjustmentModalVisible = ref<boolean>(false)
 const selectedStudent = ref<GradeManagementStudent | null>(null)
 
 // 毕业表单
@@ -270,6 +322,17 @@ const graduationForm = reactive({
   graduationDate: null as Dayjs | null,
   remarks: ''
 })
+
+const gradeAdjustmentForm = reactive({
+  newGrade: '',
+  reason: ''
+})
+
+const gradeOptions = [
+  { label: '一年级', value: '一年级' },
+  { label: '二年级', value: '二年级' },
+  { label: '三年级', value: '三年级' }
+]
 
 // 表格列定义
 const columns = [
@@ -292,7 +355,19 @@ const columns = [
     align: 'center'
   },
   {
+    title: '专业',
+    dataIndex: 'major',
+    key: 'major',
+    width: 120
+  },
+  {
     title: '学籍状态',
+    key: 'academicStatus',
+    width: 100,
+    align: 'center'
+  },
+  {
+    title: '毕业状态',
     key: 'graduationStatus',
     width: 100,
     align: 'center'
@@ -346,7 +421,7 @@ const loadStatistics = async (): Promise<void> => {
 
 const loadStudents = async (): Promise<void> => {
   try {
-    const response = await request.get('/students?page=1&pageSize=100&includeGradeInfo=true')
+    const response = await request.get('/grade-management/students')
     const data = response.data as { list?: GradeManagementStudent[] }
     students.value = data?.list || []
     console.log('学生数据:', students.value)
@@ -399,6 +474,22 @@ const handleManualGraduation = (student: GradeManagementStudent): void => {
   graduationModalVisible.value = true
 }
 
+const getRetentionGrade = (grade?: string): string => {
+  const previousGradeMap: Record<string, string> = {
+    '三年级': '二年级',
+    '二年级': '一年级',
+    '一年级': '一年级'
+  }
+  return previousGradeMap[grade || ''] || '一年级'
+}
+
+const handleManualRetention = (student: GradeManagementStudent): void => {
+  selectedStudent.value = student
+  gradeAdjustmentForm.newGrade = getRetentionGrade(student.currentGrade)
+  gradeAdjustmentForm.reason = '留级处理'
+  gradeAdjustmentModalVisible.value = true
+}
+
 const handleConfirmGraduation = async (): Promise<void> => {
   if (!selectedStudent.value) return
 
@@ -419,6 +510,30 @@ const handleConfirmGraduation = async (): Promise<void> => {
     message.error('设置毕业失败')
   } finally {
     graduationLoading.value = false
+  }
+}
+
+const handleConfirmGradeAdjustment = async (): Promise<void> => {
+  if (!selectedStudent.value || !gradeAdjustmentForm.newGrade) {
+    message.warning('请选择调整后的年级')
+    return
+  }
+
+  gradeAdjustmentLoading.value = true
+  try {
+    await request.post(`/grade-management/adjust/${selectedStudent.value.id}`, {
+      newGrade: gradeAdjustmentForm.newGrade,
+      reason: gradeAdjustmentForm.reason || '手动年级调整'
+    })
+
+    message.success(`学生 ${selectedStudent.value.name} 年级已调整为 ${gradeAdjustmentForm.newGrade}`)
+    gradeAdjustmentModalVisible.value = false
+    await handleRefreshData()
+  } catch (error: any) {
+    console.error('调整年级失败:', error)
+    message.error('调整年级失败')
+  } finally {
+    gradeAdjustmentLoading.value = false
   }
 }
 
@@ -452,6 +567,24 @@ const getStatusTagColor = (status: string): string => {
     'ARCHIVED': 'default'
   }
   return colorMap[status] || 'default'
+}
+
+const getAcademicStatusTagColor = (status: string): string => {
+  const colorMap: Record<string, string> = {
+    'ACTIVE': 'processing',
+    'SUSPENDED': 'warning',
+    'GRADUATED': 'success'
+  }
+  return colorMap[status] || 'default'
+}
+
+const getAcademicStatusText = (status: string): string => {
+  const textMap: Record<string, string> = {
+    'ACTIVE': '在读',
+    'SUSPENDED': '休学',
+    'GRADUATED': '毕业'
+  }
+  return textMap[status] || status || '未设置'
 }
 
 const getStatusText = (status: string): string => {

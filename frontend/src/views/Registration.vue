@@ -33,7 +33,7 @@
         >
           <!-- 身份证读卡器 -->
           <div class="mb-8">
-            <IdCardReader 
+            <IdCardReader
               @dataRead="handleIdCardDataRead"
               @error="handleReaderError"
             />
@@ -48,7 +48,7 @@
               </h2>
               <p class="text-gray-600">请填写您的基本个人信息，可使用身份证读卡器快速录入</p>
             </div>
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <!-- 姓名 -->
               <a-form-item label="姓名" name="name" required>
@@ -165,28 +165,28 @@
                 >
                   <div class="id-card-upload-area">
                     <div v-if="formData.idCardFront || pendingPhotoData.idCardFront" class="relative">
-                      <img 
-                        :src="idCardFrontUrl" 
-                        alt="身份证正面" 
-                        class="id-card-image cursor-pointer" 
+                      <img
+                        :src="idCardFrontUrl"
+                        alt="身份证正面"
+                        class="id-card-image cursor-pointer"
                         @click.stop="previewIdCard('front')"
                         @error="(e: Event) => console.log('❌ 图片加载失败 - 正面:', (e.target as HTMLImageElement)?.src)"
                         @load="(e: Event) => console.log('✅ 图片加载成功 - 正面:', (e.target as HTMLImageElement)?.src)"
                       />
                       <!-- 操作按钮 -->
                       <div class="absolute top-2 right-2 flex space-x-1">
-                        <a-button 
-                          type="primary" 
-                          size="small" 
+                        <a-button
+                          type="primary"
+                          size="small"
                           @click.stop="triggerIdCardUpload('front')"
                           class="!px-2"
                           title="重新上传"
                         >
                           <i class="fas fa-upload text-xs"></i>
                         </a-button>
-                        <a-button 
-                          danger 
-                          size="small" 
+                        <a-button
+                          danger
+                          size="small"
                           @click.stop="clearIdCardPhoto('front')"
                           class="!px-2"
                           title="删除照片"
@@ -215,28 +215,28 @@
                 >
                   <div class="id-card-upload-area">
                     <div v-if="formData.idCardBack || pendingPhotoData.idCardBack" class="relative">
-                      <img 
-                        :src="idCardBackUrl" 
-                        alt="身份证反面" 
-                        class="id-card-image cursor-pointer" 
+                      <img
+                        :src="idCardBackUrl"
+                        alt="身份证反面"
+                        class="id-card-image cursor-pointer"
                         @click.stop="previewIdCard('back')"
                         @error="(e: Event) => console.log('❌ 图片加载失败 - 反面:', (e.target as HTMLImageElement)?.src)"
                         @load="(e: Event) => console.log('✅ 图片加载成功 - 反面:', (e.target as HTMLImageElement)?.src)"
                       />
                       <!-- 操作按钮 -->
                       <div class="absolute top-2 right-2 flex space-x-1">
-                        <a-button 
-                          type="primary" 
-                          size="small" 
+                        <a-button
+                          type="primary"
+                          size="small"
                           @click.stop="triggerIdCardUpload('back')"
                           class="!px-2"
                           title="重新上传"
                         >
                           <i class="fas fa-upload text-xs"></i>
                         </a-button>
-                        <a-button 
-                          danger 
-                          size="small" 
+                        <a-button
+                          danger
+                          size="small"
                           @click.stop="clearIdCardPhoto('back')"
                           class="!px-2"
                           title="删除照片"
@@ -265,7 +265,7 @@
               </h2>
               <p class="text-gray-600">请填写学籍相关信息</p>
             </div>
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                <!-- 学员证号 -->
                <a-form-item label="学员证号" name="studentId">
@@ -275,7 +275,7 @@
                   size="large"
                   :maxlength="20"
                 />
-              </a-form-item>            
+              </a-form-item>
 
               <!-- 学期选择 -->
               <a-form-item label="学期" name="semester" required>
@@ -301,8 +301,8 @@
                     已报名课程（{{ enrollmentLimits.activeEnrollmentsCount }}/{{ enrollmentLimits.maxCoursesAllowed }}）
                   </div>
                   <div class="space-y-1">
-                    <div 
-                      v-for="enrollment in enrollmentLimits.currentEnrollments" 
+                    <div
+                      v-for="enrollment in enrollmentLimits.currentEnrollments"
                       :key="enrollment.id"
                       class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded flex justify-between items-center"
                     >
@@ -316,12 +316,12 @@
                     </div>
                   </div>
                 </div>
-                
+
                 <a-select
                   v-model:value="formData.selectedCourses"
                   mode="multiple"
-                  :placeholder="enrollmentLimits.remainingCourseSlots > 0 
-                    ? `还可以选择${enrollmentLimits.remainingCourseSlots}门课程` 
+                  :placeholder="enrollmentLimits.remainingCourseSlots > 0
+                    ? `还可以选择${enrollmentLimits.remainingCourseSlots}门课程`
                     : '已达到最大报名数量'"
                   size="large"
                   :options="courseOptions"
@@ -338,23 +338,56 @@
                       （已达本次最大选择数量）
                     </span>
                   </div>
-                  
+
                   <!-- 显示已选课程的详细信息 -->
                   <div class="mt-2 space-y-1">
-                    <div 
-                      v-for="courseId in formData.selectedCourses" 
+                    <div
+                      v-for="courseId in formData.selectedCourses"
                       :key="courseId"
                       class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded flex justify-between items-center"
                     >
-                      <span>{{ availableCourses?.find?.(c => c.id.toString() === courseId)?.name || '未知课程' }}</span>
+                      <span>{{ findCourseBySelectionId(courseId)?.name || '未知课程' }}</span>
                     </div>
                   </div>
                 </div>
-                
+
                 <!-- 选择提示 -->
                 <div class="mt-2 text-xs text-gray-500">
                   <i class="fas fa-info-circle mr-1"></i>
-                  最多可选择2门不同时间段的课程，系统会自动过滤时间冲突的课程
+                  <span v-if="formData.semester && enrollmentLimits.policyDescription">
+                    {{ enrollmentLimits.policyDescription }}
+                  </span>
+                  <span v-else>最多可选择2门不同时间段的课程，系统会自动过滤时间冲突的课程</span>
+                </div>
+
+                <!-- 跨学期报名信息 -->
+                <div v-if="enrollmentLimits.semesterBreakdown.length > 0" class="mt-2 text-xs text-blue-600">
+                  <i class="fas fa-calendar-alt mr-1"></i>
+                  <span class="font-medium">跨学期报名统计：</span>
+                  <div class="mt-1 space-y-1">
+                    <div v-for="semester in enrollmentLimits.semesterBreakdown" :key="semester.semester" class="ml-2">
+                      {{ semester.semester }}：{{ semester.count }}/{{ semester.limit }}门课程
+                    </div>
+                  </div>
+                  <!-- 总报名数量提示 -->
+                  <div class="mt-2 text-xs text-green-600">
+                    <i class="fas fa-chart-bar mr-1"></i>
+                    <span class="font-medium">总报名情况：</span>
+                    当前学期已报名 {{ enrollmentLimits.activeEnrollmentsCount || 0 }} 门，总报名 {{ enrollmentLimits.totalEnrollments || 0 }} 门课程
+                  </div>
+                </div>
+
+                <!-- 跨学期报名说明 -->
+                <div v-if="enrollmentLimits.semesterBreakdown.length > 1" class="mt-2 text-xs text-orange-600 bg-orange-50 p-2 rounded">
+                  <i class="fas fa-lightbulb mr-1"></i>
+                  <span class="font-medium">跨学期报名说明：</span>
+                  <div class="mt-1 space-y-1">
+                    <div>• 2024年秋季学期：总数限制为3门课程</div>
+                    <div>• 其他学期（2025年等）：总数限制为2门课程</div>
+                    <div>• 跨学期限制逻辑：</div>
+                    <div class="ml-4">- 2024年已报名2门 → 2025年无法再报名（因为总限制2门）</div>
+                    <div class="ml-4">- 2025年已报名2门 → 2024年还可以报名1门（因为总限制是3门）</div>
+                  </div>
                 </div>
               </a-form-item>
 
@@ -435,7 +468,7 @@
               </h2>
               <p class="text-gray-600">请填写联系方式和其他信息</p>
             </div>
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <!-- 紧急联系人 -->
               <a-form-item label="紧急联系人" name="emergencyContact" required>
@@ -508,7 +541,7 @@
                 <i class="fas fa-undo mr-2"></i>
                 重置表单
               </a-button>
-              
+
               <a-button
                 type="primary"
                 size="large"
@@ -536,8 +569,8 @@
       class="id-card-preview-modal"
     >
       <div class="preview-image-container">
-        <img 
-          :src="previewImage" 
+        <img
+          :src="previewImage"
           :alt="previewTitle"
           class="preview-image"
         />
@@ -597,7 +630,7 @@ import ApplicationService from '@/api/application'
 import { CourseService } from '@/api/course'
 import type { IdCardData } from '@/types'
 import IdCardReader from '@/components/IdCardReader.vue'
-import { getMaxCoursesForSemester } from '@/utils/enrollmentConfig'
+import { getCrossSemesterEnrollmentLimits } from '@/utils/enrollmentConfig'
 import { getAvatarUrl, getIdCardUrl } from '@/utils/imageUtils'
 
 const authStore = useAuthStore()
@@ -633,30 +666,69 @@ const enrollmentLimits = reactive({
       id: number
       name: string
       level: string
+      semester: string
     }
-  }>
+  }>,
+  semesterBreakdown: [] as Array<{ semester: string, count: number, limit: number }>,
+  totalEnrollments: 0,
+  policyDescription: ''
 })
 
 /**
- * 更新课程数量限制（根据学期）
+ * 更新课程数量限制（支持跨学期）
  */
 const updateEnrollmentLimits = (semester?: string): void => {
-  const maxAllowed = getMaxCoursesForSemester(semester)
-  enrollmentLimits.maxCoursesAllowed = maxAllowed
-  enrollmentLimits.remainingCourseSlots = Math.max(0, maxAllowed - enrollmentLimits.activeEnrollmentsCount)
-  
-  console.log(`🔧 更新课程限制: [${semester}] -> 最多${maxAllowed}门课程, 已报名${enrollmentLimits.activeEnrollmentsCount}门, 剩余${enrollmentLimits.remainingCourseSlots}门`)
-  
-  // 🔧 调试：检查学期字符串匹配
-  if (semester) {
-    const includes2024 = semester.includes('2024')
-    const includesAutumn = semester.includes('秋') || semester.includes('秋季')
-    console.log(`🔍 调试学期匹配: 包含"2024"=${includes2024}, 包含"秋"=${includesAutumn}`)
+  if (!semester) return
+
+  // 使用跨学期限制计算
+  const limits = getCrossSemesterEnrollmentLimits(
+    semester,
+    enrollmentLimits.currentEnrollments.map(e => ({
+      course: { semester: e.course.semester },
+      status: e.status
+    })),
+    0 // 当前不新增课程，只计算现有状态
+  )
+
+  enrollmentLimits.maxCoursesAllowed = limits.semesterLimit
+  enrollmentLimits.semesterBreakdown = limits.semesterBreakdown
+  enrollmentLimits.totalEnrollments = limits.totalEnrollments
+  enrollmentLimits.policyDescription = limits.policyDescription
+
+  // 🔧 修复：根据学期确定总课程数量限制
+  // 2024年秋季：总数限制为3门课程
+  // 其他学期：总数限制为2门课程
+  const totalLimit = (semester.includes('2024') && semester.includes('秋')) ? 3 : 2
+
+  // 如果总报名数量已经达到学期限制，则不能再报名
+  if (limits.totalEnrollments >= totalLimit) {
+    enrollmentLimits.remainingCourseSlots = 0
+  } else {
+    // 🔧 修复：考虑总限制和学期限制的综合约束
+    // 剩余槽位 = min(总限制剩余, 学期限制剩余)
+    const totalRemaining = Math.max(0, totalLimit - limits.totalEnrollments)
+    const semesterRemaining = Math.max(0, limits.semesterLimit - limits.currentTotal)
+    enrollmentLimits.remainingCourseSlots = Math.min(totalRemaining, semesterRemaining)
   }
+
+  // 计算当前学期的已报名数量
+  const currentSemesterEnrollments = enrollmentLimits.currentEnrollments.filter(e =>
+    e.course.semester === semester
+  ).length
+  enrollmentLimits.activeEnrollmentsCount = currentSemesterEnrollments
+
+  console.log(`🔧 更新跨学期课程限制: [${semester}] -> 最多${limits.semesterLimit}门课程, 已报名${limits.currentTotal}门, 剩余${enrollmentLimits.remainingCourseSlots}门`)
+  console.log(`📊 跨学期统计: 总报名${limits.totalEnrollments}门, 政策: ${limits.policyDescription}`)
+  console.log(`📊 当前学期已报名: ${currentSemesterEnrollments}门`)
+
+  // 🔧 调试：检查学期字符串匹配
+  const includes2024 = semester.includes('2024')
+  const includesAutumn = semester.includes('秋') || semester.includes('秋季')
+  console.log(`🔍 调试学期匹配: 包含"2024"=${includes2024}, 包含"秋"=${includesAutumn}`)
 }
 
 // 表单数据
-const formData = reactive<RegistrationFormData & { 
+const formData = reactive<RegistrationFormData & {
   idCardFront: string
   idCardBack: string
 }>({
@@ -807,7 +879,10 @@ const retirementCategoryOptions = ref([
 
 // 存储完整课程数据用于时间冲突检测
 const availableCourses = ref<Array<{
-  id: number
+  id: string | number
+  classSectionId?: string | null
+  classSectionCode?: string | null
+  classSectionName?: string | null
   name: string
   description: string
   teacher: string
@@ -825,10 +900,10 @@ const availableCourses = ref<Array<{
   endDate: string
 }>>([])
 
-const courseOptions = ref<Array<{ 
-  label: string 
-  value: string 
-  disabled?: boolean 
+const courseOptions = ref<Array<{
+  label: string
+  value: string
+  disabled?: boolean
   timeSlots?: Array<{
     dayOfWeek: number
     startTime: string
@@ -837,15 +912,36 @@ const courseOptions = ref<Array<{
 }>>([])
 
 // 课程选择过滤函数
+const getCourseSelectionId = (course: { id: string | number; classSectionId?: string | null }): string => {
+  return String(course.classSectionId || course.id)
+}
+
+const findCourseBySelectionId = (selectionId: string) => {
+  return availableCourses.value?.find(course => getCourseSelectionId(course) === selectionId)
+}
+
+const getSelectedCourseIds = (): string[] => {
+  return formData.selectedCourses.map(selectionId => {
+    const course = findCourseBySelectionId(selectionId)
+    return String(course?.id || selectionId)
+  })
+}
+
+const getSelectedClassSectionIds = (): string[] => {
+  return formData.selectedCourses
+    .map(selectionId => findCourseBySelectionId(selectionId)?.classSectionId)
+    .filter((classSectionId): classSectionId is string => Boolean(classSectionId))
+}
+
 const filterCourseOption = (input: string, option: any) => {
   return option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
 }
 
 // 检查两个时间段是否冲突
-const hasTimeConflict = (timeSlots1: Array<{dayOfWeek: number, startTime: string, endTime: string}>, 
+const hasTimeConflict = (timeSlots1: Array<{dayOfWeek: number, startTime: string, endTime: string}>,
                         timeSlots2: Array<{dayOfWeek: number, startTime: string, endTime: string}>) => {
   if (!timeSlots1 || !timeSlots2 || timeSlots1.length === 0 || timeSlots2.length === 0) return false
-  
+
   for (const slot1 of timeSlots1) {
     for (const slot2 of timeSlots2) {
       // 检查是否在同一天
@@ -855,7 +951,7 @@ const hasTimeConflict = (timeSlots1: Array<{dayOfWeek: number, startTime: string
         const end1 = slot1.endTime
         const start2 = slot2.startTime
         const end2 = slot2.endTime
-        
+
         // 如果时间段有重叠，返回true
         if (start1 < end2 && start2 < end1) {
           return true
@@ -871,39 +967,39 @@ const hasTimeConflict = (timeSlots1: Array<{dayOfWeek: number, startTime: string
 // 更新课程选项的可用状态
 const updateCourseOptionsAvailability = () => {
   if (!availableCourses.value || availableCourses.value.length === 0) return
-  
+
   // 计算学生年龄
   const studentAge = formData.birthDate ? calculateAge(formData.birthDate) : 0
-  
+
   // 获取已选课程的时间段
   const selectedTimeSlots: Array<{dayOfWeek: number, startTime: string, endTime: string}> = []
-  
+
   formData.selectedCourses.forEach(courseId => {
-    const selectedCourse = availableCourses.value?.find(c => c.id.toString() === courseId)
+    const selectedCourse = findCourseBySelectionId(courseId)
     if (selectedCourse && selectedCourse.timeSlots) {
       selectedTimeSlots.push(...selectedCourse.timeSlots)
     }
   })
-  
+
   // 更新课程选项
   courseOptions.value = (availableCourses.value || []).filter(course => {
     // 检查是否已经报名该课程
-    const alreadyEnrolledSameCourse = enrollmentLimits.currentEnrollments.some(enrollment => 
-      enrollment.courseId === course.id
+    const alreadyEnrolledSameCourse = enrollmentLimits.currentEnrollments.some(enrollment =>
+      String(enrollment.courseId) === String(course.id)
     )
-    
+
     // 检查是否已经报名同名课程的其他等级
-    const alreadyEnrolledSameName = enrollmentLimits.currentEnrollments.some(enrollment => 
-      enrollment.course.name === course.name && enrollment.courseId !== course.id
+    const alreadyEnrolledSameName = enrollmentLimits.currentEnrollments.some(enrollment =>
+      enrollment.course.name === course.name && String(enrollment.courseId) !== String(course.id)
     )
-    
+
     // 过滤掉已报名的课程
     return !alreadyEnrolledSameCourse && !alreadyEnrolledSameName
   }).map(course => {
-    const isSelected = formData.selectedCourses.includes(course.id.toString())
+    const isSelected = formData.selectedCourses.includes(getCourseSelectionId(course))
     let disabled = false
     let disabledReason = ''
-    
+
     // 检查年龄限制
     if (!disabled && studentAge > 0) {
       const courseData = course as any
@@ -913,17 +1009,17 @@ const updateCourseOptionsAvailability = () => {
         maxAge: courseData.ageRestriction?.maxAge || courseData.maxAge,
         description: courseData.ageRestriction?.description || courseData.ageDescription
       })
-      
+
       if (!ageCheck.isEligible) {
         disabled = true
         disabledReason = '年龄不符'
       }
     }
-    
+
     // 如果已选择达到剩余课程数量且当前课程未被选择，则禁用
     if (!disabled && formData.selectedCourses.length >= enrollmentLimits.remainingCourseSlots && !isSelected) {
       disabled = true
-      disabledReason = `最多${enrollmentLimits.remainingCourseSlots}门`
+      disabledReason = `${formData.semester}学期最多${enrollmentLimits.remainingCourseSlots}门`
     }
     // 如果当前课程与已选课程时间冲突且未被选择，则禁用
     else if (!disabled && !isSelected && selectedTimeSlots.length > 0) {
@@ -937,21 +1033,21 @@ const updateCourseOptionsAvailability = () => {
       disabled = true
       disabledReason = '已满员'
     }
-    
+
     // 构建课程标签，显示容量信息
     const enrolled = course.enrolled || 0
     const capacity = course.capacity || 0
     const remainingSlots = capacity - enrolled
-    
+
     let label = `${course.name} (${enrolled}/${capacity})`
-    
+
     // 添加容量状态提示
     if (remainingSlots <= 0) {
       label += ` - 已满员`
     } else if (remainingSlots <= 3) {
       label += ` - 仅剩${remainingSlots}名额`
     }
-    
+
     // 添加年龄限制提示
     const courseData = course as any
     const ageHint = getAgeRestrictionHint({
@@ -962,15 +1058,15 @@ const updateCourseOptionsAvailability = () => {
     if (ageHint) {
       label += ` [${ageHint}]`
     }
-    
+
     // 添加其他状态提示（时间冲突、选择限制等）
     if (disabledReason && disabledReason !== '已满员') {
       label += ` - ${disabledReason}`
     }
-    
+
     return {
       label,
-      value: course.id.toString(),
+      value: getCourseSelectionId(course),
       disabled,
       timeSlots: course.timeSlots,
       ageRestriction: (course as any).ageRestriction || {
@@ -1019,19 +1115,20 @@ const formRules = {
   ],
   selectedCourses: [
     { required: true, message: '请选择至少一门课程', trigger: 'change' },
-    { 
-      type: 'array', 
-      min: 1, 
+    {
+      type: 'array',
+      min: 1,
       validator: (_rule: any, value: string[]) => {
         if (!value || value.length === 0) {
           return Promise.reject('请选择至少一门课程')
         }
         if (value.length > enrollmentLimits.remainingCourseSlots) {
-          return Promise.reject(`最多只能选择${enrollmentLimits.remainingCourseSlots}门课程`)
+          const semesterNote = formData.semester?.includes('2024') && formData.semester?.includes('秋') ? '（2024年秋季最多3门）' : '（最多2门）'
+          return Promise.reject(`${formData.semester || '当前学期'}学期最多只能选择${enrollmentLimits.remainingCourseSlots}门课程${semesterNote}`)
         }
         return Promise.resolve()
       },
-      trigger: 'change' 
+      trigger: 'change'
     }
   ],
   studyPeriodStart: [
@@ -1097,14 +1194,57 @@ const handleIdNumberInput = (): void => {
 const handleIdNumberBlur = async (): Promise<void> => {
   if (formData.idNumber && formData.idNumber.length === 18) {
     try {
-      const response = await ApplicationService.checkIdNumberExists(formData.idNumber)
+      // 查询学员详细报名信息
+      const response = await ApplicationService.getStudentEnrollments(formData.idNumber)
+
       if (response.data.exists) {
-        message.warning('该身份证号已存在报名记录')
+        // 学员存在，更新报名限制信息
+        const studentData = response.data
+
+        // 更新现有报名记录
+        enrollmentLimits.currentEnrollments = studentData.enrollments.map((e: any) => ({
+          id: e.id,
+          status: e.status,
+          courseId: e.course.id,
+          course: {
+            id: e.course.id,
+            name: e.course.name,
+            level: e.course.level,
+            semester: e.course.semester || ''
+          }
+        }))
+
+        // 更新报名限制（如果已选择学期）
+        if (formData.semester) {
+          updateEnrollmentLimits(formData.semester)
+        }
+
+        // 显示学员信息提示
+        message.info(`发现学员：${studentData.student?.name || '未知'}，已报名${studentData.totalEnrollments}门课程`)
+
+        // 如果有跨学期报名，显示详细信息
+        if (studentData.semesterBreakdown.length > 1) {
+          const semesterInfo = studentData.semesterBreakdown.map((s: any) =>
+            `${s.semester}：${s.count}/${s.limit}门`
+          ).join('，')
+          message.info(`跨学期报名情况：${semesterInfo}`)
+        }
+      } else {
+        // 新学员，清空现有报名记录
+        enrollmentLimits.currentEnrollments = []
+        enrollmentLimits.semesterBreakdown = []
+        enrollmentLimits.totalEnrollments = 0
+        enrollmentLimits.policyDescription = ''
+
+        if (formData.semester) {
+          updateEnrollmentLimits(formData.semester)
+        }
       }
     } catch (error) {
-      console.error('检查身份证号失败:', error)
+      console.error('查询学员报名信息失败:', error)
+      message.error('查询学员报名信息失败')
     }
-    
+
     // 再次确认提取出生日期（防止输入过程中的遗漏）
     const birthDate = extractBirthDateFromId(formData.idNumber)
     if (birthDate && !formData.birthDate) {
@@ -1180,17 +1320,17 @@ const handleIdCardUpload = async (file: File, type: 'front' | 'back'): Promise<b
   try {
     // 显示上传中状态
     const uploadingMessage = message.loading(`正在上传身份证${type === 'front' ? '正面' : '反面'}...`, 0)
-    
+
     // 调用后端上传接口
     const response = await ApplicationService.uploadIdCardImage(file)
-    
+
     // 关闭loading消息
     uploadingMessage()
-    
+
     if (response.code === 200) {
       console.log('🎯 上传成功，服务器返回数据:', response.data)
       console.log('📍 返回的URL:', response.data.url)
-      
+
       // 保存文件URL到表单数据
       if (type === 'front') {
         formData.idCardFront = response.data.url
@@ -1199,7 +1339,7 @@ const handleIdCardUpload = async (file: File, type: 'front' | 'back'): Promise<b
         formData.idCardBack = response.data.url
         console.log('✅ 反面照片URL已保存:', formData.idCardBack)
       }
-      
+
       message.success(`身份证${type === 'front' ? '正面' : '反面'}上传成功`)
     } else {
       throw new Error(response.message || '上传失败')
@@ -1217,7 +1357,7 @@ const handleIdCardUpload = async (file: File, type: 'front' | 'back'): Promise<b
  */
 const previewIdCard = (type: 'front' | 'back'): void => {
   console.log('🔍 预览触发:', type)
-  
+
   if (type === 'front' && (formData.idCardFront || pendingPhotoData.value.idCardFront)) {
     previewImage.value = idCardFrontUrl.value
     previewTitle.value = '身份证正面'
@@ -1280,10 +1420,10 @@ const idCardFrontUrl = computed(() => {
   // 优先显示暂存的身份证正面照片
   const frontSource = pendingPhotoData.value.idCardFront || formData.idCardFront
   if (!frontSource) return ''
-  
+
   console.log('🔍 计算正面URL, 原值:', frontSource)
   console.log('📊 正面数据来源:', pendingPhotoData.value.idCardFront ? '暂存照片' : 'formData照片')
-  
+
   // 使用统一的图片URL工具函数
   const fullURL = getIdCardUrl(frontSource, 'front')
   console.log('📝 拼接后的正面URL:', fullURL)
@@ -1297,10 +1437,10 @@ const idCardBackUrl = computed(() => {
   // 优先显示暂存的身份证反面照片
   const backSource = pendingPhotoData.value.idCardBack || formData.idCardBack
   if (!backSource) return ''
-  
+
   console.log('🔍 计算反面URL, 原值:', backSource)
   console.log('📊 反面数据来源:', pendingPhotoData.value.idCardBack ? '暂存照片' : 'formData照片')
-  
+
   // 使用统一的图片URL工具函数
   const fullURL = getIdCardUrl(backSource, 'back')
   console.log('📝 拼接后的反面URL:', fullURL)
@@ -1314,10 +1454,10 @@ const photoUrl = computed(() => {
   // 优先显示暂存的照片数据
   const photoSource = pendingPhotoData.value.photo || formData.photo
   if (!photoSource) return ''
-  
+
   console.log('🔍 计算照片URL, 原值:', photoSource)
   console.log('📊 数据来源:', pendingPhotoData.value.photo ? '暂存照片' : 'formData照片')
-  
+
   // 使用统一的图片URL工具函数
   const fullURL = getAvatarUrl(photoSource)
   console.log('📝 拼接后的照片URL:', fullURL)
@@ -1330,17 +1470,17 @@ const photoUrl = computed(() => {
 const base64ToFile = (base64Data: string, fileName: string, mimeType: string = 'image/jpeg'): File => {
   // 去除data:image/jpeg;base64,前缀
   const base64 = base64Data.replace(/^data:image\/[a-z]+;base64,/, '')
-  
+
   // 将base64转换为字节数组
   const byteCharacters = atob(base64)
   const byteNumbers = new Array(byteCharacters.length)
-  
+
   for (let i = 0; i < byteCharacters.length; i++) {
     byteNumbers[i] = byteCharacters.charCodeAt(i)
   }
-  
+
   const byteArray = new Uint8Array(byteNumbers)
-  
+
   // 创建File对象
   return new File([byteArray], fileName, { type: mimeType })
 }
@@ -1352,20 +1492,20 @@ const uploadBase64Image = async (base64Data: string, type: 'front' | 'back' | 'p
   try {
     // 显示上传状态
     const uploadingMessage = message.loading(
-      `正在上传${type === 'front' ? '身份证正面' : type === 'back' ? '身份证反面' : '头像照片'}...`, 
+      `正在上传${type === 'front' ? '身份证正面' : type === 'back' ? '身份证反面' : '头像照片'}...`,
       0
     )
-    
+
     // 转换为File对象
     const fileName = `${type === 'photo' ? 'photo' : 'idcard'}_${type}_${Date.now()}.jpg`
     const file = base64ToFile(base64Data, fileName)
-    
+
     // 调用上传接口
     const response = await ApplicationService.uploadIdCardImage(file)
-    
+
     // 关闭loading
     uploadingMessage()
-    
+
     if (response.code === 200) {
       const successMsg = type === 'front' ? '身份证正面' : type === 'back' ? '身份证反面' : '头像照片'
       message.success(`${successMsg}上传成功`)
@@ -1386,15 +1526,27 @@ const uploadBase64Image = async (base64Data: string, type: 'front' | 'back' | 'p
 const handleSubmit = async (): Promise<void> => {
   try {
     await formRef.value.validate()
-    
+
     submitting.value = true
-    
+
+    // 添加调试信息
+    console.log('📝 开始提交报名表单...')
+    console.log('选择的学期:', formData.semester)
+    console.log('选择的课程数量:', formData.selectedCourses.length)
+    console.log('报名限制信息:', enrollmentLimits)
+    console.log('🔍 调试信息:')
+    console.log('  - 学期类型:', typeof formData.semester)
+    console.log('  - 学期内容:', JSON.stringify(formData.semester))
+    console.log('  - 课程ID列表:', formData.selectedCourses)
+
     // 在提交前先上传暂存的照片
     await uploadPendingPhotos()
 
     // 转换日期格式（保持前端字段名）
     const submitData = {
       ...formData,
+      selectedCourses: getSelectedCourseIds(),
+      selectedClassSections: getSelectedClassSectionIds(),
       birthDate: formData.birthDate ? dayjs(formData.birthDate).format('YYYY-MM-DD') : '',
       studyPeriodStart: formData.studyPeriodStart ? dayjs(formData.studyPeriodStart).format('YYYY-MM-DD') : '',
       studyPeriodEnd: formData.studyPeriodEnd ? dayjs(formData.studyPeriodEnd).format('YYYY-MM-DD') : '',
@@ -1404,7 +1556,7 @@ const handleSubmit = async (): Promise<void> => {
 
     // 提交报名申请（支持多门课程）- 使用V2版本支持年级管理
     const response = await ApplicationService.submitApplicationV2(submitData)
-    
+
     if (response.code === 200) {
       message.success(response.message)
       // 🎉 成功后清除表单内容和暂存照片
@@ -1419,18 +1571,18 @@ const handleSubmit = async (): Promise<void> => {
     }
   } catch (error: any) {
     console.error('提交失败:', error)
-    
+
     // 提取具体的错误信息
     let errorMessage = '报名提交失败，请重试'
-    
+
     if (error.response && error.response.data) {
       const errorData = error.response.data
-      
+
       // 处理ValidationError - 重复报名等业务错误
       if (errorData.message) {
         errorMessage = errorData.message
       }
-      
+
       // 处理具体的验证错误
       if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
         const fieldErrors = errorData.errors.map((err: any) => err.message).join('; ')
@@ -1439,7 +1591,7 @@ const handleSubmit = async (): Promise<void> => {
     } else if (error.message) {
       errorMessage = error.message
     }
-    
+
     message.error(errorMessage)
   } finally {
     submitting.value = false
@@ -1459,7 +1611,7 @@ const handleSubmitFailed = (errorInfo: any): void => {
  */
 const handleReset = (): void => {
   formRef.value?.resetFields()
-  
+
   // 重置表单数据
   Object.assign(formData, {
     name: '',
@@ -1494,26 +1646,35 @@ const handleReset = (): void => {
     photo: '',
     remarks: ''
   })
-  
+
   // 🔥 清除文件上传列表
   idCardFrontFileList.value = []
   idCardBackFileList.value = []
   fileList.value = []
-  
+
   // 🔥 清除暂存照片数据
   pendingPhotoData.value = {
     photo: '',
     idCardFront: '',
     idCardBack: ''
   }
-  
+
   // 🔥 重置其他状态
   submitting.value = false
   previewVisible.value = false
   previewImage.value = ''
   previewTitle.value = ''
-  
-  console.log('✅ 表单已完全重置，包括暂存照片数据')
+
+  // 🔧 修复：清除报名限制相关信息，为下一个报名人提供清洁界面
+  enrollmentLimits.activeEnrollmentsCount = 0
+  enrollmentLimits.maxCoursesAllowed = 2
+  enrollmentLimits.remainingCourseSlots = 2
+  enrollmentLimits.currentEnrollments = []
+  enrollmentLimits.semesterBreakdown = []
+  enrollmentLimits.totalEnrollments = 0
+  enrollmentLimits.policyDescription = ''
+
+  console.log('✅ 表单已完全重置，包括暂存照片数据和报名限制信息')
 }
 
 /**
@@ -1522,24 +1683,24 @@ const handleReset = (): void => {
 const handleIdCardDataRead = async (idCardData: IdCardData): Promise<void> => {
   // 自动填充指定字段
   formData.name = idCardData.name || ''                    // 姓名
-  
+
   // 性别处理 - 增强兼容性
   if (idCardData.sex) {
     const gender = idCardData.sex === '1' ? '男' : idCardData.sex === '2' ? '女' : idCardData.sex
     formData.gender = (gender === '男' || gender === '女') ? gender : '男'
   }
-  
+
   // 民族处理
   formData.ethnicity = idCardData.nation || ''
-  
+
   // 身份证号
   formData.idNumber = idCardData.certNo || ''
-  
+
   // 身份证地址
   formData.idCardAddress = idCardData.address || ''
-  
+
   // 现居住地址保持手工填写，不自动填充
-  
+
   // 出生年月处理 - 优先使用身份证号码提取，其次使用读卡器数据
   if (formData.idNumber) {
     const extractedBirthDate = extractBirthDateFromId(formData.idNumber)
@@ -1554,7 +1715,7 @@ const handleIdCardDataRead = async (idCardData: IdCardData): Promise<void> => {
       console.log('✅ 从读卡器数据获取出生日期:', birthDate)
     }
   }
-  
+
   // 先检查该身份证号是否已经存在
   if (formData.idNumber) {
     try {
@@ -1562,21 +1723,26 @@ const handleIdCardDataRead = async (idCardData: IdCardData): Promise<void> => {
       if (checkResponse.data.exists && checkResponse.data.studentInfo) {
         // 学员已存在，自动填充已有信息
         const studentInfo = checkResponse.data.studentInfo
-        const { activeEnrollmentsCount, remainingCourseSlots, maxCoursesAllowed } = checkResponse.data
-        
+
         // 更新报名限制信息
-        enrollmentLimits.activeEnrollmentsCount = activeEnrollmentsCount || 0
-        enrollmentLimits.currentEnrollments = studentInfo.enrollments || []
+        enrollmentLimits.activeEnrollmentsCount = checkResponse.data.activeEnrollmentsCount || 0
+        enrollmentLimits.currentEnrollments = (studentInfo.enrollments || []).map((e: any) => ({
+          ...e,
+          course: {
+            ...e.course,
+            semester: e.course.semester || ''
+          }
+        }))
         // 根据当前选择的学期动态更新课程限制
         updateEnrollmentLimits(formData.semester)
-        
+
         // 显示报名状态信息
-        const enrollmentInfo = enrollmentLimits.currentEnrollments.length > 0 
+        const enrollmentInfo = enrollmentLimits.currentEnrollments.length > 0
           ? `，当前已报名${enrollmentLimits.activeEnrollmentsCount}门课程（${enrollmentLimits.currentEnrollments.map(e => e.course.name).join('、')}）`
           : ''
-        
+
         message.success(`学员 ${studentInfo.name} 的信息已自动填充！还可以报名${enrollmentLimits.remainingCourseSlots}门课程${enrollmentInfo}`)
-        
+
         // 自动填充表单数据（保留身份证照片，其他信息自动填充）
         formData.name = studentInfo.name || formData.name
         // 性别字段转换：确保是中文值
@@ -1599,7 +1765,7 @@ const handleIdCardDataRead = async (idCardData: IdCardData): Promise<void> => {
         formData.idCardAddress = studentInfo.idCardAddress || formData.idCardAddress
         formData.familyAddress = studentInfo.familyAddress || formData.familyAddress
         formData.healthStatus = studentInfo.healthStatus || formData.healthStatus
-        
+
         // 如果已有照片，自动填充
         if (studentInfo.photo) {
           formData.photo = studentInfo.photo
@@ -1610,12 +1776,13 @@ const handleIdCardDataRead = async (idCardData: IdCardData): Promise<void> => {
         if (studentInfo.idCardBack) {
           formData.idCardBack = studentInfo.idCardBack
         }
-        
-        // 紧急联系人信息
-        formData.emergencyContact = studentInfo.emergencyContact || formData.emergencyContact
-        formData.emergencyPhone = studentInfo.emergencyPhone || formData.emergencyPhone
-        formData.emergencyRelation = studentInfo.emergencyRelation || formData.emergencyRelation
-        
+
+        // 🔧 修复：身份证读卡器读取后自动填充紧急联系人信息
+        // 直接使用数据库中的值，如果为空则清空表单字段，避免数据串联
+        formData.emergencyContact = studentInfo.emergencyContact || ''
+        formData.emergencyPhone = studentInfo.emergencyPhone || ''
+        formData.emergencyRelation = studentInfo.emergencyRelation || ''
+
         // 保险信息
         formData.insuranceCompany = studentInfo.insuranceCompany || formData.insuranceCompany
         formData.retirementCategory = studentInfo.retirementCategory || formData.retirementCategory
@@ -1625,13 +1792,13 @@ const handleIdCardDataRead = async (idCardData: IdCardData): Promise<void> => {
         if (studentInfo.studyPeriodEnd) {
           formData.studyPeriodEnd = dayjs(studentInfo.studyPeriodEnd)
         }
-        
+
         // 如果已达到报名限制，给出提示
         if (enrollmentLimits.remainingCourseSlots <= 0) {
           message.warning(`您已达到最大报名数量（${enrollmentLimits.maxCoursesAllowed}门），无法继续报名新课程`)
           return
         }
-        
+
         // 允许继续选择课程进行二次报名
         return
       } else {
@@ -1645,10 +1812,10 @@ const handleIdCardDataRead = async (idCardData: IdCardData): Promise<void> => {
       console.log('检查身份证号时出错，继续处理照片')
     }
   }
-  
+
   // 新用户或检查失败时，暂存照片数据，等待提交时统一上传
   await processIdCardPhotos(idCardData)
-  
+
   // 显示填充完成的消息
   message.success('身份证信息已填充完成')
 }
@@ -1663,19 +1830,19 @@ const processIdCardPhotos = async (idCardData: any): Promise<void> => {
     pendingPhotoData.value.photo = `data:image/jpeg;base64,${idCardData.base64Data}`
     console.log('暂存个人头像数据，将在表单提交时上传')
   }
-  
+
   // 身份证正面完整照片（如果读卡器支持拍照功能）
   if (idCardData.imageFront) {
     pendingPhotoData.value.idCardFront = `data:image/jpeg;base64,${idCardData.imageFront}`
     console.log('暂存身份证正面照片，将在表单提交时上传')
   }
-  
+
   // 身份证反面完整照片（如果读卡器支持拍照功能）
   if (idCardData.imageBack) {
     pendingPhotoData.value.idCardBack = `data:image/jpeg;base64,${idCardData.imageBack}`
     console.log('暂存身份证反面照片，将在表单提交时上传')
   }
-  
+
   // 提示用户照片已准备好，将在提交时上传
   if (pendingPhotoData.value.photo || pendingPhotoData.value.idCardFront || pendingPhotoData.value.idCardBack) {
     message.info('身份证照片已准备就绪，将在提交表单时统一上传')
@@ -1698,12 +1865,12 @@ const handleReaderError = (error: string): void => {
  */
 const formatIdCardDate = (dateStr: string): string => {
   if (!dateStr) return ''
-  
+
   // 身份证日期格式通常是YYYYMMDD
   if (dateStr.length === 8) {
     return `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`
   }
-  
+
   return dateStr
 }
 
@@ -1714,7 +1881,7 @@ const formatIdCardDate = (dateStr: string): string => {
  */
 const extractBirthDateFromId = (idNumber: string): Dayjs | null => {
   if (!idNumber) return null
-  
+
   try {
     if (idNumber.length === 18) {
       // 18位身份证：第7-14位是出生日期 YYYYMMDD
@@ -1723,10 +1890,10 @@ const extractBirthDateFromId = (idNumber: string): Dayjs | null => {
         const year = parseInt(birthStr.substring(0, 4))
         const month = parseInt(birthStr.substring(4, 6))
         const day = parseInt(birthStr.substring(6, 8))
-        
+
         // 验证日期的合理性
-        if (year >= 1900 && year <= new Date().getFullYear() && 
-            month >= 1 && month <= 12 && 
+        if (year >= 1900 && year <= new Date().getFullYear() &&
+            month >= 1 && month <= 12 &&
             day >= 1 && day <= 31) {
           const dateStr = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
           return dayjs(dateStr)
@@ -1739,13 +1906,13 @@ const extractBirthDateFromId = (idNumber: string): Dayjs | null => {
         let year = parseInt(birthStr.substring(0, 2))
         const month = parseInt(birthStr.substring(2, 4))
         const day = parseInt(birthStr.substring(4, 6))
-        
+
         // 15位身份证的年份判断：00-09为2000-2009，10-99为1910-1999
         year = year <= 9 ? 2000 + year : 1900 + year
-        
+
         // 验证日期的合理性
-        if (year >= 1900 && year <= new Date().getFullYear() && 
-            month >= 1 && month <= 12 && 
+        if (year >= 1900 && year <= new Date().getFullYear() &&
+            month >= 1 && month <= 12 &&
             day >= 1 && day <= 31) {
           const dateStr = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
           return dayjs(dateStr)
@@ -1755,7 +1922,7 @@ const extractBirthDateFromId = (idNumber: string): Dayjs | null => {
   } catch (error) {
     console.error('解析身份证出生日期失败:', error)
   }
-  
+
   return null
 }
 
@@ -1764,7 +1931,7 @@ const extractBirthDateFromId = (idNumber: string): Dayjs | null => {
  */
 const uploadPendingPhotos = async (): Promise<void> => {
   console.log('🚀 开始批量上传暂存的照片...')
-  
+
   // 上传个人照片
   if (pendingPhotoData.value.photo && pendingPhotoData.value.photo.startsWith('data:')) {
     console.log('📤 上传个人照片...')
@@ -1774,7 +1941,7 @@ const uploadPendingPhotos = async (): Promise<void> => {
       console.log('✅ 个人照片上传成功:', photoUrl)
     }
   }
-  
+
   // 上传身份证正面
   if (pendingPhotoData.value.idCardFront && pendingPhotoData.value.idCardFront.startsWith('data:')) {
     console.log('📤 上传身份证正面...')
@@ -1784,7 +1951,7 @@ const uploadPendingPhotos = async (): Promise<void> => {
       console.log('✅ 身份证正面上传成功:', frontUrl)
     }
   }
-  
+
   // 上传身份证反面
   if (pendingPhotoData.value.idCardBack && pendingPhotoData.value.idCardBack.startsWith('data:')) {
     console.log('📤 上传身份证反面...')
@@ -1794,7 +1961,7 @@ const uploadPendingPhotos = async (): Promise<void> => {
       console.log('✅ 身份证反面上传成功:', backUrl)
     }
   }
-  
+
   console.log('✅ 所有照片上传完成')
 }
 
@@ -1814,7 +1981,7 @@ const getCurrentYearSemester = (): string => {
 const setDefaultSemester = (): void => {
   const currentSemester = getCurrentYearSemester()
   const semesterValues = semesterOptions.value.map(option => option.value)
-  
+
   if (semesterValues.includes(currentSemester)) {
     formData.semester = currentSemester
     console.log(`设置默认学期为: ${currentSemester}`)
@@ -1834,13 +2001,13 @@ const loadSemesters = async (): Promise<void> => {
   try {
     semestersLoading.value = true
     const response = await CourseService.getSemesters()
-    
+
     if (response.code === 200) {
       semesterOptions.value = response.data.map((semester: string) => ({
         label: semester,
         value: semester
       }))
-      
+
       // 设置默认学期（优先当前年份学期）
       setDefaultSemester()
     }
@@ -1865,7 +2032,7 @@ const loadSemesters = async (): Promise<void> => {
 const handleSemesterChange = async (): Promise<void> => {
   // 清空已选课程
   formData.selectedCourses = []
-  
+
   // 重新加载该学期的课程
   await loadAvailableCourses()
 }
@@ -1879,17 +2046,16 @@ const loadAvailableCourses = async (): Promise<void> => {
     courseOptions.value = []
     return
   }
-  
+
   try {
     coursesLoading.value = true
     // 根据学期查询课程
-    const response = await CourseService.getCourses({
+    const response = await CourseService.getPublicCourses({
       page: 1,
       pageSize: 100,
-      status: 'PUBLISHED',
       semester: formData.semester
     })
-    
+
     if (response.code === 200) {
       // 存储完整课程数据，使用后端API计算的正确容量信息
       availableCourses.value = response.data.list.map((course: any) => ({
@@ -1902,7 +2068,7 @@ const loadAvailableCourses = async (): Promise<void> => {
         maxAge: course.maxAge || null,
         ageDescription: course.ageDescription || null
       }))
-      
+
       // 初始化课程选项
       updateCourseOptionsAvailability()
     }
@@ -1920,14 +2086,14 @@ const loadAvailableCourses = async (): Promise<void> => {
 watch(() => formData.birthDate, () => {
   // 当出生日期变化时，重新检查课程可用性
   updateCourseOptionsAvailability()
-  
+
   // 检查已选课程是否仍符合年龄要求
   if (formData.selectedCourses.length > 0 && formData.birthDate) {
     const studentAge = calculateAge(formData.birthDate)
     const invalidCourses: string[] = []
-    
+
     formData.selectedCourses.forEach(courseId => {
-      const course = availableCourses.value?.find(c => c.id.toString() === courseId)
+      const course = findCourseBySelectionId(courseId)
       if (course) {
         const courseData = course as any
         const ageCheck = checkAgeRestriction(studentAge, {
@@ -1936,18 +2102,18 @@ watch(() => formData.birthDate, () => {
           maxAge: courseData.ageRestriction?.maxAge || courseData.maxAge,
           description: courseData.ageRestriction?.description || courseData.ageDescription
         })
-        
+
         if (!ageCheck.isEligible) {
           invalidCourses.push(courseId)
         }
       }
     })
-    
+
     // 移除不符合年龄要求的课程
     if (invalidCourses.length > 0) {
       formData.selectedCourses = formData.selectedCourses.filter(id => !invalidCourses.includes(id))
       const courseNames = invalidCourses.map(id => {
-        const course = availableCourses.value.find(c => c.id.toString() === id)
+        const course = findCourseBySelectionId(id)
         return course?.name || '未知课程'
       }).join('、')
       message.warning(`根据您的年龄，已自动移除不符合要求的课程：${courseNames}`)
@@ -1980,16 +2146,16 @@ watch(() => formData.selectedCourses, (newCourses: string[], oldCourses: string[
     message.warning(`本次最多只能选择${maxAllowed}门课程${semesterNote}`)
     return
   }
-  
+
   // 检查时间冲突（当添加新课程时）
   if (newCourses.length > oldCourses.length && newCourses.length > 1) {
     const newCourseId = newCourses.find(id => !oldCourses.includes(id))
     if (newCourseId) {
       // 检查新课程与所有已选课程的时间冲突
-      const newCourse = availableCourses.value?.find(c => c.id.toString() === newCourseId)
+      const newCourse = findCourseBySelectionId(newCourseId)
       if (newCourse) {
         for (const existingCourseId of oldCourses) {
-          const existingCourse = availableCourses.value?.find(c => c.id.toString() === existingCourseId)
+          const existingCourse = findCourseBySelectionId(existingCourseId)
           if (existingCourse && hasTimeConflict(newCourse.timeSlots, existingCourse.timeSlots)) {
             // 移除新添加的课程
             formData.selectedCourses = oldCourses
@@ -2000,12 +2166,12 @@ watch(() => formData.selectedCourses, (newCourses: string[], oldCourses: string[
       }
     }
   }
-  
+
   // 检查新选课程的年龄限制
   if (newCourses.length > oldCourses.length && formData.birthDate) {
     const newCourseId = newCourses.find(id => !oldCourses.includes(id))
     if (newCourseId) {
-      const course = availableCourses.value?.find(c => c.id.toString() === newCourseId)
+      const course = findCourseBySelectionId(newCourseId)
       if (course) {
         const studentAge = calculateAge(formData.birthDate)
         const courseData = course as any
@@ -2015,7 +2181,7 @@ watch(() => formData.selectedCourses, (newCourses: string[], oldCourses: string[
           maxAge: courseData.ageRestriction?.maxAge || courseData.maxAge,
           description: courseData.ageRestriction?.description || courseData.ageDescription
         })
-        
+
         if (!ageCheck.isEligible) {
           // 移除不符合年龄要求的课程
           formData.selectedCourses = oldCourses
@@ -2025,7 +2191,7 @@ watch(() => formData.selectedCourses, (newCourses: string[], oldCourses: string[
       }
     }
   }
-  
+
   // 更新课程选项的可用状态
   updateCourseOptionsAvailability()
 }, { deep: true })
@@ -2213,4 +2379,4 @@ onMounted((): void => {
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
-</style> 
+</style>

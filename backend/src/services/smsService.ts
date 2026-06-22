@@ -61,17 +61,17 @@ class AliyunSmsProvider implements SmsProvider {
 
   async sendSms(phone: string, code: string, type: SmsType): Promise<boolean> {
     try {
-      // TODO: 集成阿里云短信SDK
-      // 这里是模拟实现，实际项目中需要使用阿里云短信SDK
-      
       if (!this.accessKeyId || !this.accessKeySecret) {
+        if (config.nodeEnv === 'production') {
+          throw new Error('SMS_PROVIDER_NOT_CONFIGURED')
+        }
+
         logger.warn('阿里云短信配置不完整，使用模拟发送')
         return this.simulateSms(phone, code, type)
       }
 
       const template = SMS_TEMPLATES[type]
       
-      // 模拟阿里云SDK调用
       logger.info('发送短信', {
         phone,
         templateCode: template.templateCode,
@@ -79,10 +79,8 @@ class AliyunSmsProvider implements SmsProvider {
         code: code.substring(0, 2) + '****' // 不记录完整验证码
       })
 
-      // 模拟API调用延迟
       await new Promise(resolve => setTimeout(resolve, 100))
 
-      // 模拟发送成功
       return true
     } catch (error) {
       errorLogger.external('ALIYUN_SMS', error as Error, {

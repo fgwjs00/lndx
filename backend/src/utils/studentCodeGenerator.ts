@@ -3,16 +3,15 @@
  * @description 按学期生成规范化的学员编号
  */
 
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 
-const prisma = new PrismaClient()
 
 /**
  * 🔧 按学期生成学员编号
  * 格式：{年份}0001，如 20250001, 20240001
  * @param semester 学期字符串，如 "2025年秋季", "2024年秋季"
  */
-export async function generateStudentCode(semester?: string): Promise<string> {
+export async function generateStudentCode(semester?: string, db: any = prisma): Promise<string> {
   // 🔧 从学期字符串中提取年份
   let yearFromSemester = new Date().getFullYear() // 默认当前年份
   
@@ -31,7 +30,7 @@ export async function generateStudentCode(semester?: string): Promise<string> {
   for (let attempt = 0; attempt < 5; attempt++) {
     try {
       // 🔧 查找该年份最大的学员编号
-      const latestStudent = await prisma.student.findFirst({
+      const latestStudent = await db.student.findFirst({
         where: {
           studentCode: {
             startsWith: yearPrefix
@@ -58,7 +57,7 @@ export async function generateStudentCode(semester?: string): Promise<string> {
       const candidateCode = `${yearPrefix}${formattedNumber}`
       
       // 双重检查：验证该编号是否已存在
-      const existing = await prisma.student.findUnique({
+      const existing = await db.student.findUnique({
         where: { studentCode: candidateCode }
       })
       

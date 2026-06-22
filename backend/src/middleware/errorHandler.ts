@@ -125,6 +125,50 @@ const handleJoiError = (error: any) => {
   }
 }
 
+const SENSITIVE_LOG_KEYS = new Set([
+  'password',
+  'oldPassword',
+  'newPassword',
+  'confirmPassword',
+  'token',
+  'refreshToken',
+  'accessToken',
+  'authorization',
+  'smsCode',
+  'code',
+  'idNumber',
+  'idCardFront',
+  'idCardBack',
+  'photo',
+  'base64Data',
+  'imageFront',
+  'imageBack'
+])
+
+export const sanitizeForLog = (value: any): any => {
+  if (value === null || value === undefined) return value
+
+  if (typeof value === 'string') {
+    if (value.startsWith('data:image/') || value.length > 256) {
+      return '[REDACTED]'
+    }
+    return value
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(item => sanitizeForLog(item))
+  }
+
+  if (typeof value === 'object') {
+    return Object.entries(value).reduce((acc, [key, item]) => {
+      acc[key] = SENSITIVE_LOG_KEYS.has(key) ? '[REDACTED]' : sanitizeForLog(item)
+      return acc
+    }, {} as Record<string, any>)
+  }
+
+  return value
+}
+
 /**
  * 全局错误处理中间件
  */
@@ -140,9 +184,9 @@ export const errorHandler = (
     method: req.method,
     ip: req.ip,
     userAgent: req.get('User-Agent'),
-    body: req.body,
-    params: req.params,
-    query: req.query
+    body: sanitizeForLog(req.body),
+    params: sanitizeForLog(req.params),
+    query: sanitizeForLog(req.query)
   })
 
   let statusCode = 500

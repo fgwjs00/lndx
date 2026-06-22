@@ -3,10 +3,9 @@
  * @description 基于PostgreSQL的全文搜索功能
  */
 
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { logger } from '@/utils/logger'
 
-const prisma = new PrismaClient()
 
 /**
  * 搜索结果接口

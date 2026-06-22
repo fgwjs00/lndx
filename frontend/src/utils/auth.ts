@@ -15,7 +15,7 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, string[]> = {
     'teacher:*',
     'course:*',
     'application:*',
-    'analysis:*',
+    // 'analysis:*', // 功能暂时屏蔽
     'setting:*',
     'logs:*',
     'school:*'
@@ -28,20 +28,22 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, string[]> = {
     'teacher:*',
     'course:*',
     'application:*',
-    'analysis:read',
+    'grade:*',
+    'attendance:manage',
+    // 'analysis:read', // 功能暂时屏蔽
     'setting:read',
     'setting:update'
   ],
   teacher: [
     'student:read',
-    'student:create',
     'student:update',
+    'student:export',
     'course:read',
     'course:create',
     'course:update',
     'application:read',
     'application:approve',
-    'analysis:read',
+    // 'analysis:read', // 功能暂时屏蔽
     'attendance:manage'
   ],
   student: [

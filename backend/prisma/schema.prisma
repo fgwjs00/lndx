@@ -16,12 +16,13 @@ model User {
   avatar             String?
   role               UserRole
   isActive           Boolean        @default(true)
-  mustChangePassword Boolean        @default(false)
   lastLoginAt        DateTime?
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
+  mustChangePassword Boolean        @default(false)
   createdCourses     Course[]       @relation("CreatedBy")
   createdEnrollments Enrollment[]   @relation("CreatedBy")
+  operatedAcademicEvents StudentAcademicEvent[] @relation("AcademicEventOperator")
   operationLogs      OperationLog[]
   createdStudents    Student[]      @relation("CreatedBy")
   studentProfile     Student?
@@ -31,67 +32,66 @@ model User {
 }
 
 model Student {
-  id                String       @id @default(uuid())
-  studentCode       String       @unique
-  name              String       // 改为前端字段名
-  gender            Gender
-  age               Int
-  birthDate         DateTime     // 改为前端字段名 (用于生日，保留birthday做兼容)
-  birthday          DateTime     // 保留用于年龄计算
-  idNumber          String       @unique // 改为前端字段名
-  idCardAddress     String
-  contactPhone      String
-  photo             String?      // 个人照片URL
-  idCardFront       String?
-  idCardBack        String?
-  currentAddress    String
-  emergencyContact  String
-  emergencyPhone    String
-  emergencyRelation String
-  healthStatus      String?
-  medicalHistory    String?
-  allergies         String?
-  interests         String[]     @default([])
-  tags              String[]     @default([])
-  remarks           String?
-  isActive          Boolean      @default(true)
-  
-  // 前端字段 - 完全匹配前端提交字段
-  ethnicity         String?      // 民族
-  educationLevel    String?      // 学历
-  politicalStatus   String?      // 政治面貌
-  phone             String?      // 电话
-  isRetired         Boolean      @default(false) // 是否退休
-  insuranceCompany  String?      // 保险公司
-  retirementCategory String?     // 退休类别
-  familyAddress     String?      // 家庭地址
-  familyPhone       String?      // 家庭电话
-  major             String?      // 专业
-  semester          String?      // 学期
-  selectedCourses   String[]     @default([]) // 选择的课程
-  studyPeriodStart  DateTime?    // 学习开始时间
-  studyPeriodEnd    DateTime?    // 学习结束时间
-  studentId         String?      // 学号
-  agreementSigned   Boolean      @default(false) // 协议签署
-  applicationDate   DateTime?    // 申请日期
-  status            String?      // 状态
-  
-  // 年级管理字段
-  currentGrade      String?      // 当前年级：一年级、二年级、三年级
-  enrollmentYear    Int?         // 入学年份
-  enrollmentSemester String?     // 入学学期
-  graduationStatus  String       @default("IN_PROGRESS") // 毕业状态：IN_PROGRESS, GRADUATED, ARCHIVED
-  graduationDate    DateTime?    // 毕业时间
-  academicStatus    String       @default("ACTIVE") // 学籍状态：ACTIVE, SUSPENDED, GRADUATED
-  
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-  userId            String?      @unique
-  createdBy         String
-  attendances       Attendance[]
-  enrollments       Enrollment[]
-  creator           User         @relation("CreatedBy", fields: [createdBy], references: [id])
-  user              User?        @relation(fields: [userId], references: [id])
+  id                 String       @id @default(uuid())
+  studentCode        String       @unique
+  name               String
+  gender             Gender
+  age                Int
+  birthDate          DateTime
+  birthday           DateTime
+  idNumber           String       @unique
+  idCardAddress      String
+  contactPhone       String
+  photo              String?
+  idCardFront        String?
+  idCardBack         String?
+  currentAddress     String
+  emergencyContact   String
+  emergencyPhone     String
+  emergencyRelation  String
+  healthStatus       String?
+  medicalHistory     String?
+  allergies          String?
+  interests          String[]     @default([])
+  tags               String[]     @default([])
+  remarks            String?
+  isActive           Boolean      @default(true)
+  ethnicity          String?
+  educationLevel     String?
+  politicalStatus    String?
+  phone              String?
+  isRetired          Boolean      @default(false)
+  retirementCategory String?
+  familyAddress      String?
+  familyPhone        String?
+  major              String?
+  semester           String?
+  selectedCourses    String[]     @default([])
+  studyPeriodStart   DateTime?
+  studyPeriodEnd     DateTime?
+  studentId          String?
+  agreementSigned    Boolean      @default(false)
+  applicationDate    DateTime?
+  status             String?
+  currentGrade       String?
+  enrollmentYear     Int?
+  enrollmentSemester String?
+  graduationStatus   String       @default("IN_PROGRESS")
+  graduationDate     DateTime?
+  academicStatus     String       @default("ACTIVE")
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  userId             String?      @unique
+  createdBy          String
+  insuranceCompany   String?
+  attendances        Attendance[]
+  enrollments        Enrollment[]
+  enrollmentApplications EnrollmentApplication[]
+  rosterMembers      RosterMember[]
+  studentInsurances  StudentInsurance[]
+  academicEvents     StudentAcademicEvent[]
+  creator            User         @relation("CreatedBy", fields: [createdBy], references: [id])
+  user               User?        @relation(fields: [userId], references: [id])
 
   @@index([name, idNumber, contactPhone])
   @@index([graduationStatus, academicStatus])
@@ -134,8 +134,6 @@ model Course {
   minAge            Int?
   maxAge            Int?
   ageDescription    String?
-  requiresGrades    Boolean         @default(true)    // 是否需要年级管理
-  gradeDescription  String?                           // 年级说明
   tags              String[]        @default([])
   keywords          String[]        @default([])
   timeSlots         Json
@@ -150,10 +148,13 @@ model Course {
   location          String?
   semester          String?
   teacher           String?
+  gradeDescription  String?
+  requiresGrades    Boolean         @default(true)
   attendances       Attendance[]
   teachers          CourseTeacher[]
   creator           User            @relation("CreatedBy", fields: [createdBy], references: [id])
   enrollments       Enrollment[]
+  classSections     ClassSection[]
 
   @@index([name, category, level])
   @@map("courses")
@@ -198,6 +199,7 @@ model Enrollment {
   course           Course           @relation(fields: [courseId], references: [id])
   creator          User             @relation("CreatedBy", fields: [createdBy], references: [id])
   student          Student          @relation(fields: [studentId], references: [id])
+  rosterMembers    RosterMember[]
 
   @@unique([studentId, courseId])
   @@map("enrollments")
@@ -277,10 +279,210 @@ model FileUpload {
   isTemp       Boolean   @default(false)
   expiresAt    DateTime?
   createdAt    DateTime  @default(now())
+  insuranceAttachments StudentInsurance[] @relation("InsuranceAttachment")
 
   @@index([uploadedBy, createdAt])
   @@index([isTemp, expiresAt])
   @@map("file_uploads")
+}
+
+model AcademicYear {
+  id                     String                  @id @default(uuid())
+  code                   String                  @unique
+  name                   String
+  startsAt               DateTime
+  endsAt                 DateTime
+  enrollmentStartsAt     DateTime?
+  enrollmentEndsAt       DateTime?
+  requiredInsuranceStart DateTime
+  requiredInsuranceEnd   DateTime
+  isActive               Boolean                 @default(false)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  semesters              Semester[]
+  classSections          ClassSection[]
+  rosters                Roster[]
+  enrollmentApplications EnrollmentApplication[]
+  studentInsurances      StudentInsurance[]
+
+  @@map("academic_years")
+}
+
+model Semester {
+  id                     String                  @id @default(uuid())
+  academicYearId         String
+  code                   String                  @unique
+  name                   String
+  startsAt               DateTime?
+  endsAt                 DateTime?
+  isEnrollmentOpen       Boolean                 @default(false)
+  isActive               Boolean                 @default(true)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  academicYear           AcademicYear            @relation(fields: [academicYearId], references: [id])
+  classSections          ClassSection[]
+  rosters                Roster[]
+  enrollmentApplications EnrollmentApplication[]
+
+  @@index([academicYearId])
+  @@map("semesters")
+}
+
+model ClassSection {
+  id                String                        @id @default(uuid())
+  code              String                        @unique
+  name              String
+  academicYearId    String
+  semesterId        String
+  courseId          String
+  grade             String?
+  major             String
+  capacity          Int
+  timeSlots         Json
+  status            String                        @default("DRAFT")
+  isActive          Boolean                       @default(true)
+  createdAt         DateTime                      @default(now())
+  updatedAt         DateTime                      @updatedAt
+  academicYear      AcademicYear                  @relation(fields: [academicYearId], references: [id])
+  semester          Semester                      @relation(fields: [semesterId], references: [id])
+  course            Course                        @relation(fields: [courseId], references: [id])
+  rosters           Roster[]
+  rosterMembers     RosterMember[]
+  enrollmentChoices EnrollmentApplicationChoice[]
+
+  @@index([academicYearId, semesterId])
+  @@index([courseId])
+  @@map("class_sections")
+}
+
+model Roster {
+  id             String         @id @default(uuid())
+  code           String         @unique
+  classSectionId String
+  semesterId     String
+  academicYearId String
+  status         RosterStatus   @default(DRAFT)
+  snapshotAt     DateTime       @default(now())
+  publishedAt    DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  classSection   ClassSection   @relation(fields: [classSectionId], references: [id])
+  semester       Semester       @relation(fields: [semesterId], references: [id])
+  academicYear   AcademicYear   @relation(fields: [academicYearId], references: [id])
+  members        RosterMember[]
+
+  @@unique([classSectionId, semesterId])
+  @@index([semesterId])
+  @@map("rosters")
+}
+
+model RosterMember {
+  id                 String             @id @default(uuid())
+  rosterId           String
+  classSectionId     String
+  studentId          String
+  sourceEnrollmentId String?
+  status             RosterMemberStatus @default(ACTIVE)
+  joinedAt           DateTime           @default(now())
+  leftAt             DateTime?
+  remarks            String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  roster             Roster             @relation(fields: [rosterId], references: [id], onDelete: Cascade)
+  classSection       ClassSection       @relation(fields: [classSectionId], references: [id])
+  student            Student            @relation(fields: [studentId], references: [id])
+  sourceEnrollment   Enrollment?        @relation(fields: [sourceEnrollmentId], references: [id])
+
+  @@unique([rosterId, studentId])
+  @@index([classSectionId, status])
+  @@index([studentId])
+  @@map("roster_members")
+}
+
+model EnrollmentApplication {
+  id             String                      @id @default(uuid())
+  applicationCode String                     @unique
+  studentId       String
+  academicYearId  String
+  semesterId      String
+  insuranceId     String?
+  status          EnrollmentApplicationStatus @default(SUBMITTED)
+  source          String                       @default("SELF_SERVICE")
+  submittedAt     DateTime                     @default(now())
+  reviewedAt      DateTime?
+  reviewedBy      String?
+  remarks         String?
+  createdAt       DateTime                     @default(now())
+  updatedAt       DateTime                     @updatedAt
+  student         Student                      @relation(fields: [studentId], references: [id])
+  academicYear    AcademicYear                 @relation(fields: [academicYearId], references: [id])
+  semester        Semester                     @relation(fields: [semesterId], references: [id])
+  insurance       StudentInsurance?            @relation(fields: [insuranceId], references: [id])
+  choices         EnrollmentApplicationChoice[]
+
+  @@index([studentId, academicYearId])
+  @@index([semesterId, status])
+  @@map("enrollment_applications")
+}
+
+model EnrollmentApplicationChoice {
+  id             String                 @id @default(uuid())
+  applicationId  String
+  choiceOrder    Int
+  classSectionId String
+  status         EnrollmentChoiceStatus @default(PENDING)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  application    EnrollmentApplication  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  classSection   ClassSection           @relation(fields: [classSectionId], references: [id])
+
+  @@unique([applicationId, choiceOrder])
+  @@unique([applicationId, classSectionId])
+  @@index([classSectionId, status])
+  @@map("enrollment_application_choices")
+}
+
+model StudentInsurance {
+  id             String                @id @default(uuid())
+  studentId      String
+  academicYearId String
+  company        String
+  category       String?
+  coverageStart  DateTime
+  coverageEnd    DateTime
+  attachmentFileId String?
+  reviewStatus   InsuranceReviewStatus @default(PENDING)
+  reviewedBy     String?
+  reviewedAt     DateTime?
+  remarks        String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  student        Student               @relation(fields: [studentId], references: [id])
+  academicYear   AcademicYear          @relation(fields: [academicYearId], references: [id])
+  attachment     FileUpload?           @relation("InsuranceAttachment", fields: [attachmentFileId], references: [id])
+  applications   EnrollmentApplication[]
+
+  @@index([studentId, academicYearId])
+  @@index([academicYearId, reviewStatus])
+  @@map("student_insurances")
+}
+
+model StudentAcademicEvent {
+  id         String   @id @default(uuid())
+  studentId  String
+  eventType  String
+  fromValue  String?
+  toValue    String?
+  reason     String?
+  operatorId String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  student    Student  @relation(fields: [studentId], references: [id])
+  operator   User?    @relation("AcademicEventOperator", fields: [operatorId], references: [id])
+
+  @@index([studentId, createdAt])
+  @@index([eventType, createdAt])
+  @@map("student_academic_events")
 }
 
 enum UserRole {
@@ -327,4 +529,40 @@ enum AttendanceMethod {
   MANUAL
   QR_CODE
   CARD
+}
+
+enum RosterStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum RosterMemberStatus {
+  ACTIVE
+  DROPPED
+  TRANSFERRED
+  GRADUATED
+}
+
+enum EnrollmentApplicationStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum EnrollmentChoiceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WAITLISTED
+  CANCELLED
+}
+
+enum InsuranceReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
 }

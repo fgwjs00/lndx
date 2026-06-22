@@ -4,18 +4,328 @@
  */
 
 import { Router, Request, Response } from 'express'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { asyncHandler, BusinessError } from '@/middleware/errorHandler'
 import { authMiddleware, requireTeacher } from '@/middleware/auth'
 import { validatePaginationData } from '@/utils/validation'
 import { businessLogger } from '@/utils/logger'
 import multer from 'multer'
+import { randomUUID } from 'crypto'
 const XLSX = require('xlsx')
 import fs from 'fs'
 import path from 'path'
 
 const router = Router()
-const prisma = new PrismaClient()
+
+type AcademicYearConfig = {
+  code: string
+  name: string
+  startsAt: Date
+  endsAt: Date
+  enrollmentStartsAt: Date | null
+  enrollmentEndsAt: Date | null
+  requiredInsuranceStart: Date
+  requiredInsuranceEnd: Date
+}
+
+type AcademicTermResult = {
+  academicYear: any
+  semester: any
+}
+
+function normalizeTermName(value: unknown): string {
+  return String(value || '').trim()
+}
+
+function inferYear(value: unknown): number {
+  const match = normalizeTermName(value).match(/(\d{4})/)
+  if (!match) {
+    throw new BusinessError('无法识别学期年份', 400, 'INVALID_SEMESTER_YEAR')
+  }
+  return Number(match[1])
+}
+
+function inferSeason(value: unknown): 'spring' | 'summer' | 'autumn' | 'winter' | 'term' {
+  const text = normalizeTermName(value).toLowerCase()
+  if (text.includes('spring') || text.includes('春')) return 'spring'
+  if (text.includes('summer') || text.includes('夏')) return 'summer'
+  if (text.includes('autumn') || text.includes('fall') || text.includes('秋')) return 'autumn'
+  if (text.includes('winter') || text.includes('冬')) return 'winter'
+  return 'term'
+}
+
+function inferAcademicYearStart(semester: string): number {
+  const year = inferYear(semester)
+  const season = inferSeason(semester)
+  return season === 'autumn' || season === 'term' ? year : year - 1
+}
+
+function buildSemesterCode(semester: string): string {
+  const value = normalizeTermName(semester)
+  const existingCode = value.match(/^(\d{4})-(spring|summer|autumn|winter|term)$/i)
+  if (existingCode) {
+    return `${existingCode[1]}-${existingCode[2].toLowerCase()}`
+  }
+  return `${inferYear(value)}-${inferSeason(value)}`
+}
+
+function buildAcademicYearConfig(semester: string, body: any = {}): AcademicYearConfig {
+  const startYear = inferAcademicYearStart(semester)
+  const defaultStartsAt = new Date(`${startYear}-09-01T00:00:00.000Z`)
+  const defaultEndsAt = new Date(`${startYear + 1}-08-31T23:59:59.000Z`)
+
+  return {
+    code: `${startYear}-${startYear + 1}`,
+    name: `${startYear}-${startYear + 1}学年`,
+    startsAt: parseOptionalDate(body.startsAt) || defaultStartsAt,
+    endsAt: parseOptionalDate(body.endsAt) || defaultEndsAt,
+    enrollmentStartsAt: parseOptionalDate(body.enrollmentStartsAt),
+    enrollmentEndsAt: parseOptionalDate(body.enrollmentEndsAt),
+    requiredInsuranceStart: parseOptionalDate(body.requiredInsuranceStart) || defaultStartsAt,
+    requiredInsuranceEnd: parseOptionalDate(body.requiredInsuranceEnd) || defaultEndsAt
+  }
+}
+
+function buildSemesterDateRange(semester: string): { startsAt: Date | null; endsAt: Date | null } {
+  const year = inferYear(semester)
+  const season = inferSeason(semester)
+
+  if (season === 'autumn') {
+    return {
+      startsAt: new Date(`${year}-09-01T00:00:00.000Z`),
+      endsAt: new Date(`${year + 1}-01-31T23:59:59.000Z`)
+    }
+  }
+
+  if (season === 'spring') {
+    return {
+      startsAt: new Date(`${year}-03-01T00:00:00.000Z`),
+      endsAt: new Date(`${year}-08-31T23:59:59.000Z`)
+    }
+  }
+
+  return {
+    startsAt: null,
+    endsAt: null
+  }
+}
+
+function parseOptionalDate(value: unknown): Date | null {
+  if (!value) return null
+  const date = new Date(String(value))
+  if (Number.isNaN(date.getTime())) {
+    throw new BusinessError('日期格式无效', 400, 'INVALID_DATE')
+  }
+  return date
+}
+
+function getSemesterRank(semester: string): number {
+  const season = inferSeason(semester)
+  if (season === 'spring') return 1
+  if (season === 'summer') return 2
+  if (season === 'autumn') return 3
+  if (season === 'winter') return 4
+  return 0
+}
+
+function getSortableYear(semester: string): number {
+  const match = normalizeTermName(semester).match(/(\d{4})/)
+  return match ? Number(match[1]) : 0
+}
+
+function sortSemestersDesc(values: string[]): string[] {
+  return values.sort((a, b) => {
+    const yearA = getSortableYear(a)
+    const yearB = getSortableYear(b)
+    if (yearA !== yearB) return yearB - yearA
+    return getSemesterRank(b) - getSemesterRank(a)
+  })
+}
+
+function mergeSemesterNames(...groups: string[][]): string[] {
+  const merged = new Set<string>()
+  for (const group of groups) {
+    for (const value of group) {
+      const semester = normalizeTermName(value)
+      if (semester) {
+        merged.add(semester)
+      }
+    }
+  }
+  return sortSemestersDesc(Array.from(merged))
+}
+
+async function hasAcademicTermTables(client: any = prisma): Promise<boolean> {
+  const rows = await client.$queryRaw<Array<{
+    academicYears: string | null
+    semesters: string | null
+    classSections: string | null
+  }>>`
+    SELECT
+      to_regclass('public.academic_years')::text AS "academicYears",
+      to_regclass('public.semesters')::text AS "semesters",
+      to_regclass('public.class_sections')::text AS "classSections"
+  `
+
+  const state = rows[0]
+  return Boolean(state?.academicYears && state?.semesters && state?.classSections)
+}
+
+async function getPhase2SemesterNames(): Promise<string[]> {
+  if (!(await hasAcademicTermTables())) {
+    return []
+  }
+
+  const rows = await prisma.$queryRaw<Array<{ name: string }>>`
+    SELECT s."name"
+    FROM "semesters" s
+    JOIN "academic_years" ay ON ay."id" = s."academicYearId"
+    WHERE s."isActive" = TRUE
+    ORDER BY ay."startsAt" DESC, s."startsAt" DESC NULLS LAST, s."createdAt" DESC
+  `
+
+  return rows.map(row => normalizeTermName(row.name)).filter(Boolean)
+}
+
+async function getLegacyCourseSemesters(): Promise<string[]> {
+  const legacyRows = await prisma.course.findMany({
+    where: {
+      isActive: true
+    },
+    select: {
+      semester: true
+    },
+    distinct: ['semester']
+  })
+
+  return legacyRows
+    .map(item => normalizeTermName(item.semester))
+    .filter(Boolean)
+}
+
+function safeCodePart(value: unknown): string {
+  return normalizeTermName(value)
+    .replace(/[^a-zA-Z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48)
+}
+
+function buildClassSectionCode(semesterCode: string, course: any): string {
+  const coursePart = safeCodePart(course.courseCode || course.id?.slice(0, 8)) || course.id?.slice(0, 8) || randomUUID().slice(0, 8)
+  return `${semesterCode}-${coursePart}`.slice(0, 96)
+}
+
+async function ensureAcademicYearMaster(tx: any, config: AcademicYearConfig, isActive: boolean): Promise<any> {
+  const now = new Date()
+  const rows = await tx.$queryRaw<Array<any>>`
+    INSERT INTO "academic_years" (
+      "id", "code", "name", "startsAt", "endsAt",
+      "enrollmentStartsAt", "enrollmentEndsAt",
+      "requiredInsuranceStart", "requiredInsuranceEnd",
+      "isActive", "createdAt", "updatedAt"
+    )
+    VALUES (
+      ${randomUUID()}, ${config.code}, ${config.name}, ${config.startsAt}, ${config.endsAt},
+      ${config.enrollmentStartsAt}, ${config.enrollmentEndsAt},
+      ${config.requiredInsuranceStart}, ${config.requiredInsuranceEnd},
+      ${isActive}, ${now}, ${now}
+    )
+    ON CONFLICT ("code") DO UPDATE SET
+      "name" = EXCLUDED."name",
+      "startsAt" = EXCLUDED."startsAt",
+      "endsAt" = EXCLUDED."endsAt",
+      "enrollmentStartsAt" = COALESCE(EXCLUDED."enrollmentStartsAt", "academic_years"."enrollmentStartsAt"),
+      "enrollmentEndsAt" = COALESCE(EXCLUDED."enrollmentEndsAt", "academic_years"."enrollmentEndsAt"),
+      "requiredInsuranceStart" = EXCLUDED."requiredInsuranceStart",
+      "requiredInsuranceEnd" = EXCLUDED."requiredInsuranceEnd",
+      "isActive" = CASE WHEN EXCLUDED."isActive" THEN TRUE ELSE "academic_years"."isActive" END,
+      "updatedAt" = EXCLUDED."updatedAt"
+    RETURNING *
+  `
+  return rows[0]
+}
+
+async function ensureSemesterMaster(tx: any, academicYearId: string, name: string, body: any = {}): Promise<any> {
+  const now = new Date()
+  const code = buildSemesterCode(name)
+  const range = buildSemesterDateRange(name)
+  const isEnrollmentOpen = body.isEnrollmentOpen === true
+  const isActive = body.isActive !== false
+  const startsAt = parseOptionalDate(body.semesterStartsAt || body.startsAt) || range.startsAt
+  const endsAt = parseOptionalDate(body.semesterEndsAt || body.endsAt) || range.endsAt
+
+  const rows = await tx.$queryRaw<Array<any>>`
+    INSERT INTO "semesters" (
+      "id", "academicYearId", "code", "name",
+      "startsAt", "endsAt", "isEnrollmentOpen", "isActive", "createdAt", "updatedAt"
+    )
+    VALUES (
+      ${randomUUID()}, ${academicYearId}, ${code}, ${name},
+      ${startsAt}, ${endsAt}, ${isEnrollmentOpen}, ${isActive}, ${now}, ${now}
+    )
+    ON CONFLICT ("code") DO UPDATE SET
+      "academicYearId" = EXCLUDED."academicYearId",
+      "name" = EXCLUDED."name",
+      "startsAt" = COALESCE(EXCLUDED."startsAt", "semesters"."startsAt"),
+      "endsAt" = COALESCE(EXCLUDED."endsAt", "semesters"."endsAt"),
+      "isEnrollmentOpen" = CASE WHEN EXCLUDED."isEnrollmentOpen" THEN TRUE ELSE "semesters"."isEnrollmentOpen" END,
+      "isActive" = EXCLUDED."isActive",
+      "updatedAt" = EXCLUDED."updatedAt"
+    RETURNING *
+  `
+  return rows[0]
+}
+
+async function ensureAcademicTerm(tx: any, semesterName: string, body: any = {}): Promise<AcademicTermResult> {
+  const config = buildAcademicYearConfig(semesterName, body)
+  const academicYear = await ensureAcademicYearMaster(tx, config, body.isActive !== false)
+  const semester = await ensureSemesterMaster(tx, academicYear.id, semesterName, body)
+  return { academicYear, semester }
+}
+
+async function ensureClassSectionMaster(tx: any, term: AcademicTermResult, course: any): Promise<{ id: string; created: boolean }> {
+  const now = new Date()
+  const code = buildClassSectionCode(term.semester.code, course)
+  const existingRows = await tx.$queryRaw<Array<{ id: string }>>`
+    SELECT "id"
+    FROM "class_sections"
+    WHERE "code" = ${code}
+    LIMIT 1
+  `
+  const status = course.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT'
+  const rows = await tx.$queryRaw<Array<{ id: string }>>`
+    INSERT INTO "class_sections" (
+      "id", "code", "name", "academicYearId", "semesterId", "courseId",
+      "grade", "major", "capacity", "timeSlots", "status", "isActive", "createdAt", "updatedAt"
+    )
+    VALUES (
+      ${randomUUID()}, ${code}, ${course.name}, ${term.academicYear.id}, ${term.semester.id}, ${course.id},
+      ${course.level || null}, ${course.category || course.name}, ${Number(course.maxStudents) || 0},
+      ${JSON.stringify(course.timeSlots || [])}::jsonb, ${status}, TRUE, ${now}, ${now}
+    )
+    ON CONFLICT ("code") DO UPDATE SET
+      "name" = EXCLUDED."name",
+      "academicYearId" = EXCLUDED."academicYearId",
+      "semesterId" = EXCLUDED."semesterId",
+      "courseId" = EXCLUDED."courseId",
+      "grade" = EXCLUDED."grade",
+      "major" = EXCLUDED."major",
+      "capacity" = EXCLUDED."capacity",
+      "timeSlots" = EXCLUDED."timeSlots",
+      "status" = CASE
+        WHEN "class_sections"."status" = 'PUBLISHED' THEN "class_sections"."status"
+        ELSE EXCLUDED."status"
+      END,
+      "isActive" = TRUE,
+      "updatedAt" = EXCLUDED."updatedAt"
+    RETURNING "id"
+  `
+
+  return {
+    id: rows[0].id,
+    created: existingRows.length === 0
+  }
+}
 
 // 解析上课时间字符串为timeSlots数组
 function parseTimeSlots(timeString: string): any[] {
@@ -187,6 +497,44 @@ router.get('/', authMiddleware, asyncHandler(async (req: Request, res: Response)
       take: pageSizeNum
     })
 
+    let classSectionRows: Array<{
+      courseId: string
+      classSectionId: string
+      classSectionCode: string
+      rosterId: string | null
+      rosterStatus: string | null
+    }> = []
+    const courseIds = courses.map(course => course.id)
+    if (courseIds.length > 0) {
+      const phase2Tables = await prisma.$queryRaw<Array<{ exists: boolean }>>`
+        SELECT to_regclass('public.class_sections') IS NOT NULL
+          AND to_regclass('public.rosters') IS NOT NULL AS "exists"
+      `
+
+      if (phase2Tables[0]?.exists) {
+        classSectionRows = await prisma.$queryRaw<Array<{
+          courseId: string
+          classSectionId: string
+          classSectionCode: string
+          rosterId: string | null
+          rosterStatus: string | null
+        }>>`
+          SELECT DISTINCT ON (cs."courseId")
+            cs."courseId",
+            cs.id AS "classSectionId",
+            cs.code AS "classSectionCode",
+            r.id AS "rosterId",
+            r.status::text AS "rosterStatus"
+          FROM "class_sections" cs
+          LEFT JOIN "rosters" r ON r."classSectionId" = cs.id AND r."semesterId" = cs."semesterId"
+          WHERE cs."courseId" = ANY(${courseIds}::text[])
+            AND cs."isActive" = TRUE
+          ORDER BY cs."courseId", cs."createdAt" DESC
+        `
+      }
+    }
+    const classSectionByCourseId = new Map(classSectionRows.map(row => [row.courseId, row]))
+
     // 转换数据格式以匹配前端需求
     const formattedCourses = courses.map(course => ({
       id: course.id,
@@ -208,6 +556,10 @@ router.get('/', authMiddleware, asyncHandler(async (req: Request, res: Response)
       tags: course.tags,
       timeSlots: course.timeSlots,
       status: course.status,
+      classSectionId: classSectionByCourseId.get(course.id)?.classSectionId || null,
+      classSectionCode: classSectionByCourseId.get(course.id)?.classSectionCode || null,
+      rosterId: classSectionByCourseId.get(course.id)?.rosterId || null,
+      rosterStatus: classSectionByCourseId.get(course.id)?.rosterStatus || null,
       enrolled: course.enrollments.filter(e => e.status === 'PENDING' || e.status === 'APPROVED').length, // 已报名人数（包含待审核）
       capacity: course.maxStudents, // 容量
       // 🔥 修复：添加缺失的字段返回
@@ -258,37 +610,10 @@ router.get('/', authMiddleware, asyncHandler(async (req: Request, res: Response)
  */
 router.get('/semesters', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
   try {
-    // 获取所有不重复的学期
-    const semesters = await prisma.course.findMany({
-      where: {
-        isActive: true
-      },
-      select: {
-        semester: true
-      },
-      distinct: ['semester']
-    })
-
-    // 提取学期值并排序（过滤掉null值）
-    const semesterList = semesters
-      .map(item => item.semester)
-      .filter(Boolean) // 过滤掉null、undefined、空字符串
-      .sort((a, b) => {
-        // 按年份和季节排序 (2025年春季 > 2024年冬季)
-        const getYear = (s: string) => parseInt(s.match(/(\d{4})年/)?.[1] || '0')
-        const getSeason = (s: string) => {
-          if (s.includes('春季')) return 1
-          if (s.includes('夏季')) return 2
-          if (s.includes('秋季')) return 3
-          if (s.includes('冬季')) return 4
-          return 0
-        }
-        
-        const yearA = getYear(a!)
-        const yearB = getYear(b!)
-        if (yearA !== yearB) return yearB - yearA // 年份倒序
-        return getSeason(b!) - getSeason(a!) // 季节倒序
-      })
+    const semesterList = mergeSemesterNames(
+      await getPhase2SemesterNames(),
+      await getLegacyCourseSemesters()
+    )
 
     res.json({
       code: 200,
@@ -299,6 +624,112 @@ router.get('/semesters', authMiddleware, asyncHandler(async (req: Request, res: 
     console.error('获取学期列表失败:', error)
     throw new BusinessError('获取学期列表失败', 500, 'QUERY_ERROR')
   }
+}))
+
+/**
+ * 创建或激活学期主数据
+ * POST /api/courses/semesters
+ */
+router.post('/semesters', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
+  const semesterName = normalizeTermName(req.body.name || req.body.semester)
+
+  if (!semesterName) {
+    throw new BusinessError('请填写学期名称', 400, 'INVALID_SEMESTER_NAME')
+  }
+
+  if (!(await hasAcademicTermTables())) {
+    throw new BusinessError('二期学期主数据表尚未就绪', 500, 'TERM_TABLES_NOT_READY')
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    return ensureAcademicTerm(tx, semesterName, req.body)
+  })
+
+  businessLogger.userAction(req.user!.id, 'SEMESTER_UPSERT', {
+    semesterId: result.semester.id,
+    semesterName,
+    academicYearId: result.academicYear.id
+  })
+
+  res.json({
+    code: 200,
+    message: '学期创建成功',
+    data: result
+  })
+}))
+
+/**
+ * 将当前课程同步为二期班次主数据
+ * POST /api/courses/semesters/sync-class-sections
+ */
+router.post('/semesters/sync-class-sections', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
+  const semesterName = normalizeTermName(req.body.semester || req.body.name)
+
+  if (!semesterName) {
+    throw new BusinessError('请先选择学期', 400, 'INVALID_SEMESTER_NAME')
+  }
+
+  if (!(await hasAcademicTermTables())) {
+    throw new BusinessError('二期班次主数据表尚未就绪', 500, 'TERM_TABLES_NOT_READY')
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const term = await ensureAcademicTerm(tx, semesterName, req.body)
+    const courses = await tx.course.findMany({
+      where: {
+        isActive: true,
+        semester: term.semester.name
+      },
+      select: {
+        id: true,
+        courseCode: true,
+        name: true,
+        category: true,
+        level: true,
+        maxStudents: true,
+        timeSlots: true,
+        status: true
+      },
+      orderBy: [
+        { name: 'asc' },
+        { id: 'asc' }
+      ]
+    })
+
+    let createdCount = 0
+    let updatedCount = 0
+
+    for (const course of courses) {
+      const section = await ensureClassSectionMaster(tx, term, course)
+      if (section.created) {
+        createdCount += 1
+      } else {
+        updatedCount += 1
+      }
+    }
+
+    return {
+      academicYear: term.academicYear,
+      semester: term.semester,
+      courseCount: courses.length,
+      createdCount,
+      updatedCount,
+      skippedCount: 0
+    }
+  })
+
+  businessLogger.userAction(req.user!.id, 'CLASS_SECTION_SYNC', {
+    semesterName,
+    courseCount: result.courseCount,
+    createdCount: result.createdCount,
+    updatedCount: result.updatedCount
+  })
+
+  res.json({
+    code: 200,
+    message: '班次同步完成',
+    data: result
+  })
 }))
 
 /**
@@ -483,7 +914,7 @@ router.get('/import-template', authMiddleware, asyncHandler(async (req: Request,
  * 批量导入课程
  * POST /api/courses/batch-import
  */
-router.post('/batch-import', authMiddleware, upload.single('file'), asyncHandler(async (req: Request, res: Response) => {
+router.post('/batch-import', requireTeacher, upload.single('file'), asyncHandler(async (req: Request, res: Response) => {
   if (!req.file) {
     throw new BusinessError('请选择要导入的文件', 400, 'FILE_REQUIRED')
   }
@@ -816,6 +1247,18 @@ router.post('/', requireTeacher, asyncHandler(async (req: Request, res: Response
   } = req.body
 
   try {
+    if (!courseCode || !name || !category || !level || duration === undefined || maxStudents === undefined) {
+      throw new BusinessError('请填写课程编号、名称、分类、级别、课时和人数上限', 400, 'INVALID_COURSE_INPUT')
+    }
+
+    if (!Number.isFinite(Number(duration)) || Number(duration) <= 0) {
+      throw new BusinessError('课程课时必须是大于0的数字', 400, 'INVALID_DURATION')
+    }
+
+    if (!Number.isFinite(Number(maxStudents)) || Number(maxStudents) <= 0) {
+      throw new BusinessError('课程人数上限必须是大于0的数字', 400, 'INVALID_MAX_STUDENTS')
+    }
+
     // 检查课程编号是否已存在
     const existingCourse = await prisma.course.findUnique({
       where: { courseCode }

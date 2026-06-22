@@ -43,6 +43,18 @@ export const useAuthStore = defineStore('auth', () => {
   const userAvatar = computed<string>(() => user.value?.avatar || '')
   const userPhone = computed<string>(() => user.value?.phone || '')
 
+  const refreshAssetToken = async (): Promise<void> => {
+    try {
+      const response = await AuthService.getAssetToken()
+      if (response.code === 200 && response.data?.assetToken) {
+        localStorage.setItem('assetToken', response.data.assetToken)
+      }
+    } catch (error) {
+      localStorage.removeItem('assetToken')
+      console.warn('Asset token refresh failed')
+    }
+  }
+
   /**
    * 初始化认证状态
    * 从localStorage恢复登录状态
@@ -149,6 +161,7 @@ export const useAuthStore = defineStore('auth', () => {
         permissions.value = savedPermissions ? JSON.parse(savedPermissions) : []
         mustChangePassword.value = savedMustChangePassword ? JSON.parse(savedMustChangePassword) : false
         isAuthenticated.value = true
+        await refreshAssetToken()
 
         console.log('✅ 认证状态已恢复:', {
           userId: user.value?.id,
@@ -199,7 +212,7 @@ export const useAuthStore = defineStore('auth', () => {
    * @param loginData 登录数据
    */
   const login = async (loginData: LoginRequest): Promise<boolean> => {
-    console.log('🔐 AuthStore.login 开始', loginData)
+    console.log('🔐 AuthStore.login 开始')
     try {
       loading.value = true
       error.value = null
@@ -208,21 +221,16 @@ export const useAuthStore = defineStore('auth', () => {
 
       // 开发模式下使用模拟登录
       if (shouldMockAuth()) {
-        console.log('🧪 使用模拟登录')
         response = await mockLogin(loginData.phone, loginData.password)
-        console.log('🧪 模拟登录响应:', response)
       } else {
         console.log('🌐 使用真实API登录')
         response = await AuthService.login(loginData)
-        console.log('🌐 API登录响应:', response)
       }
       
       if (response.code === 200) {
         const { token: newToken, refreshToken: newRefreshToken, user: userInfo, mustChangePassword: needPasswordChange } = response.data
         const userPermissions = response.data.permissions || []
         
-        console.log('👤 用户信息:', userInfo)
-        console.log('🔑 权限列表:', userPermissions)
         console.log('🔒 需要强制修改密码:', needPasswordChange)
         
         // 更新状态
@@ -262,14 +270,14 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.setItem('user', JSON.stringify(convertedUserInfo))
         localStorage.setItem('permissions', JSON.stringify(userPermissions))
         localStorage.setItem('mustChangePassword', JSON.stringify(mustChangePassword.value))
+        await refreshAssetToken()
 
         console.log('✅ 登录成功，状态已更新')
-        console.log('🔍 用户数据详情:', {
+        console.log('🔍 用户状态详情:', {
           originalRole: userInfo.role,
           convertedRole: convertedUserInfo.role,
           roleType: typeof convertedUserInfo.role,
-          permissions: userPermissions,
-          token: newToken?.substring(0, 20) + '...'
+          permissionsCount: userPermissions.length
         })
         // 根据是否需要强制修改密码显示不同的消息
         if (mustChangePassword.value) {
@@ -338,10 +346,11 @@ export const useAuthStore = defineStore('auth', () => {
 
   /**
    * 用户登出
+   * @param redirectToLogin 是否跳转到登录页，默认true
    */
-  const logout = async (): Promise<void> => {
+  const logout = async (redirectToLogin: boolean = true): Promise<void> => {
     // 打印调用堆栈，帮助调试
-    console.log('🚪 执行用户登出...')
+    console.log('🚪 执行用户登出...', { redirectToLogin })
     console.trace('💡 Logout调用堆栈:')
     
     try {
@@ -367,8 +376,29 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.removeItem('user')
       localStorage.removeItem('permissions')
       localStorage.removeItem('mustChangePassword')
+      localStorage.removeItem('assetToken')
 
       message.success('已退出登录')
+
+      // 跳转到登录页面
+      if (redirectToLogin) {
+        console.log('🔄 跳转到登录页面...')
+        // 动态导入router避免循环依赖
+        import('@/router').then(({ default: router }) => {
+          const currentRoute = router.currentRoute.value
+          // 如果当前不在登录页面，则跳转到登录页面
+          if (currentRoute.path !== '/login') {
+            router.push({
+              path: '/login',
+              query: { redirect: currentRoute.fullPath }
+            })
+          }
+        }).catch(error => {
+          console.error('❌ 跳转到登录页面失败:', error)
+          // 降级方案：直接修改location
+          window.location.href = '/login'
+        })
+      }
     }
   }
 
@@ -491,6 +521,7 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.setItem('token', newToken)
         localStorage.setItem('refreshToken', newRefreshToken)
         localStorage.setItem('user', JSON.stringify(convertedUserInfo))
+        await refreshAssetToken()
 
         return true
       } else {

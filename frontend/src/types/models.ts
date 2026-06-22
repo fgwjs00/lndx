@@ -6,7 +6,7 @@
 // 用户角色枚举 - 匹配后端
 export enum UserRole {
   SUPER_ADMIN = 'SUPER_ADMIN',
-  SCHOOL_ADMIN = 'SCHOOL_ADMIN', 
+  SCHOOL_ADMIN = 'SCHOOL_ADMIN',
   TEACHER = 'TEACHER',
   STUDENT = 'STUDENT'
 }
@@ -14,7 +14,7 @@ export enum UserRole {
 // 学生状态枚举 - 匹配后端
 export enum StudentStatus {
   ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE', 
+  INACTIVE = 'INACTIVE',
   GRADUATED = 'GRADUATED',
   SUSPENDED = 'SUSPENDED'
 }
@@ -22,7 +22,7 @@ export enum StudentStatus {
 // 课程状态枚举 - 匹配后端Prisma schema
 export enum CourseStatus {
   DRAFT = 'DRAFT',
-  PUBLISHED = 'PUBLISHED', 
+  PUBLISHED = 'PUBLISHED',
   SUSPENDED = 'SUSPENDED',
   CANCELLED = 'CANCELLED'
 }
@@ -47,7 +47,7 @@ export interface User {
   lastLoginAt?: string | null  // 最后登录时间，ISO字符串
   createdAt: string            // 创建时间，ISO字符串
   updatedAt?: string | null    // 更新时间，ISO字符串
-  
+
   // 关联字段（可选，根据查询需要）
   studentProfile?: Student | null
   teacherProfile?: Teacher | null
@@ -76,26 +76,36 @@ export interface Student {
   enrollmentDate?: string | null
   graduationDate?: string | null
   notes?: string | null
+  classSectionId?: string | null
+  classSectionCode?: string | null
+  rosterId?: string | null
+  rosterStatus?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | null
   createdAt: string
   updatedAt?: string | null
   createdById?: string | null
-  
+
   // 头像和证件照片
   photo?: string | null         // 头像
   idCardFront?: string | null   // 身份证正面
   idCardBack?: string | null    // 身份证反面
-  
+
   // 院系和年级信息
   major?: string | null         // 院系
   currentGrade?: string | null  // 年级
   semester?: string | null      // 学期
-  
+
+  // 政治面貌
+  politicalStatus?: string | null // 政治面貌
+
   // 保险信息
   insuranceCompany?: string | null    // 保险公司
   retirementCategory?: string | null  // 保险类别
   studyPeriodStart?: string | null    // 保险开始日期
   studyPeriodEnd?: string | null      // 保险结束日期
-  
+
+  // 报名时间相关字段
+  firstEnrollmentDate?: string | null  // 最早报名时间
+
   // 关联字段
   user?: User | null
   createdBy?: User | null
@@ -122,7 +132,7 @@ export interface Teacher {
   createdAt: string
   updatedAt?: string | null
   createdById?: string | null
-  
+
   // 关联字段
   user?: User | null
   createdBy?: User | null
@@ -137,7 +147,7 @@ export interface Course {
   name: string                 // 课程名称 (匹配后端字段)
   description?: string | null
   category: string             // 课程分类
-  level: string               // 课程级别  
+  level: string               // 课程级别
   duration?: number           // 课程时长(分钟)（可选）
   maxStudents: number         // 最大学员数
   hasAgeRestriction?: boolean // 是否有年龄限制
@@ -154,18 +164,18 @@ export interface Course {
   capacity?: number           // 容量 (maxStudents的别名)
   createdAt: string
   updatedAt?: string | null
-  
+
   // 必需字段
   semester: string            // 学期（必需）
   teacher?: string | null     // 主讲老师
   location: string            // 上课地点（必需）
-  
+
   // 兼容字段
   credits?: number            // 学分（兼容旧接口）
   hours?: number             // 学时（兼容旧接口）
   schedule?: string          // 时间安排（兼容旧接口）
   teacherId?: string         // 教师ID（兼容旧接口）
-  
+
   // 关联字段 - 匹配后端返回格式
   teachers?: Array<{
     id: string
@@ -190,12 +200,12 @@ export interface Enrollment {
   createdAt: string
   updatedAt?: string | null
   createdById?: string | null
-  
+
   // 保险相关字段
   insuranceStart?: string | null    // 保险开始时间
   insuranceEnd?: string | null      // 保险结束时间
   remarks?: string | null           // 备注
-  
+
   // 关联字段
   student?: Student | null
   course?: Course | null
@@ -212,7 +222,7 @@ export interface Attendance {
   notes?: string | null
   createdAt: string
   updatedAt?: string | null
-  
+
   // 关联字段
   student?: Student | null
   course?: Course | null
@@ -240,7 +250,7 @@ export interface OperationLog {
   ipAddress?: string | null
   userAgent?: string | null
   createdAt: string
-  
+
   // 关联字段
   user?: User | null
 }
@@ -389,7 +399,7 @@ export const ROLE_HIERARCHY = {
 
 export const ROLE_LABELS = {
   [UserRole.SUPER_ADMIN]: '超级管理员',
-  [UserRole.SCHOOL_ADMIN]: '学校管理员', 
+  [UserRole.SCHOOL_ADMIN]: '学校管理员',
   [UserRole.TEACHER]: '教师',
   [UserRole.STUDENT]: '学生'
 }
@@ -398,19 +408,19 @@ export const STATUS_LABELS = {
   // 用户状态
   active: '正常',
   inactive: '禁用',
-  
+
   // 学生状态
   [StudentStatus.ACTIVE]: '在读',
   [StudentStatus.INACTIVE]: '暂停',
   [StudentStatus.GRADUATED]: '毕业',
   [StudentStatus.SUSPENDED]: '退学',
-  
+
   // 课程状态
   [CourseStatus.DRAFT]: '草稿',
   [CourseStatus.PUBLISHED]: '已发布',
   [CourseStatus.SUSPENDED]: '暂停',
   [CourseStatus.CANCELLED]: '已取消',
-  
+
   // 报名状态
   [EnrollmentStatus.PENDING]: '待审核',
   [EnrollmentStatus.APPROVED]: '已通过',

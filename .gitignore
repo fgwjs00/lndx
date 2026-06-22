@@ -13,6 +13,7 @@ backend/dist/
 frontend/dist/
 
 backend/logs/
+logs/
 backend/uploads/
 backend/backups/
 local-db-backups/

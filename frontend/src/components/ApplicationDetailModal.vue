@@ -30,7 +30,7 @@
             </div>
             <div class="flex justify-between">
               <span class="text-gray-600">性别:</span>
-              <span class="text-gray-800">{{ getGenderText(application.studentInfo?.gender) }}</span>
+              <span class="text-gray-800">{{ formatGender(application.studentInfo?.gender) }}</span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-600">年龄:</span>
@@ -129,6 +129,37 @@
         <h3 class="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">备注信息</h3>
         <p class="text-gray-700 bg-gray-50 p-4 rounded-lg">{{ application.remarks }}</p>
       </div>
+
+      <!-- 审核快照 -->
+      <div class="mb-6" v-if="reviewSnapshot">
+        <h3 class="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">审核快照</h3>
+        <div class="bg-gray-50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex justify-between gap-4">
+            <span class="text-gray-600">审核状态:</span>
+            <span class="text-gray-800">{{ getStatusText(reviewSnapshot.status || application.status) }}</span>
+          </div>
+          <div class="flex justify-between gap-4">
+            <span class="text-gray-600">审核时间:</span>
+            <span class="text-gray-800">{{ formatDateTime(reviewSnapshot.reviewedAt) || '未记录' }}</span>
+          </div>
+          <div class="flex justify-between gap-4">
+            <span class="text-gray-600">课程:</span>
+            <span class="text-gray-800">{{ reviewSnapshot.courseName || application.courseInfo?.name || '未记录' }}</span>
+          </div>
+          <div class="flex justify-between gap-4">
+            <span class="text-gray-600">班次:</span>
+            <span class="text-gray-800">{{ formatClassSectionCode(reviewSnapshot.classSectionCode) || '未记录' }}</span>
+          </div>
+          <div class="flex justify-between gap-4">
+            <span class="text-gray-600">报名编号:</span>
+            <span class="text-gray-800 font-mono">{{ reviewSnapshot.enrollmentCode || application.enrollmentCode || '未记录' }}</span>
+          </div>
+          <div class="flex justify-between gap-4">
+            <span class="text-gray-600">审核人:</span>
+            <span class="text-gray-800 font-mono">{{ reviewSnapshot.reviewedBy || '未记录' }}</span>
+          </div>
+        </div>
+      </div>
       
       <!-- 操作按钮 -->
       <div class="flex justify-end gap-4 pt-4 border-t">
@@ -174,6 +205,7 @@
 import { ref, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import { getImageUrl as getImageUrlUtil, getAvatarUrl, getIdCardUrl } from '@/utils/imageUtils'
+import { formatClassSectionCode, formatGender } from '@/utils/displayFormatters'
 
 // Props定义
 interface Props {
@@ -199,6 +231,10 @@ const previewTitle = ref<string>('')
 const visible = computed({
   get: () => props.open,
   set: (value) => emit('update:open', value)
+})
+
+const reviewSnapshot = computed(() => {
+  return props.application?.reviewSnapshot || props.application?.metadata?.reviewSnapshot || null
 })
 
 /**
@@ -250,6 +286,8 @@ const getStatusClass = (status: string): string => {
       return 'bg-green-100 text-green-600'
     case 'REJECTED':
       return 'bg-red-100 text-red-600'
+    case 'CANCELLED':
+      return 'bg-gray-100 text-gray-600'
     default:
       return 'bg-gray-100 text-gray-600'
   }
@@ -267,9 +305,16 @@ const getStatusText = (status: string): string => {
       return '已批准'
     case 'REJECTED':
       return '已拒绝'
+    case 'CANCELLED':
+      return '已取消'
     default:
       return '未知'
   }
+}
+
+const formatDateTime = (value?: string | null): string => {
+  if (!value) return ''
+  return new Date(value).toLocaleString('zh-CN', { hour12: false })
 }
 
 /**

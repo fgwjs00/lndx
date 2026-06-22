@@ -220,7 +220,20 @@
             />
           </a-form-item>
 
-
+          <a-form-item
+            label="专业"
+            name="major"
+          >
+            <a-select
+              v-model:value="formData.major"
+              placeholder="请选择专业"
+              :options="majorOptions"
+              :loading="majorsLoading"
+              allow-clear
+              show-search
+              :filter-option="filterMajorOption"
+            />
+          </a-form-item>
 
           <a-form-item
             label="所报课程"
@@ -326,6 +339,7 @@ const emit = defineEmits<{
 const loading = ref<boolean>(false)
 const semestersLoading = ref<boolean>(false)
 const coursesLoading = ref<boolean>(false)
+const majorsLoading = ref<boolean>(false)
 const formRef = ref<FormInstance>()
 const formData = ref({
   realName: '',
@@ -345,12 +359,14 @@ const formData = ref({
   studyPeriodEnd: null as any,
   // 学籍信息
   semester: '',
+  major: '',
   selectedCourses: [] as string[]
 })
 
 // 课程和学期选项
 const courseOptions = ref<Array<{ label: string; value: string }>>([])
 const semesterOptions = ref<Array<{ label: string; value: string }>>([])
+const majorOptions = ref<Array<{ label: string; value: string }>>([])
 const studentEnrollments = ref<string[]>([])
 
 // 保险公司选项
@@ -372,6 +388,10 @@ const retirementCategoryOptions = ref([
 
 // 课程选择过滤函数
 const filterCourseOption = (input: string, option: any) => {
+  return option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
+}
+
+const filterMajorOption = (input: string, option: any) => {
   return option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
 }
 
@@ -404,6 +424,24 @@ const fetchSemesters = async (): Promise<void> => {
     console.error('获取学期列表失败:', error)
   } finally {
     semestersLoading.value = false
+  }
+}
+
+/**
+ * 获取专业列表
+ */
+const fetchMajors = async (): Promise<void> => {
+  try {
+    majorsLoading.value = true
+    const response = await StudentService.getMajors()
+    majorOptions.value = response.data?.map((major: string) => ({
+      label: major,
+      value: major
+    })) || []
+  } catch (error) {
+    console.error('获取专业列表失败:', error)
+  } finally {
+    majorsLoading.value = false
   }
 }
 
@@ -524,6 +562,7 @@ const initializeFormData = async () => {
         studyPeriodEnd: studentDetail.studyPeriodEnd ? dayjs(studentDetail.studyPeriodEnd) : null,
         // 学籍信息
         semester: studentDetail.semester || '',
+        major: studentDetail.major || '',
         selectedCourses: enrolledCourseIds
       }
       
@@ -555,6 +594,7 @@ watch(
       await Promise.all([
         fetchCourses(),
         fetchSemesters(),
+        fetchMajors(),
         initializeFormData()
       ])
     }
@@ -588,7 +628,8 @@ const handleSubmit = async (): Promise<void> => {
       studyPeriodStart: formData.value.studyPeriodStart ? formData.value.studyPeriodStart.format('YYYY-MM-DD') : null,
       studyPeriodEnd: formData.value.studyPeriodEnd ? formData.value.studyPeriodEnd.format('YYYY-MM-DD') : null,
       // 学籍信息
-      semester: formData.value.semester
+      semester: formData.value.semester,
+      major: formData.value.major
       // 注意：课程信息需要通过专门的API处理，暂时不在这里提交
       // selectedCourses: formData.value.selectedCourses
     }

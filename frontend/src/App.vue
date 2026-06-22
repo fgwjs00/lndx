@@ -5,7 +5,12 @@
  * @description 应用程序的根组件，负责渲染路由视图
  */
 import { onMounted } from 'vue'
+import dayjs from 'dayjs'
+import zhCN from 'ant-design-vue/es/locale/zh_CN'
+import 'dayjs/locale/zh-cn'
 import { useAuthStore } from '@/store/auth'
+
+dayjs.locale('zh-cn')
 
 const authStore = useAuthStore()
 
@@ -16,7 +21,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <router-view />
+  <a-config-provider :locale="zhCN">
+    <router-view />
+  </a-config-provider>
 </template>
 
 <style scoped>

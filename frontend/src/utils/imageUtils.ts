@@ -18,6 +18,20 @@ const getBackendBaseUrl = (): string => {
   return import.meta.env.VITE_BACKEND_URL || 'http://ln.tuojiayi.com'
 }
 
+export function withAssetToken(url: string): string {
+  if (!url || url.startsWith('data:') || !url.includes('/uploads/')) {
+    return url
+  }
+
+  const assetToken = localStorage.getItem('assetToken')
+  if (!assetToken) {
+    return url
+  }
+
+  const separator = url.includes('?') ? '&' : '?'
+  return `${url}${separator}assetToken=${encodeURIComponent(assetToken)}`
+}
+
 /**
  * 构造完整的图片URL
  * @param imagePath 图片路径
@@ -26,12 +40,12 @@ const getBackendBaseUrl = (): string => {
 export function getImageUrl(imagePath: string | null | undefined): string {
   // 空值处理
   if (!imagePath) {
-    return `${getBackendBaseUrl()}/uploads/id-cards/default-avatar.svg`
+    return withAssetToken(`${getBackendBaseUrl()}/uploads/id-cards/default-avatar.svg`)
   }
 
   // 如果已经是完整的URL（http开头），直接返回
   if (imagePath.startsWith('http')) {
-    return imagePath
+    return withAssetToken(imagePath)
   }
 
   // 如果是base64数据，直接返回
@@ -43,7 +57,7 @@ export function getImageUrl(imagePath: string | null | undefined): string {
   const backendUrl = getBackendBaseUrl()
   const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`
   
-  return `${backendUrl}${cleanPath}`
+  return withAssetToken(`${backendUrl}${cleanPath}`)
 }
 
 /**
@@ -55,7 +69,7 @@ export function getImageUrl(imagePath: string | null | undefined): string {
 export function getIdCardUrl(cardPath: string | null | undefined, type: 'front' | 'back' = 'front'): string {
   if (!cardPath) {
     // 返回默认占位图
-    return `${getBackendBaseUrl()}/uploads/id-cards/default-idcard-${type}.svg`
+    return withAssetToken(`${getBackendBaseUrl()}/uploads/id-cards/default-idcard-${type}.svg`)
   }
 
   return getImageUrl(cardPath)
@@ -68,7 +82,7 @@ export function getIdCardUrl(cardPath: string | null | undefined, type: 'front' 
  */
 export function getAvatarUrl(photoPath: string | null | undefined): string {
   if (!photoPath) {
-    return `${getBackendBaseUrl()}/uploads/id-cards/default-avatar.svg`
+    return withAssetToken(`${getBackendBaseUrl()}/uploads/id-cards/default-avatar.svg`)
   }
 
   return getImageUrl(photoPath)
@@ -120,5 +134,6 @@ export default {
   getImageUrl,
   getIdCardUrl,
   getAvatarUrl,
+  withAssetToken,
   checkImageAvailable
 }

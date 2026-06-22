@@ -25,17 +25,25 @@ export interface SemesterInfo {
  * @returns 学期信息对象
  */
 export function parseSemester(semester: string): SemesterInfo {
-  const match = semester.match(/(\d{4})年度/)
+  const normalizedSemester = semester.trim()
+  const match = normalizedSemester.match(/(\d{4})年(?:度|春季|夏季|秋季|冬季)?/)
   if (!match) {
     throw new Error(`无效的学期格式: ${semester}`)
   }
   
   const year = parseInt(match[1])
+  const seasonMatch = normalizedSemester.match(/(春季|夏季|秋季|冬季)/)
+  const seasonMap: Record<string, SemesterInfo['season']> = {
+    '春季': 'spring',
+    '夏季': 'summer',
+    '秋季': 'autumn',
+    '冬季': 'winter'
+  }
   
   return {
     year,
-    season: 'autumn', // 默认为秋季，因为每年只有一个学期
-    displayName: semester
+    season: seasonMatch ? seasonMap[seasonMatch[1]] : 'autumn',
+    displayName: normalizedSemester
   }
 }
 
@@ -112,12 +120,12 @@ export function canEnrollCourse(
     return { canEnroll: true }
   }
   
-  // 在读学生年级检查（仅当有通过审核课程时严格执行）
+  // 在读学生年级检查（仅当有通过审核课程时执行）
   if (!studentGrade) {
     return { canEnroll: false, reason: '学生年级信息缺失' }
   }
   
-  // 定义年级等级
+  // 定义年级等级（用于记录和统计，不再用于限制报名）
   const gradeLevel: Record<string, number> = {
     '一年级': 1,
     '二年级': 2,
@@ -127,19 +135,10 @@ export function canEnrollCourse(
   const studentLevel = gradeLevel[studentGrade]
   const courseGradeLevel = gradeLevel[courseLevel]
   
-  if (!studentLevel || !courseGradeLevel) {
-    return { canEnroll: true } // 如果年级不在定义范围内，允许报名
-  }
+  // 🔧 移除年级限制：允许所有年级的学生报名任何年级的课程
+  // 不再检查 studentLevel < courseGradeLevel 的限制
   
-  // 高年级学生可以报名低年级课程，但低年级不能报名高年级课程
-  if (studentLevel < courseGradeLevel) {
-    return { 
-      canEnroll: false, 
-      reason: `该课程面向${courseLevel}学生，您当前是${studentGrade}，年级不够` 
-    }
-  }
-  
-  // 高年级或同年级学生可以报名
+  // 所有年级学生都可以报名任何年级课程
   return { canEnroll: true }
 }
 
@@ -192,12 +191,11 @@ export function getCurrentSemester(): string {
   const year = now.getFullYear()
   const month = now.getMonth() + 1
   
-  // 每年只有一个学期，根据月份判断是当前年度还是下一年度
-  // 假设学期从9月开始，到次年7月结束
+  // 每年只有一个秋季学期。9月后进入当年秋季，9月前仍属于上一年秋季学期。
   if (month >= 9) {
-    return `${year}年度`
+    return `${year}年秋季`
   } else {
-    return `${year - 1}年度`
+    return `${year - 1}年秋季`
   }
 }
 
@@ -207,6 +205,6 @@ export function getCurrentSemester(): string {
  * @returns 下一个学期字符串
  */
 export function getNextSemester(currentSemester: string): string {
-  const year = parseInt(currentSemester.match(/(\d{4})年度/)?.[1] || '2025')
-  return `${year + 1}年度`
+  const year = parseInt(currentSemester.match(/(\d{4})年/)?.[1] || '2025')
+  return `${year + 1}年秋季`
 }

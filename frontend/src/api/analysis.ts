@@ -64,6 +64,61 @@ export interface SystemStatus {
 }
 
 /**
+ * 校区统计数据类型
+ */
+export interface CampusStats {
+  location: string          // 教学点名称
+  courseCount: number       // 课程数量
+  studentCount: number      // 学生人数
+  enrollmentCount: number   // 报名人次
+  averageEnrollment: number // 平均报名数
+}
+
+/**
+ * 专业统计数据类型
+ */
+export interface MajorStats {
+  major: string            // 专业名称
+  studentCount: number     // 学生人数
+  enrollmentCount: number  // 报名人次
+  averageEnrollment: number // 平均报名数
+}
+
+/**
+ * 政治面貌统计数据类型
+ */
+export interface PoliticalStats {
+  politicalStatus: string  // 政治面貌
+  studentCount: number     // 学生人数
+  percentage: number       // 占比
+  isPartyMember: boolean   // 是否为党员
+}
+
+/**
+ * 政治面貌统计响应数据类型
+ */
+export interface PoliticalStatsResponse {
+  stats: PoliticalStats[]  // 详细统计
+  summary: {
+    totalStudents: number        // 总学生数
+    partyMemberCount: number     // 党员总数
+    partyMemberPercentage: number // 党员占比
+  }
+}
+
+/**
+ * 综合统计数据类型
+ */
+export interface ComprehensiveStats {
+  totalStudents: number         // 总学生数
+  totalEnrollments: number      // 总报名人次
+  totalCourses: number          // 总课程数
+  totalLocations: number        // 总教学点数
+  avgEnrollmentPerStudent: number // 平均每人报名数
+  avgEnrollmentPerCourse: number  // 平均每门课报名数
+}
+
+/**
  * 数据分析API服务类
  */
 export class AnalysisService {
@@ -106,6 +161,38 @@ export class AnalysisService {
    */
   static async getSystemStatus(): Promise<ApiResponse<SystemStatus>> {
     return request.get('/analysis/system-status')
+  }
+
+  /**
+   * 获取校区统计数据
+   * @returns 校区统计数据
+   */
+  static async getCampusStats(): Promise<ApiResponse<CampusStats[]>> {
+    return request.get('/analysis/campus-stats')
+  }
+
+  /**
+   * 获取专业统计数据
+   * @returns 专业统计数据
+   */
+  static async getMajorStats(): Promise<ApiResponse<MajorStats[]>> {
+    return request.get('/analysis/major-stats')
+  }
+
+  /**
+   * 获取政治面貌统计数据
+   * @returns 政治面貌统计数据
+   */
+  static async getPoliticalStats(): Promise<ApiResponse<PoliticalStatsResponse>> {
+    return request.get('/analysis/political-stats')
+  }
+
+  /**
+   * 获取综合统计数据
+   * @returns 综合统计数据
+   */
+  static async getComprehensiveStats(): Promise<ApiResponse<ComprehensiveStats>> {
+    return request.get('/analysis/comprehensive-stats')
   }
 }
 
