@@ -6,6 +6,13 @@
 
 set -e
 
+if [[ "${LNDX_ALLOW_LEGACY_BAOTA_DEPLOY:-}" != "1" ]]; then
+    echo "baota-deploy.sh is a legacy script and is disabled by default."
+    echo "Use docs/deployment/baota-migration-runbook.md for the current Baota deployment path."
+    echo "Set LNDX_ALLOW_LEGACY_BAOTA_DEPLOY=1 only after manually reviewing this script."
+    exit 1
+fi
+
 # 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -312,14 +319,17 @@ server {
     
     # 上传文件访问
     location /uploads/ {
-        alias /www/wwwroot/lndx/uploads/;
-        expires 30d;
-        add_header Cache-Control "public";
-        
-        # 安全限制
-        location ~ \.(php|jsp|asp|aspx|cgi)\$ {
-            deny all;
-        }
+        # Upload files must go through Express auth middleware; never expose
+        # backend/uploads with alias/root in Nginx.
+        proxy_pass http://127.0.0.1:3001/uploads/;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
     }
     
     # 健康检查

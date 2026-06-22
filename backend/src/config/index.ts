@@ -124,10 +124,10 @@ export const config: AppConfig = {
   apiPrefix: process.env.API_PREFIX || '/api',
   
   // 数据库配置
-  databaseUrl: process.env.DATABASE_URL || 'mysql://root:password@localhost:3306/lndx_db',
+  databaseUrl: process.env.DATABASE_URL || '',
   
   // JWT配置
-  jwtSecret: process.env.JWT_SECRET || 'your_super_secret_jwt_key_here',
+  jwtSecret: process.env.JWT_SECRET || '',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
   
@@ -209,18 +209,28 @@ export const validateConfig = (): void => {
   ]
   
   const missing = required.filter(key => !process.env[key])
+  const placeholderValues = required.filter(key => {
+    const value = String(process.env[key] || '').trim()
+    return value.includes('CHANGE_ME') || value.includes('your_') || value.includes('your-')
+  })
   
   if (missing.length > 0) {
     console.error('❌ 缺少必要的环境变量:', missing.join(', '))
     console.error('请检查 .env 文件或环境变量设置')
     process.exit(1)
   }
+
+  if (placeholderValues.length > 0) {
+    console.error('❌ 生产配置仍包含占位值:', placeholderValues.join(', '))
+    console.error('请替换 env.production.template 中的占位符后再启动')
+    process.exit(1)
+  }
   
   console.log('✅ 配置验证通过')
 }
 
-// 开发模式下验证配置
-if (config.nodeEnv === 'development') {
+// 生产模式下必须失败即停，避免宝塔漏配环境变量后继续使用空配置运行
+if (config.nodeEnv === 'production') {
   validateConfig()
 }
 

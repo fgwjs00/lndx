@@ -37,7 +37,7 @@ module.exports = {
       
       // 健康检查
       health_check: {
-        url: 'http://localhost:3000/health',
+        url: 'http://localhost:3000/api/health',
         interval: 30000,
         timeout: 5000
       },
@@ -73,9 +73,10 @@ module.exports = {
       pid_file: './logs/lndx-backend.pid',
       
       // 启动后执行的命令
+      // Build only. Database migrations are run manually from the deployment runbook
+      // after backup, restore rehearsal, and baseline checks.
       post_update: [
-        'npm run build',
-        'npm run prisma:deploy'
+        'npm run build'
       ]
     }
   ],
@@ -88,7 +89,7 @@ module.exports = {
       ref: 'origin/main',
       repo: 'git@github.com:your-repo/lndx-backend.git',
       path: '/var/www/lndx-backend',
-      'post-deploy': 'pnpm install && pnpm build && pnpm prisma:deploy && pm2 reload ecosystem.config.js --env production',
+      'post-deploy': 'pnpm install && pnpm build && pm2 reload ecosystem.config.js --env production',
       'pre-setup': 'mkdir -p /var/www/lndx-backend/logs',
       'post-setup': 'echo "Deploy setup complete"'
     },
@@ -98,7 +99,7 @@ module.exports = {
       ref: 'origin/develop',
       repo: 'git@github.com:your-repo/lndx-backend.git',
       path: '/var/www/lndx-backend-staging',
-      'post-deploy': 'pnpm install && pnpm build && pnpm prisma:deploy && pm2 reload ecosystem.config.js --env staging'
+      'post-deploy': 'pnpm install && pnpm build && pm2 reload ecosystem.config.js --env staging'
     }
   }
 }
