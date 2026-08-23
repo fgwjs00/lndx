@@ -76,7 +76,7 @@ module.exports = {
       // Build only. Database migrations are run manually from the deployment runbook
       // after backup, restore rehearsal, and baseline checks.
       post_update: [
-        'npm run build'
+        'pnpm run build'
       ]
     }
   ],
@@ -89,7 +89,7 @@ module.exports = {
       ref: 'origin/main',
       repo: 'git@github.com:your-repo/lndx-backend.git',
       path: '/var/www/lndx-backend',
-      'post-deploy': 'pnpm install && pnpm build && pm2 reload ecosystem.config.js --env production',
+      'post-deploy': 'pnpm install --frozen-lockfile && pnpm run build && pm2 reload ecosystem.config.js --env production',
       'pre-setup': 'mkdir -p /var/www/lndx-backend/logs',
       'post-setup': 'echo "Deploy setup complete"'
     },
@@ -99,7 +99,7 @@ module.exports = {
       ref: 'origin/develop',
       repo: 'git@github.com:your-repo/lndx-backend.git',
       path: '/var/www/lndx-backend-staging',
-      'post-deploy': 'pnpm install && pnpm build && pm2 reload ecosystem.config.js --env staging'
+      'post-deploy': 'pnpm install --frozen-lockfile && pnpm run build && pm2 reload ecosystem.config.js --env staging'
     }
   }
 }

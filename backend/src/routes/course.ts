@@ -6,7 +6,7 @@
 import { Router, Request, Response } from 'express'
 import { prisma } from '@/lib/prisma'
 import { asyncHandler, BusinessError } from '@/middleware/errorHandler'
-import { authMiddleware, requireTeacher } from '@/middleware/auth'
+import { authMiddleware, requireAdmin, requireTeacher } from '@/middleware/auth'
 import { validatePaginationData } from '@/utils/validation'
 import { businessLogger } from '@/utils/logger'
 import multer from 'multer'
@@ -630,11 +630,19 @@ router.get('/semesters', authMiddleware, asyncHandler(async (req: Request, res: 
  * 创建或激活学期主数据
  * POST /api/courses/semesters
  */
-router.post('/semesters', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
+router.post('/semesters', requireAdmin, asyncHandler(async (req: Request, res: Response) => {
   const semesterName = normalizeTermName(req.body.name || req.body.semester)
 
   if (!semesterName) {
     throw new BusinessError('请填写学期名称', 400, 'INVALID_SEMESTER_NAME')
+  }
+
+  if (req.body.isEnrollmentOpen === true) {
+    const enrollmentStartsAt = parseOptionalDate(req.body.enrollmentStartsAt)
+    const enrollmentEndsAt = parseOptionalDate(req.body.enrollmentEndsAt)
+    if (!enrollmentStartsAt || !enrollmentEndsAt || enrollmentStartsAt > enrollmentEndsAt) {
+      throw new BusinessError('开放报名时必须填写正确的报名起止时间', 400, 'INVALID_ENROLLMENT_WINDOW')
+    }
   }
 
   if (!(await hasAcademicTermTables())) {
@@ -662,7 +670,7 @@ router.post('/semesters', requireTeacher, asyncHandler(async (req: Request, res:
  * 将当前课程同步为二期班次主数据
  * POST /api/courses/semesters/sync-class-sections
  */
-router.post('/semesters/sync-class-sections', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
+router.post('/semesters/sync-class-sections', requireAdmin, asyncHandler(async (req: Request, res: Response) => {
   const semesterName = normalizeTermName(req.body.semester || req.body.name)
 
   if (!semesterName) {

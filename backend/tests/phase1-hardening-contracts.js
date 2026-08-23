@@ -94,7 +94,7 @@ assertIncludes(errorHandler, 'sanitizeForLog', 'error handler must sanitize requ
 assertNotIncludes(errorHandler, 'body: req.body', 'error handler must not log raw request body')
 assertNotIncludes(errorHandler, 'query: req.query', 'error handler must not log raw query params')
 
-assertIncludes(authRoutes, 'verifySmsCode(value.phone, value.code, value.type)', 'verify-sms route must validate issued SMS code')
+assertIncludes(authRoutes, 'verifySmsCode(value.phone, String(code), value.type)', 'verify-sms route must validate issued SMS code')
 assertIncludes(authRoutes, "verifySmsCode(value.phone, smsCode, 'register')", 'register route must validate issued SMS code')
 assertNotIncludes(authRoutes, "code === '123456'", 'fixed SMS verification code must not be accepted')
 assertNotIncludes(authRoutes, "smsCode !== '123456'", 'fixed registration SMS code must not be accepted')

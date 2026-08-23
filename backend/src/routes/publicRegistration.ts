@@ -21,6 +21,14 @@ function validateInsuranceUploadMimeType(file: Express.Multer.File): boolean {
   return ALLOWED_INSURANCE_MIME_TYPES.has(file.mimetype)
 }
 
+function discardRejectedInsuranceUpload(file?: Express.Multer.File): void {
+  if (!file?.path || !fs.existsSync(file.path)) {
+    return
+  }
+
+  fs.unlinkSync(file.path)
+}
+
 const insuranceStorage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     const uploadDir = path.join(process.cwd(), 'uploads', 'insurances')
@@ -80,6 +88,18 @@ function sortSemestersDesc(left: string, right: string): number {
   return getSemesterRank(right) - getSemesterRank(left)
 }
 
+function formatChinaDate(value: Date): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(value)
+  const lookup = Object.fromEntries(parts.map(part => [part.type, part.value]))
+
+  return `${lookup.year}-${lookup.month}-${lookup.day}`
+}
+
 async function hasPhase2EnrollmentTables(): Promise<boolean> {
   const rows = await prisma.$queryRaw<Array<{ exists: boolean }>>`
     SELECT to_regclass('public.academic_years') IS NOT NULL
@@ -134,6 +154,10 @@ async function getPhase2PublicSemesters(): Promise<string[]> {
     WHERE s."isActive" = TRUE
       AND s."isEnrollmentOpen" = TRUE
       AND ay."isActive" = TRUE
+      AND ay."enrollmentStartsAt" IS NOT NULL
+      AND ay."enrollmentEndsAt" IS NOT NULL
+      AND NOW() >= ay."enrollmentStartsAt"
+      AND NOW() <= ay."enrollmentEndsAt"
     ORDER BY ay."startsAt" DESC, s."startsAt" DESC NULLS LAST, s.name DESC
   `
 
@@ -245,6 +269,10 @@ async function getPhase2PublicCourses(query: PublicCourseQuery): Promise<PublicC
       AND s."isActive" = TRUE
       AND s."isEnrollmentOpen" = TRUE
       AND ay."isActive" = TRUE
+      AND ay."enrollmentStartsAt" IS NOT NULL
+      AND ay."enrollmentEndsAt" IS NOT NULL
+      AND NOW() >= ay."enrollmentStartsAt"
+      AND NOW() <= ay."enrollmentEndsAt"
     GROUP BY
       cs.id,
       s.id,
@@ -287,10 +315,6 @@ async function getPhase2PublicCourses(query: PublicCourseQuery): Promise<PublicC
       }
     })
     .filter(course => courseMatchesPublicFilters(course, query))
-
-  if (courses.length === 0) {
-    return null
-  }
 
   return paginatePublicCourses(courses, query)
 }
@@ -450,8 +474,8 @@ router.get('/insurance-requirement', asyncHandler(async (req: Request, res: Resp
     data: requirement
       ? {
           ...requirement,
-          requiredInsuranceStart: requirement.requiredInsuranceStart.toISOString().slice(0, 10),
-          requiredInsuranceEnd: requirement.requiredInsuranceEnd.toISOString().slice(0, 10),
+          requiredInsuranceStart: formatChinaDate(requirement.requiredInsuranceStart),
+          requiredInsuranceEnd: formatChinaDate(requirement.requiredInsuranceEnd),
           enrollmentStartsAt: requirement.enrollmentStartsAt?.toISOString() || null,
           enrollmentEndsAt: requirement.enrollmentEndsAt?.toISOString() || null
         }
@@ -462,6 +486,12 @@ router.get('/insurance-requirement', asyncHandler(async (req: Request, res: Resp
 router.post('/insurance-upload', uploadLimiter, insuranceUpload.single('file'), asyncHandler(async (req: Request, res: Response) => {
   if (!req.file) {
     throw new ValidationError('请上传保险凭证文件')
+  }
+
+  const contactPhone = String(req.body?.contactPhone || '').trim()
+  if (!/^1[3-9]\d{9}$/.test(contactPhone)) {
+    discardRejectedInsuranceUpload(req.file)
+    throw new ValidationError('请填写正确的报名手机号后再上传保险凭证')
   }
 
   const filePath = `/uploads/insurances/${req.file.filename}`
@@ -477,7 +507,8 @@ router.post('/insurance-upload', uploadLimiter, insuranceUpload.single('file'), 
       isTemp: true,
       expiresAt: new Date(Date.now() + INSURANCE_UPLOAD_TTL_MS),
       metadata: {
-        source: 'public-registration'
+        source: 'public-registration',
+        ownerPhone: contactPhone
       }
     }
   })
@@ -497,8 +528,9 @@ router.post('/insurance-upload', uploadLimiter, insuranceUpload.single('file'), 
 }))
 
 router.get('/semesters', asyncHandler(async (_req: Request, res: Response) => {
-  const phase2Semesters = await getPhase2PublicSemesters()
-  const list = phase2Semesters.length > 0 ? phase2Semesters : await getLegacyPublicSemesters()
+  const list = await hasPhase2EnrollmentTables()
+    ? await getPhase2PublicSemesters()
+    : await getLegacyPublicSemesters()
 
   res.json({
     code: 200,

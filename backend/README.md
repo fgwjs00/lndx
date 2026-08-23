@@ -53,7 +53,7 @@ backend/
 
 ```bash
 cd backend
-npm install
+pnpm install --frozen-lockfile
 ```
 
 ### 2. 环境配置

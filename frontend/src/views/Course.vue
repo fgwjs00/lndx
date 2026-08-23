@@ -110,7 +110,7 @@
               </select>
 
               <button
-                v-if="!isCurrentSemesterAvailable"
+                v-if="canManageAcademicTerms && !isCurrentSemesterAvailable"
                 @click="handleCreateCurrentSemester"
                 :disabled="termActionLoading"
                 class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-300 text-white rounded-lg transition-colors whitespace-nowrap"
@@ -119,6 +119,15 @@
               </button>
 
               <button
+                v-if="canManageAcademicTerms"
+                @click="openSemesterModal"
+                class="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-lg transition-colors whitespace-nowrap"
+              >
+                新建学期
+              </button>
+
+              <button
+                v-if="canManageAcademicTerms"
                 @click="handleSyncClassSections"
                 :disabled="!selectedSemester || classSectionSyncing"
                 class="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 text-white rounded-lg transition-colors whitespace-nowrap"
@@ -258,7 +267,7 @@
             </button>
 
               <button
-                v-if="!isCurrentSemesterAvailable"
+                v-if="canManageAcademicTerms && !isCurrentSemesterAvailable"
                 @click="handleCreateCurrentSemester"
                 :disabled="termActionLoading"
                 class="bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-300 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0"
@@ -268,6 +277,16 @@
               </button>
 
               <button
+                v-if="canManageAcademicTerms"
+                @click="openSemesterModal"
+                class="bg-slate-700 hover:bg-slate-800 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0"
+              >
+                <i class="fas fa-calendar-plus mr-2"></i>
+                <span class="whitespace-nowrap">新建学期</span>
+              </button>
+
+              <button
+                v-if="canManageAcademicTerms"
                 @click="handleSyncClassSections"
                 :disabled="!selectedSemester || classSectionSyncing"
                 class="bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 text-white px-6 py-2 rounded-lg flex items-center justify-center transition-colors min-w-0"
@@ -546,6 +565,34 @@
   
           <!-- 课程表单弹窗 -->
     <a-modal
+      v-model:open="showSemesterModal"
+      title="新建学期"
+      :confirm-loading="termActionLoading"
+      ok-text="创建"
+      cancel-text="取消"
+      @ok="submitManualSemester"
+      @cancel="showSemesterModal = false"
+    >
+      <a-form layout="vertical">
+        <a-form-item label="学期名称" required>
+          <a-input v-model:value="manualSemester.name" placeholder="例如：2027年春季" :maxlength="20" />
+        </a-form-item>
+        <a-form-item label="报名时间">
+          <a-range-picker
+            v-model:value="manualEnrollmentRange"
+            value-format="YYYY-MM-DD"
+            class="w-full"
+            :placeholder="['报名开始日期', '报名结束日期']"
+          />
+        </a-form-item>
+        <a-form-item label="开放报名">
+          <a-switch v-model:checked="manualSemester.isEnrollmentOpen" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+
+          <!-- 课程表单弹窗 -->
+    <a-modal
       v-model:open="showCourseFormModal"
       :title="editingCourse ? '编辑课程' : '添加课程'"
       :width="1000"
@@ -798,6 +845,7 @@ import { EnrollmentStatus } from '@/types/models'
 import CourseForm from '@/components/CourseForm.vue'
 import BatchImportModal from '@/components/BatchImportModal.vue'
 import { getDepartmentCodes } from '@/config/departments'
+import { useAuthStore } from '@/store/auth'
 
 // 响应式数据
   const activeView = ref<'schedule' | 'list' | 'statistics'>('schedule')
@@ -838,6 +886,14 @@ const exportingCourseStudents = ref<boolean>(false)
   const availableCategories = ref<string[]>([])
 const termActionLoading = ref<boolean>(false)
 const classSectionSyncing = ref<boolean>(false)
+const showSemesterModal = ref<boolean>(false)
+const manualSemester = ref({
+  name: '',
+  isEnrollmentOpen: false
+})
+const manualEnrollmentRange = ref<string[]>([])
+const authStore = useAuthStore()
+const canManageAcademicTerms = computed(() => authStore.isSuperAdmin || authStore.isSchoolAdmin)
 const showCourseDetailModal = ref<boolean>(false)
 const selectedCourse = ref<Course | null>(null)
 const showCourseFormModal = ref<boolean>(false)
@@ -955,6 +1011,50 @@ const handleCreateCurrentSemester = async (): Promise<void> => {
   } catch (error) {
     console.error('创建学期失败:', error)
     message.error('创建学期失败')
+  } finally {
+    termActionLoading.value = false
+  }
+}
+
+const openSemesterModal = (): void => {
+  manualSemester.value = {
+    name: '',
+    isEnrollmentOpen: false
+  }
+  manualEnrollmentRange.value = []
+  showSemesterModal.value = true
+}
+
+const submitManualSemester = async (): Promise<void> => {
+  const name = manualSemester.value.name.trim()
+  const [enrollmentStartsAt, enrollmentEndsAt] = manualEnrollmentRange.value
+
+  if (!name) {
+    message.warning('请填写学期名称')
+    return
+  }
+  if (manualSemester.value.isEnrollmentOpen && (!enrollmentStartsAt || !enrollmentEndsAt)) {
+    message.warning('开放报名时请填写报名起止时间')
+    return
+  }
+
+  try {
+    termActionLoading.value = true
+    await CourseService.createSemester({
+      name,
+      isActive: true,
+      isEnrollmentOpen: manualSemester.value.isEnrollmentOpen,
+      enrollmentStartsAt: enrollmentStartsAt ? `${enrollmentStartsAt}T00:00:00` : undefined,
+      enrollmentEndsAt: enrollmentEndsAt ? `${enrollmentEndsAt}T23:59:59` : undefined
+    })
+    message.success(`已创建${name}`)
+    showSemesterModal.value = false
+    await fetchSemesters()
+    selectedSemester.value = name
+    await fetchCourses()
+  } catch (error) {
+    console.error('手工创建学期失败:', error)
+    message.error('手工创建学期失败')
   } finally {
     termActionLoading.value = false
   }

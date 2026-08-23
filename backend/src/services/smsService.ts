@@ -13,7 +13,8 @@ export enum SmsType {
   REGISTER = 'register',
   LOGIN = 'login',
   RESET_PASSWORD = 'reset_password',
-  BIND_PHONE = 'bind_phone'
+  BIND_PHONE = 'bind_phone',
+  ENROLLMENT = 'enrollment'
 }
 
 /**
@@ -35,6 +36,10 @@ const SMS_TEMPLATES: Record<SmsType, { templateCode: string; content: string }> 
   [SmsType.BIND_PHONE]: {
     templateCode: 'SMS_BIND_001',
     content: '您的手机绑定验证码是：{code}，有效期5分钟，请勿泄露。'
+  },
+  [SmsType.ENROLLMENT]: {
+    templateCode: 'SMS_ENROLLMENT_001',
+    content: '您的报名验证验证码是：{code}，有效期5分钟，请勿泄露。'
   }
 }
 

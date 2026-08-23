@@ -37,7 +37,7 @@ assertRegex(service, /FROM "roster_members"[\s\S]*status = 'ACTIVE'/, 'roster fr
 
 assertIncludes(applicationV2, "router.post('/rosters/:classSectionId/freeze'", 'application V2 must expose roster freeze endpoint')
 assertIncludes(applicationV2, 'freezeRosterSnapshot', 'roster freeze endpoint must call shared service')
-assertIncludes(applicationV2, 'requireTeacher', 'roster freeze endpoint must require teacher/admin permissions')
+assertIncludes(applicationV2, 'requireAdmin', 'roster freeze endpoint must require administrator permissions')
 
 assertIncludes(courseRoute, '"classSectionId"', 'admin course list must expose class section id for roster operations')
 assertIncludes(courseRoute, '"rosterStatus"', 'admin course list must expose roster status')

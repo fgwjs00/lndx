@@ -68,8 +68,13 @@ export const InsuranceService = {
     return request.get<InsuranceRequirement | null>('/public-registration/insurance-requirement', { semester })
   },
 
-  uploadInsuranceAttachment(file: File) {
-    return request.upload<InsuranceUploadResult>('/public-registration/insurance-upload', file)
+  uploadInsuranceAttachment(file: File, contactPhone: string) {
+    return request.upload<InsuranceUploadResult>(
+      '/public-registration/insurance-upload',
+      file,
+      undefined,
+      { contactPhone }
+    )
   },
 
   getInsuranceList(params: InsuranceListParams = {}) {

@@ -10,7 +10,7 @@ import { UserRole } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { config } from '@/config'
 import { asyncHandler, ValidationError, BusinessError } from '@/middleware/errorHandler'
-import { generateToken, generateRefreshToken } from '@/middleware/auth'
+import { generateEnrollmentVerificationToken, generateToken, generateRefreshToken } from '@/middleware/auth'
 import { loginLimiter, smsLimiter } from '@/middleware/rateLimiter'
 import { logger, businessLogger, errorLogger } from '@/utils/logger'
 import { validateLoginData, validateSmsData, validateRegisterData } from '@/utils/validation'
@@ -298,13 +298,12 @@ router.post('/send-sms', smsLimiter, asyncHandler(async (req, res) => {
 router.post('/verify-sms', asyncHandler(async (req, res) => {
   const { phone, code, type } = req.body
 
-  // 参数验证
-  if (!phone || !code || !type) {
-    throw new ValidationError('缺少必要参数')
+  const { error, value } = validateSmsData({ phone, type })
+  if (error || !/^\d{6}$/.test(String(code || ''))) {
+    throw new ValidationError('短信验证码参数无效')
   }
 
-  const value = { phone, code, type }
-  const smsResult = verifySmsCode(value.phone, value.code, value.type)
+  const smsResult = verifySmsCode(value.phone, String(code), value.type)
 
   if (!smsResult.success) {
     businessLogger.systemAction('SMS_VERIFY_FAILED', {
@@ -326,7 +325,10 @@ router.post('/verify-sms', asyncHandler(async (req, res) => {
     message: '验证码验证成功',
     data: {
       phone,
-      verified: true
+      verified: true,
+      ...(type === 'enrollment'
+        ? { enrollmentVerificationToken: generateEnrollmentVerificationToken(phone) }
+        : {})
     }
   })
 }))

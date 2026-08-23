@@ -126,6 +126,7 @@
                     导出
                   </button>
                   <button
+                    v-if="canManageRosters"
                     @click="handleFreeze(roster)"
                     :disabled="!canFreeze(roster)"
                     class="inline-flex items-center justify-center rounded-lg bg-amber-100 px-3 py-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-200 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
@@ -212,6 +213,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import { CourseService, type RosterManagementRow, type RosterMemberRow } from '@/api/course'
 import { formatAcademicYearName, formatClassSectionCode, formatGender } from '@/utils/displayFormatters'
+import { useAuthStore } from '@/store/auth'
 
 const loading = ref(false)
 const rosters = ref<RosterManagementRow[]>([])
@@ -228,6 +230,8 @@ const pagination = reactive({
   pageSize: 10,
   total: 0
 })
+const authStore = useAuthStore()
+const canManageRosters = computed(() => authStore.isSuperAdmin || authStore.isSchoolAdmin)
 
 const draftCount = computed(() => rosters.value.filter(row => (row.rosterStatus || 'DRAFT') === 'DRAFT').length)
 const publishedCount = computed(() => rosters.value.filter(row => row.rosterStatus === 'PUBLISHED').length)
@@ -273,7 +277,8 @@ const handlePageSizeChange = async (_current: number, size: number): Promise<voi
 }
 
 const canFreeze = (roster: RosterManagementRow): boolean => {
-  return Boolean(roster.rosterId)
+  return canManageRosters.value
+    && Boolean(roster.rosterId)
     && (roster.rosterStatus || 'DRAFT') === 'DRAFT'
     && Number(roster.pendingApplicationCount || 0) === 0
 }

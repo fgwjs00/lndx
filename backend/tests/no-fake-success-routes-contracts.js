@@ -43,8 +43,8 @@ assertNotIncludes(enrollment, "message: '报名成功'", 'enrollment create must
 assertIncludes(attendance, 'prisma.attendance.findMany', 'attendance list must query real records')
 assertIncludes(attendance, 'prisma.attendance.count', 'attendance list must use real pagination total')
 assertIncludes(attendance, 'prisma.attendance.findFirst', 'attendance check-in must detect existing same-day records')
-assertIncludes(attendance, 'prisma.attendance.update', 'attendance check-in must update an existing same-day record')
-assertIncludes(attendance, 'prisma.attendance.create', 'attendance check-in must create a real attendance record')
+assertIncludes(attendance, 'tx.attendance.update', 'attendance check-in must update an existing same-day record in its transaction')
+assertIncludes(attendance, 'tx.attendance.create', 'attendance check-in must create a real attendance record in its transaction')
 assertIncludes(attendance, 'NOT_IMPLEMENTED', 'face-recognition attendance must be explicitly disabled until implemented')
 
 assertIncludes(upload, 'NOT_IMPLEMENTED', 'unsupported upload OCR/avatar paths must be explicitly disabled')

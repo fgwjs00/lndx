@@ -47,6 +47,13 @@ interface AssetTokenPayload {
   exp: number
 }
 
+interface EnrollmentVerificationTokenPayload {
+  type: 'enrollment_verification'
+  phone: string
+  iat: number
+  exp: number
+}
+
 /**
  * 权限配置映射
  */
@@ -125,6 +132,15 @@ export const generateAssetToken = (user: { id: string }): string => {
   } as any)
 }
 
+export const generateEnrollmentVerificationToken = (phone: string): string => {
+  return jwt.sign({
+    type: 'enrollment_verification',
+    phone
+  }, config.jwtSecret as any, {
+    expiresIn: process.env.ENROLLMENT_VERIFICATION_EXPIRES_IN || '15m'
+  } as any)
+}
+
 const verifyAssetToken = (token: string): AssetTokenPayload => {
   try {
     const payload = jwt.verify(token, config.jwtSecret) as AssetTokenPayload
@@ -140,6 +156,24 @@ const verifyAssetToken = (token: string): AssetTokenPayload => {
       throw new AuthError('Asset token expired')
     }
     throw new AuthError('Asset token verification failed')
+  }
+}
+
+export const verifyEnrollmentVerificationToken = (token: string): EnrollmentVerificationTokenPayload => {
+  try {
+    const payload = jwt.verify(token, config.jwtSecret) as EnrollmentVerificationTokenPayload
+    if (payload.type !== 'enrollment_verification' || !/^1[3-9]\d{9}$/.test(payload.phone || '')) {
+      throw new AuthError('报名验证已失效，请重新验证手机号')
+    }
+    return payload
+  } catch (error) {
+    if (error instanceof AuthError) {
+      throw error
+    }
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new AuthError('报名验证已过期，请重新验证手机号')
+    }
+    throw new AuthError('报名验证无效，请重新验证手机号')
   }
 }
 
@@ -231,7 +265,27 @@ export const assetAuthMiddleware = async (
   try {
     const assetToken = req.query.assetToken
     if (typeof assetToken === 'string' && assetToken) {
-      verifyAssetToken(assetToken)
+      const payload = verifyAssetToken(assetToken)
+      const user = await prisma.user.findUnique({
+        where: { id: payload.userId },
+        select: {
+          id: true,
+          phone: true,
+          email: true,
+          realName: true,
+          role: true,
+          isActive: true
+        }
+      })
+
+      if (!user || !user.isActive) {
+        throw new AuthError('账号不存在或已被禁用')
+      }
+
+      req.user = {
+        ...user,
+        email: user.email || undefined
+      }
       return next()
     }
 

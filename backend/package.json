@@ -1,6 +1,7 @@
 {
   "name": "lndx-backend",
   "version": "1.0.0",
+  "packageManager": "pnpm@10.13.1",
   "description": "学生报名及档案管理系统后端服务",
   "main": "dist/index.js",
   "scripts": {

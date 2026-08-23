@@ -7,7 +7,7 @@ import { Router } from 'express'
 import { prisma } from '@/lib/prisma'
 import Joi from 'joi'
 import { randomUUID } from 'crypto'
-import { authMiddleware, requireTeacher } from '../middleware/auth'
+import { authMiddleware, requireAdmin, requireTeacher } from '../middleware/auth'
 import { ValidationError, BusinessError } from '../middleware/errorHandler'
 import { businessLogger } from '../utils/logger'
 import {
@@ -126,6 +126,9 @@ const applicationV2Schema = Joi.object({
   insuranceAttachmentFileId: Joi.string().allow('', null).optional().messages({
     'string.base': '保险凭证文件ID必须是字符串'
   }),
+  enrollmentVerificationToken: Joi.string().allow('', null).optional().messages({
+    'string.base': '报名验证令牌必须是字符串'
+  }),
   semester: Joi.string().required().messages({
     'any.required': '学期为必填项'
   }),
@@ -197,8 +200,26 @@ const applicationV2Schema = Joi.object({
 })
 
 function getStudentWritableApplicationData(applicationData: any): any {
-  const { insuranceAttachmentFileId, ...studentData } = applicationData
+  const { insuranceAttachmentFileId, enrollmentVerificationToken, ...studentData } = applicationData
   return studentData
+}
+
+function normalizeApplicantPhone(value: unknown): string {
+  return String(value || '').trim()
+}
+
+function getAnonymousApplicantPhone(applicationData: any): string {
+  const contactPhone = normalizeApplicantPhone(applicationData.contactPhone)
+  if (!/^1[3-9]\d{9}$/.test(contactPhone)) {
+    throw new ValidationError('请填写正确的报名手机号')
+  }
+  return contactPhone
+}
+
+function assertStudentPhoneMatchesRecord(student: { contactPhone: string | null }, applicantPhone: string): void {
+  if (normalizeApplicantPhone(student.contactPhone) !== applicantPhone) {
+    throw new BusinessError('报名手机号与学员档案不一致，请联系学校工作人员办理', 403, 'STUDENT_IDENTITY_MISMATCH')
+  }
 }
 
 function hasSuccessfulEnrollmentResult(result: { enrollments: any[], enrollmentApplicationId?: string | null }): boolean {
@@ -242,7 +263,12 @@ async function getInsuranceRequirementForSemester(tx: any, semester: string): Pr
   return rows[0] || null
 }
 
-async function upsertStudentInsuranceForApplication(tx: any, studentId: string, applicationData: any): Promise<string | null> {
+async function upsertStudentInsuranceForApplication(
+  tx: any,
+  studentId: string,
+  applicationData: any,
+  options: { requireMatchingOwner?: boolean } = {}
+): Promise<string | null> {
   const requirement = await getInsuranceRequirementForSemester(tx, applicationData.semester)
   if (!requirement) {
     return null
@@ -277,6 +303,10 @@ async function upsertStudentInsuranceForApplication(tx: any, studentId: string, 
     FROM "file_uploads"
     WHERE id = ${attachmentFileId}
       AND "fileType" = 'INSURANCE'
+      AND (
+        ${options.requireMatchingOwner} = FALSE
+        OR metadata ->> 'ownerPhone' = ${normalizeApplicantPhone(applicationData.contactPhone)}
+      )
     LIMIT 1
   `
 
@@ -509,7 +539,7 @@ async function validateApplicationSelectionPolicy(applicationData: any): Promise
  * 提交报名申请 V2版本（支持年级管理）
  * POST /api/applications-v2
  */
-router.post('/', authMiddleware, async (req, res, next) => {
+router.post('/', authMiddleware, requireTeacher, async (req, res, next) => {
   try {
     const requestFields = Object.keys(req.body || {})
     const selectedCoursesCount = Array.isArray(req.body?.selectedCourses) ? req.body.selectedCourses.length : 0
@@ -880,6 +910,17 @@ router.post('/', authMiddleware, async (req, res, next) => {
         'ADMIN'
       )
 
+      if (enrollmentApplicationId) {
+        return {
+          student,
+          enrollments: [],
+          enrolledCourseNames: [],
+          isNewStudent,
+          isRecoveredStudent,
+          enrollmentApplicationId
+        }
+      }
+
       // 为每个课程创建报名记录
       const enrollments = []
       const enrolledCourseNames = [] // 新增：保存成功报名的课程名称
@@ -1031,7 +1072,7 @@ router.post('/:id/review', authMiddleware, requireTeacher, async (req, res, next
   }
 })
 
-router.post('/rosters/:classSectionId/freeze', authMiddleware, requireTeacher, async (req, res, next) => {
+router.post('/rosters/:classSectionId/freeze', authMiddleware, requireAdmin, async (req, res, next) => {
   try {
     const { classSectionId } = req.params
     const result = await prisma.$transaction((tx) => freezeRosterSnapshot(tx, classSectionId))
@@ -1132,6 +1173,7 @@ router.post('/anonymous', async (req, res, next) => {
       throw new ValidationError(error.details[0].message)
     }
     const applicationData = await normalizeApplicationSelectionInput(value)
+    const applicantPhone = getAnonymousApplicantPhone(applicationData)
 
     console.log('✅ 数据验证通过')
     await validateApplicationSelectionPolicy(applicationData)
@@ -1177,6 +1219,7 @@ router.post('/anonymous', async (req, res, next) => {
       let isRecoveredStudent = false
 
       if (existingStudent) {
+        assertStudentPhoneMatchesRecord(existingStudent, applicantPhone)
         await assertStudentHasNoHistoricalMajorConflict(tx, existingStudent.id, applicationData)
         console.log(`🔍 找到现有学生: ${existingStudent.name}`)
 
@@ -1325,6 +1368,7 @@ router.post('/anonymous', async (req, res, next) => {
         }
 
       } else if (deletedStudent) {
+        assertStudentPhoneMatchesRecord(deletedStudent, applicantPhone)
         await assertStudentHasNoHistoricalMajorConflict(tx, deletedStudent.id, applicationData)
         console.log(`🔄 恢复软删除学生: ${deletedStudent.name}`)
 
@@ -1414,7 +1458,9 @@ router.post('/anonymous', async (req, res, next) => {
         isNewStudent = true
       }
 
-      const insuranceId = await upsertStudentInsuranceForApplication(tx, student.id, applicationData)
+      const insuranceId = await upsertStudentInsuranceForApplication(tx, student.id, applicationData, {
+        requireMatchingOwner: true
+      })
       const enrollmentApplicationId = await createEnrollmentApplicationWithChoices(
         tx,
         student.id,
@@ -1422,6 +1468,17 @@ router.post('/anonymous', async (req, res, next) => {
         insuranceId,
         'SELF_SERVICE'
       )
+
+      if (enrollmentApplicationId) {
+        return {
+          student,
+          enrollments: [],
+          enrolledCourseNames: [],
+          isNewStudent,
+          isRecoveredStudent,
+          enrollmentApplicationId
+        }
+      }
 
       // 为每个课程创建报名记录
       const enrollments = []

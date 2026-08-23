@@ -7,6 +7,19 @@ server or running Prisma migrations against production.
 as the current production deployment entry point unless it has been reviewed and
 rewritten for the exact production port, Nginx, and `.env` handling.
 
+## Dependency Tooling
+
+Both applications use `pnpm@10.13.1` and their committed `pnpm-lock.yaml`
+files. Do not use `npm install`, do not copy local `node_modules`, and do not
+reintroduce a second lock file. On the rehearsal machine and Baota server:
+
+```bash
+corepack enable
+pnpm --version
+pnpm --dir backend install --frozen-lockfile
+pnpm --dir frontend install --frozen-lockfile
+```
+
 ## Current Migration Chain
 
 - `20250814161629_111`
@@ -17,6 +30,8 @@ rewritten for the exact production port, Nginx, and `.env` handling.
 - `20250820012828_add_student_photo_field`
 - `20260605000000_enrollment_phase2_foundation`
 - `20260606000000_student_academic_events`
+- `20260820000000_roster_and_insurance_snapshots`
+- `20260820010000_attendance_class_section_eligibility`
 
 ## Required Safety Order
 
@@ -62,6 +77,9 @@ npx prisma migrate resolve --applied 20250819171044_add_course_teaching_fields
 npx prisma migrate resolve --applied 20250819173734_change_to_uuid_format
 npx prisma migrate resolve --applied 20250820012828_add_student_photo_field
 npx prisma migrate resolve --applied 20260605000000_enrollment_phase2_foundation
+npx prisma migrate resolve --applied 20260606000000_student_academic_events
+npx prisma migrate resolve --applied 20260820000000_roster_and_insurance_snapshots
+npx prisma migrate resolve --applied 20260820010000_attendance_class_section_eligibility
 ```
 
 6. Apply migrations that are not already present in the rehearsal database.
@@ -89,7 +107,8 @@ window where the exact SQL file has been reviewed.
 ```bash
 node backend/tests/migration-governance-contracts.js
 node backend/tests/student-academic-events-contracts.js
-npm run build
+pnpm --dir backend run build
+pnpm --dir frontend run build
 ```
 
 8. Verify the Baota copy boundary before packaging or copying files.
@@ -120,7 +139,7 @@ Use this as the practical Baota upload boundary:
 | Category | Local path | Baota handling |
 | --- | --- | --- |
 | Backend source | files listed in `baota-source-manifest.txt` | Copy reviewed source only, excluding local runtime data. |
-| Backend build | `backend/dist/` | Copy after `npm run build` succeeds. |
+| Backend build | `backend/dist/` | Copy after `pnpm --dir backend run build` succeeds. |
 | Frontend build | `frontend/dist/` | Copy as the static site bundle. |
 | Dependencies | `node_modules/`, `backend/node_modules/`, `frontend/node_modules/` | Do not copy from local; install or reuse server dependencies on Baota. |
 | Environment | `.env`, `backend/.env`, `.env.*` | Do not copy local values; keep production values on Baota. |
@@ -138,9 +157,12 @@ the two `dist` directories deliberately.
 2. Complete the local restore and migration rehearsal.
 3. Stop writes or open a short maintenance window.
 4. Copy reviewed source files and verified build output only.
-5. Run the exact migration path rehearsed locally.
-6. Run `npx prisma generate` if Prisma schema changed.
-7. Restart PM2.
+5. Run `pnpm --dir backend install --frozen-lockfile`; never copy local
+   `node_modules` to Baota.
+6. Run the exact migration path rehearsed locally.
+7. Run `npx prisma generate` if Prisma schema changed, after stopping the old
+   Node process so Windows/Linux file locks cannot retain an old query engine.
+8. Restart PM2.
 
 ```bash
 pm2 restart lndx-backend

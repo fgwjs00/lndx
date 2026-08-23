@@ -209,6 +209,7 @@ model Attendance {
   id             String           @id @default(uuid())
   studentId      String
   courseId       String
+  classSectionId String?
   attendanceDate DateTime
   status         AttendanceStatus @default(ABSENT)
   method         AttendanceMethod @default(MANUAL)
@@ -223,10 +224,12 @@ model Attendance {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   course         Course           @relation(fields: [courseId], references: [id])
+  classSection   ClassSection?    @relation(fields: [classSectionId], references: [id], onDelete: SetNull)
   student        Student          @relation(fields: [studentId], references: [id])
 
   @@index([attendanceDate, status])
   @@index([studentId, courseId])
+  @@index([classSectionId])
   @@map("attendances")
 }
 
@@ -349,6 +352,7 @@ model ClassSection {
   rosters           Roster[]
   rosterMembers     RosterMember[]
   enrollmentChoices EnrollmentApplicationChoice[]
+  attendances       Attendance[]
 
   @@index([academicYearId, semesterId])
   @@index([courseId])
@@ -386,6 +390,7 @@ model RosterMember {
   joinedAt           DateTime           @default(now())
   leftAt             DateTime?
   remarks            String?
+  snapshot           Json?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   roster             Roster             @relation(fields: [rosterId], references: [id], onDelete: Cascade)
@@ -406,6 +411,7 @@ model EnrollmentApplication {
   academicYearId  String
   semesterId      String
   insuranceId     String?
+  insuranceSnapshot Json?
   status          EnrollmentApplicationStatus @default(SUBMITTED)
   source          String                       @default("SELF_SERVICE")
   submittedAt     DateTime                     @default(now())

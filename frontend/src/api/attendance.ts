@@ -61,6 +61,7 @@ export interface AttendanceListResult {
 export interface SaveAttendancePayload {
   studentId: string
   courseId: string
+  classSectionId?: string
   attendanceDate?: string
   status?: AttendanceStatusApi
   remarks?: string

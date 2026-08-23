@@ -119,6 +119,7 @@ export interface RosterMemberRow {
   insuranceEnd: Date | null
   approvedAt: Date | null
   sourceEnrollmentMetadata: any
+  memberSnapshot: any
   reviewSnapshot: any
 }
 
@@ -140,6 +141,41 @@ export async function hasPhase2ApplicationTables(tx: any): Promise<boolean> {
   `
 
   return Boolean(rows[0]?.exists)
+}
+
+/**
+ * Uses database time and the Phase 2 term configuration as the final authority
+ * for whether a new application may be accepted.
+ */
+export async function assertEnrollmentWindowOpen(
+  tx: any,
+  semesterReference: unknown
+): Promise<{ id: string; academicYearId: string }> {
+  const reference = String(semesterReference || '').trim()
+  if (!reference) {
+    throw new ValidationError('请选择报名学期')
+  }
+
+  const rows = await tx.$queryRaw<Array<{ id: string; academicYearId: string }>>`
+    SELECT s.id, s."academicYearId"
+    FROM "semesters" s
+    INNER JOIN "academic_years" ay ON ay.id = s."academicYearId"
+    WHERE (s.name = ${reference} OR s.code = ${reference})
+      AND s."isActive" = TRUE
+      AND s."isEnrollmentOpen" = TRUE
+      AND ay."isActive" = TRUE
+      AND ay."enrollmentStartsAt" IS NOT NULL
+      AND ay."enrollmentEndsAt" IS NOT NULL
+      AND NOW() >= ay."enrollmentStartsAt"
+      AND NOW() <= ay."enrollmentEndsAt"
+    LIMIT 1
+  `
+
+  if (!rows[0]) {
+    throw new BusinessError('当前学期报名尚未开放或已结束', 400, 'ENROLLMENT_WINDOW_CLOSED')
+  }
+
+  return rows[0]
 }
 
 export async function hasRosterManagementTables(tx: any): Promise<boolean> {
@@ -641,7 +677,8 @@ export async function getRosterMemberRows(tx: any, classSectionId: string): Prom
       e."insuranceStart",
       e."insuranceEnd",
       e."approvedAt",
-      e.metadata AS "sourceEnrollmentMetadata"
+      e.metadata AS "sourceEnrollmentMetadata",
+      rm.snapshot AS "memberSnapshot"
     FROM "roster_members" rm
     INNER JOIN "rosters" r ON r.id = rm."rosterId"
     INNER JOIN "class_sections" cs ON cs.id = rm."classSectionId"
@@ -657,6 +694,7 @@ export async function getRosterMemberRows(tx: any, classSectionId: string): Prom
       const metadata = normalizeMetadata(row.sourceEnrollmentMetadata)
       return {
         ...row,
+        memberSnapshot: row.memberSnapshot || null,
         reviewSnapshot: metadata.reviewSnapshot || null
       }
     })
@@ -814,26 +852,36 @@ export async function createEnrollmentApplicationWithChoices(
     return null
   }
 
-  const semesterRows = await tx.$queryRaw<Array<{ id: string, academicYearId: string }>>`
-    SELECT id, "academicYearId"
-    FROM "semesters"
-    WHERE name = ${applicationData.semester} OR code = ${applicationData.semester}
-    LIMIT 1
+  const semester = await assertEnrollmentWindowOpen(tx, applicationData.semester)
+
+  // Serialize the student and semester pair even when there is no existing row
+  // to lock. This prevents two simultaneous browser submissions from producing
+  // duplicate pending applications.
+  await tx.$executeRaw`
+    SELECT pg_advisory_xact_lock(hashtext(${`enrollment-application:${studentId}:${semester.id}`}))
   `
 
-  const semester = semesterRows[0]
-  if (!semester) {
-    return null
+  const existingSubmittedRows = await tx.$queryRaw<Array<{ id: string }>>`
+    SELECT id
+    FROM "enrollment_applications"
+    WHERE "studentId" = ${studentId}
+      AND "semesterId" = ${semester.id}
+      AND status = 'SUBMITTED'::"EnrollmentApplicationStatus"
+    LIMIT 1
+  `
+  if (existingSubmittedRows[0]) {
+    throw new BusinessError('该学期已有待审核报名申请，请勿重复提交', 409, 'ENROLLMENT_APPLICATION_ALREADY_SUBMITTED')
   }
 
   const classSections = await resolveApplicationClassSections(tx, semester.id, applicationData)
 
   if (classSections.length === 0) {
-    return null
+    throw new ValidationError('当前学期没有可报名的班级，请重新选择课程')
   }
 
   const applicationId = randomUUID()
   const applicationCode = await generateApplicationCode()
+  const insuranceSnapshot = await buildInsuranceSnapshot(tx, insuranceId)
 
   await tx.$executeRaw`
     INSERT INTO "enrollment_applications" (
@@ -843,6 +891,7 @@ export async function createEnrollmentApplicationWithChoices(
       "academicYearId",
       "semesterId",
       "insuranceId",
+      "insuranceSnapshot",
       status,
       source,
       "submittedAt",
@@ -857,6 +906,7 @@ export async function createEnrollmentApplicationWithChoices(
       ${semester.academicYearId},
       ${semester.id},
       ${insuranceId},
+      ${insuranceSnapshot ? JSON.stringify(insuranceSnapshot) : null}::jsonb,
       'SUBMITTED'::"EnrollmentApplicationStatus",
       ${source},
       NOW(),
@@ -892,6 +942,60 @@ export async function createEnrollmentApplicationWithChoices(
   }
 
   return applicationId
+}
+
+async function buildInsuranceSnapshot(tx: any, insuranceId: string | null): Promise<Record<string, any> | null> {
+  if (!insuranceId) {
+    return null
+  }
+
+  const rows = await tx.$queryRaw<Array<{
+    id: string
+    company: string
+    category: string | null
+    coverageStart: Date
+    coverageEnd: Date
+    reviewStatus: string
+    attachmentFileId: string | null
+    attachmentName: string | null
+    attachmentMimeType: string | null
+  }>>`
+    SELECT
+      si.id,
+      si.company,
+      si.category,
+      si."coverageStart" AS "coverageStart",
+      si."coverageEnd" AS "coverageEnd",
+      si."reviewStatus"::text AS "reviewStatus",
+      si."attachmentFileId" AS "attachmentFileId",
+      fu."originalName" AS "attachmentName",
+      fu."mimeType" AS "attachmentMimeType"
+    FROM "student_insurances" si
+    LEFT JOIN "file_uploads" fu ON fu.id = si."attachmentFileId"
+    WHERE si.id = ${insuranceId}
+    LIMIT 1
+  `
+
+  const insurance = rows[0]
+  if (!insurance) {
+    return null
+  }
+
+  return {
+    id: insurance.id,
+    company: insurance.company,
+    category: insurance.category,
+    coverageStart: insurance.coverageStart.toISOString(),
+    coverageEnd: insurance.coverageEnd.toISOString(),
+    reviewStatus: insurance.reviewStatus,
+    attachment: insurance.attachmentFileId
+      ? {
+          id: insurance.attachmentFileId,
+          name: insurance.attachmentName,
+          mimeType: insurance.attachmentMimeType
+        }
+      : null
+  }
 }
 
 async function resolveApplicationClassSections(
@@ -974,7 +1078,106 @@ async function ensureRosterForClassSection(tx: any, classSection: any): Promise<
   return rows[0]
 }
 
-async function addRosterMemberForChoice(tx: any, choice: any, studentId: string, sourceEnrollmentId: string | null, remarks?: string): Promise<void> {
+interface RosterMemberSnapshotSource {
+  applicationId?: string | null
+  insuranceSnapshot?: unknown
+}
+
+async function buildRosterMemberSnapshot(
+  tx: any,
+  choice: any,
+  studentId: string,
+  source: RosterMemberSnapshotSource
+): Promise<Record<string, any>> {
+  const rows = await tx.$queryRaw<Array<{
+    studentId: string
+    studentName: string
+    studentCode: string
+    idNumber: string
+    contactPhone: string
+    gender: string
+    age: number
+    major: string | null
+    currentGrade: string | null
+    classSectionId: string
+    classSectionCode: string
+    classSectionName: string
+    academicYearId: string
+    semesterId: string
+    capacity: number
+  }>>`
+    SELECT
+      s.id AS "studentId",
+      s.name AS "studentName",
+      s."studentCode" AS "studentCode",
+      s."idNumber" AS "idNumber",
+      s."contactPhone" AS "contactPhone",
+      s.gender::text AS gender,
+      s.age,
+      s.major,
+      s."currentGrade" AS "currentGrade",
+      cs.id AS "classSectionId",
+      cs.code AS "classSectionCode",
+      cs.name AS "classSectionName",
+      cs."academicYearId" AS "academicYearId",
+      cs."semesterId" AS "semesterId",
+      cs.capacity
+    FROM "students" s
+    INNER JOIN "class_sections" cs ON cs.id = ${choice.classSectionId}
+    WHERE s.id = ${studentId}
+    LIMIT 1
+  `
+
+  const row = rows[0]
+  if (!row) {
+    throw new BusinessError('无法生成花名册成员快照', 404, 'ROSTER_MEMBER_SNAPSHOT_SOURCE_NOT_FOUND')
+  }
+
+  return {
+    version: 1,
+    capturedAt: new Date().toISOString(),
+    enrollmentApplicationId: source.applicationId || null,
+    student: {
+      id: row.studentId,
+      name: row.studentName,
+      studentCode: row.studentCode,
+      idNumber: row.idNumber,
+      contactPhone: row.contactPhone,
+      gender: row.gender,
+      age: row.age,
+      major: row.major,
+      currentGrade: row.currentGrade
+    },
+    classSection: {
+      id: row.classSectionId,
+      code: row.classSectionCode,
+      name: row.classSectionName,
+      academicYearId: row.academicYearId,
+      semesterId: row.semesterId,
+      capacity: row.capacity
+    },
+    insurance: source.insuranceSnapshot || null
+  }
+}
+
+async function addRosterMemberForChoice(
+  tx: any,
+  choice: any,
+  studentId: string,
+  sourceEnrollmentId: string | null,
+  remarks?: string,
+  source: RosterMemberSnapshotSource = {}
+): Promise<void> {
+  const lockedClassSectionRows = await tx.$queryRaw<Array<{ id: string }>>`
+    SELECT id
+    FROM "class_sections"
+    WHERE id = ${choice.classSectionId}
+    FOR UPDATE
+  `
+  if (!lockedClassSectionRows[0]) {
+    throw new BusinessError('班次不存在，无法加入花名册', 404, 'CLASS_SECTION_NOT_FOUND')
+  }
+
   const roster = await ensureRosterForClassSection(tx, choice.classSection)
   if (roster.status === 'PUBLISHED' || roster.status === 'ARCHIVED') {
     throw new BusinessError('Roster is already frozen and cannot accept new members', 400, 'ROSTER_FROZEN')
@@ -992,6 +1195,8 @@ async function addRosterMemberForChoice(tx: any, choice: any, studentId: string,
     throw new BusinessError('Class section capacity is full', 400, 'CLASS_SECTION_FULL')
   }
 
+  const snapshot = await buildRosterMemberSnapshot(tx, choice, studentId, source)
+
   await tx.$executeRaw`
     INSERT INTO "roster_members" (
       id,
@@ -1001,6 +1206,7 @@ async function addRosterMemberForChoice(tx: any, choice: any, studentId: string,
       "sourceEnrollmentId",
       status,
       remarks,
+      snapshot,
       "joinedAt",
       "createdAt",
       "updatedAt"
@@ -1013,6 +1219,7 @@ async function addRosterMemberForChoice(tx: any, choice: any, studentId: string,
       ${sourceEnrollmentId},
       'ACTIVE'::"RosterMemberStatus",
       ${remarks || null},
+      ${JSON.stringify(snapshot)}::jsonb,
       NOW(),
       NOW(),
       NOW()
@@ -1024,6 +1231,7 @@ async function addRosterMemberForChoice(tx: any, choice: any, studentId: string,
       status = 'ACTIVE'::"RosterMemberStatus",
       "leftAt" = NULL,
       remarks = EXCLUDED.remarks,
+      snapshot = EXCLUDED.snapshot,
       "updatedAt" = NOW()
   `
 }
@@ -1070,6 +1278,7 @@ async function syncPhase2ApplicationsForLegacyEnrollment(tx: any, enrollment: an
   const matchedChoices = await tx.$queryRaw<Array<any>>`
     SELECT
       ea.id AS "applicationId",
+      ea."insuranceSnapshot" AS "insuranceSnapshot",
       eac.id,
       eac."classSectionId",
       cs.id AS "sectionId",
@@ -1114,7 +1323,10 @@ async function syncPhase2ApplicationsForLegacyEnrollment(tx: any, enrollment: an
     `
 
     if (normalizedStatus === 'APPROVED') {
-      await addRosterMemberForChoice(tx, choice, enrollment.studentId, enrollment.id, input.comments)
+      await addRosterMemberForChoice(tx, choice, enrollment.studentId, enrollment.id, input.comments, {
+        applicationId: row.applicationId,
+        insuranceSnapshot: row.insuranceSnapshot
+      })
     }
   }
 
@@ -1178,6 +1390,7 @@ export async function reviewEnrollmentApplication(tx: any, input: ReviewInput): 
       ea."studentId",
       ea.status::text AS status,
       ea.remarks,
+      ea."insuranceSnapshot" AS "insuranceSnapshot",
       eac.id AS "choiceId",
       eac."classSectionId",
       cs.id AS "sectionId",
@@ -1285,7 +1498,10 @@ export async function reviewEnrollmentApplication(tx: any, input: ReviewInput): 
     }
 
     if (normalizedStatus === 'APPROVED') {
-      await addRosterMemberForChoice(tx, choice, application.studentId, legacyEnrollment?.id || null, input.comments)
+      await addRosterMemberForChoice(tx, choice, application.studentId, legacyEnrollment?.id || null, input.comments, {
+        applicationId: application.id,
+        insuranceSnapshot: application.insuranceSnapshot
+      })
     }
   }
 

@@ -39,17 +39,18 @@ assertIncludes(courseRoute, 'getLegacyCourseSemesters', 'course route must keep 
 assertIncludes(courseRoute, 'mergeSemesterNames', 'course route must merge phase-2 and legacy semester sources')
 assertRegex(
   courseRoute,
-  /router\.post\('\/semesters'[\s\S]*requireTeacher/,
-  'course route must expose a teacher-only semester creation endpoint'
+  /router\.post\('\/semesters'[\s\S]*requireAdmin/,
+  'course route must expose an administrator-only semester creation endpoint'
 )
 assertRegex(
   courseRoute,
-  /router\.post\('\/semesters\/sync-class-sections'[\s\S]*requireTeacher/,
-  'course route must expose a teacher-only class section sync endpoint'
+  /router\.post\('\/semesters\/sync-class-sections'[\s\S]*requireAdmin/,
+  'course route must expose an administrator-only class section sync endpoint'
 )
 assertIncludes(courseRoute, 'INSERT INTO "academic_years"', 'semester creation must upsert academic year master data')
 assertIncludes(courseRoute, 'INSERT INTO "semesters"', 'semester creation must upsert semester master data')
 assertIncludes(courseRoute, 'INSERT INTO "class_sections"', 'class section sync must upsert class section master data')
+assertIncludes(courseRoute, 'INVALID_ENROLLMENT_WINDOW', 'opening enrollment must require a valid server-side window')
 assertNotIncludes(
   courseRoute,
   'const semesters = await prisma.course.findMany({',
@@ -63,6 +64,9 @@ assertIncludes(courseApi, 'syncSemesterClassSections', 'frontend API must expose
 assertIncludes(courseView, 'handleCreateCurrentSemester', 'course page must provide current semester creation action')
 assertIncludes(courseView, 'handleSyncClassSections', 'course page must provide class section sync action')
 assertIncludes(courseView, 'isCurrentSemesterAvailable', 'course page must know when the current semester already exists')
+assertIncludes(courseView, 'canManageAcademicTerms', 'course page must hide term master controls from teachers')
+assertIncludes(courseView, 'submitManualSemester', 'course page must let administrators create a future semester manually')
+assertIncludes(courseView, '新建学期', 'course page must expose the manual semester action')
 assertNotIncludes(
   courseView,
   "availableSemesters.value = ['2025年秋季',  '2024年秋季']",

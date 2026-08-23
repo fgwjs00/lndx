@@ -54,6 +54,13 @@ const KNOWN_MIGRATION_OBJECTS = {
   ],
   '20260606000000_student_academic_events': [
     'student_academic_events'
+  ],
+  '20260820000000_roster_and_insurance_snapshots': [
+    'enrollment_applications.insuranceSnapshot',
+    'roster_members.snapshot'
+  ],
+  '20260820010000_attendance_class_section_eligibility': [
+    'attendances.classSectionId'
   ]
 }
 

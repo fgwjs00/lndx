@@ -19,6 +19,7 @@ import { config } from '@/config'
 import { errorHandler } from '@/middleware/errorHandler'
 import { rateLimiter } from '@/middleware/rateLimiter'
 import { assetAuthMiddleware, authMiddleware, generateAssetToken, sanitizeAuthUrl } from '@/middleware/auth'
+import { assetAccessMiddleware } from '@/middleware/assetAccess'
 import { logger } from '@/utils/logger'
 import { setupSwagger } from '@/utils/swagger'
 
@@ -130,8 +131,8 @@ app.get(`${apiPrefix}/assets/token`, authMiddleware, (req: Request, res: Respons
   })
 })
 
-app.use('/uploads', assetAuthMiddleware, (req, res, next) => {
-  res.setHeader('Cache-Control', 'private, max-age=300')
+app.use('/uploads', assetAuthMiddleware, assetAccessMiddleware, (_req, res, next) => {
+  res.setHeader('Cache-Control', 'private, no-store')
   next()
 }, express.static(path.join(__dirname, '../uploads')))
 

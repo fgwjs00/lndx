@@ -353,10 +353,16 @@ class HttpRequest {
   /**
    * 文件上传
    */
-  upload<T>(url: string, file: File, onProgress?: (progress: number) => void): Promise<ApiResponse<T>> {
+  upload<T>(
+    url: string,
+    file: File,
+    onProgress?: (progress: number) => void,
+    fields: Record<string, string> = {}
+  ): Promise<ApiResponse<T>> {
     return new Promise((resolve, reject) => {
       const formData = new FormData()
       formData.append('file', file)
+      Object.entries(fields).forEach(([name, value]) => formData.append(name, value))
 
       const xhr = new XMLHttpRequest()
 
@@ -380,7 +386,12 @@ class HttpRequest {
             reject(new Error('响应解析失败'))
           }
         } else {
-          reject(new Error(`上传失败: ${xhr.status}`))
+          try {
+            const response = JSON.parse(xhr.responseText)
+            reject(new Error(response.message || `上传失败: ${xhr.status}`))
+          } catch {
+            reject(new Error(`上传失败: ${xhr.status}`))
+          }
         }
       })
 

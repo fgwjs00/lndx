@@ -392,6 +392,18 @@ router.post('/upload-image', authMiddleware, upload.single('image'), asyncHandle
 
     // 构建文件访问URL
     const fileUrl = `/uploads/id-cards/${req.file.filename}`
+    await prisma.fileUpload.create({
+      data: {
+        originalName: req.file.originalname,
+        fileName: req.file.filename,
+        filePath: fileUrl,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+        fileType: 'ID_CARD',
+        uploadedBy: req.user!.id,
+        metadata: { source: 'legacy-application-upload' }
+      }
+    })
     
     // 记录上传日志
     businessLogger.userAction(req.user!.id, 'ID_CARD_UPLOAD', {
@@ -499,7 +511,7 @@ router.get('/available-courses', authMiddleware, asyncHandler(async (req: Reques
  * 检查身份证号是否已存在
  * GET /api/applications/check-id
  */
-router.get('/check-id', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+router.get('/check-id', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
   const { idNumber } = req.query
 
   if (!idNumber || typeof idNumber !== 'string') {
@@ -531,7 +543,7 @@ router.get('/check-id', authMiddleware, asyncHandler(async (req: Request, res: R
  * 查询学员详细报名信息（用于跨学期报名限制计算）
  * GET /api/applications/student-enrollments
  */
-router.get('/student-enrollments', asyncHandler(async (req: Request, res: Response) => {
+router.get('/student-enrollments', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
   const { idNumber } = req.query
 
   if (!idNumber || typeof idNumber !== 'string') {
@@ -676,7 +688,7 @@ router.post('/validate', authMiddleware, asyncHandler(async (req: Request, res: 
 }))
 
 // 更新申请信息
-router.put('/:id', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+router.put('/:id', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
   try {
     const { id } = req.params
     const { courseId, insuranceStart, insuranceEnd, remarks } = req.body
@@ -773,7 +785,7 @@ router.post('/', authMiddleware, asyncHandler(async () => {
  */
 
 // 检查身份证号是否已存在并返回完整学员信息
-router.get('/check-id/:idNumber', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+router.get('/check-id/:idNumber', requireTeacher, asyncHandler(async (req: Request, res: Response) => {
   const { idNumber } = req.params
   
   try {
@@ -842,7 +854,7 @@ router.get('/check-id/:idNumber', authMiddleware, asyncHandler(async (req: Reque
   } catch (error) {
     console.error('检查身份证号失败', error, {
       url: req.originalUrl,
-      idNumber
+      hasIdNumber: Boolean(idNumber)
     })
     throw new BusinessError('检查身份证号失败', 500, 'CHECK_ERROR')
   }

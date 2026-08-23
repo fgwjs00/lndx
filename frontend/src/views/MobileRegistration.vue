@@ -1,63 +1,46 @@
 <template>
-  <div class="mobile-registration min-h-screen bg-[#f6f8fb] pb-28">
-    <!-- 顶部导航 -->
-    <div class="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
+  <div class="mobile-registration min-h-screen">
+    <header class="mobile-app-bar sticky top-0 z-50">
       <div class="flex items-center justify-between px-4 py-3">
-        <button @click="handleBack" class="flex items-center text-gray-600 hover:text-gray-800 transition-colors">
-          <i class="fas fa-arrow-left text-lg mr-2"></i>
-          <span class="font-medium">返回</span>
+        <button type="button" aria-label="返回上一页" @click="handleBack" class="m3-back-button">
+          <i class="fas fa-arrow-left" aria-hidden="true"></i>
+          <span>返回</span>
         </button>
-        <h1 class="text-lg font-semibold text-gray-900">学员报名</h1>
-        <div class="w-16"></div> <!-- 占位符保持居中 -->
+        <h1 class="m3-app-title">学员报名</h1>
+        <span class="m3-app-bar-spacer" aria-hidden="true"></span>
       </div>
-    </div>
+    </header>
 
-    <!-- 进度指示器 -->
-    <div class="hidden">
-      <div class="flex items-center justify-between text-sm">
-        <span class="text-gray-500">进度</span>
-        <span class="font-medium text-blue-600">{{ currentStep }}/{{ totalSteps }}</span>
-      </div>
-      <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
-        <div
-          class="bg-blue-600 h-2 rounded-full transition-all duration-300"
-          :style="{ width: `${(currentStep / totalSteps) * 100}%` }"
-        ></div>
-      </div>
-    </div>
-
-    <section class="mobile-registration-hero mx-4 mt-4 rounded-lg border border-blue-100 bg-white p-4 shadow-sm">
+    <section class="m3-progress-card mx-4 mt-4" aria-labelledby="registration-step-title">
       <div class="flex items-start justify-between gap-3">
         <div>
-          <div class="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
-            第 {{ currentStep }} 步 / 共 {{ totalSteps }} 步
-          </div>
-          <h2 class="mt-3 text-xl font-semibold leading-tight text-slate-900">{{ currentStepMeta.title }}</h2>
-          <p class="mt-1 text-sm leading-6 text-slate-600">{{ currentStepMeta.description }}</p>
+          <div class="m3-overline">报名进度 · 第 {{ currentStep }} 步，共 {{ totalSteps }} 步</div>
+          <h2 id="registration-step-title" class="m3-page-title">{{ currentStepMeta.title }}</h2>
+          <p class="m3-page-description">{{ currentStepMeta.description }}</p>
         </div>
-        <div class="rounded-lg bg-slate-900 px-3 py-2 text-right text-white">
-          <div class="text-xs text-slate-300">已选</div>
-          <div class="text-lg font-semibold">{{ formData.selectedCourses.length }}/2</div>
-        </div>
+        <output class="m3-selection-count" aria-live="polite">
+          <span>已选课程</span>
+          <strong>{{ formData.selectedCourses.length }}/2</strong>
+        </output>
       </div>
 
-      <div class="mt-4 grid grid-cols-4 gap-2">
-        <button
+      <ol class="m3-stepper" aria-label="报名步骤">
+        <li
           v-for="step in stepLabels"
           :key="step.index"
-          type="button"
           :class="[
-            'rounded-lg border px-2 py-2 text-center text-xs font-medium transition-colors',
+            'm3-stepper-item',
             currentStep === step.index
-              ? 'border-blue-500 bg-blue-600 text-white'
+              ? 'is-current'
               : currentStep > step.index
-                ? 'border-emerald-100 bg-emerald-50 text-emerald-700'
-                : 'border-slate-200 bg-slate-50 text-slate-500'
+                ? 'is-complete'
+                : ''
           ]"
         >
-          {{ step.shortTitle }}
-        </button>
-      </div>
+          <span class="m3-stepper-number">{{ step.index }}</span>
+          <span class="m3-stepper-label">{{ step.shortTitle }}</span>
+        </li>
+      </ol>
     </section>
 
     <a-form
@@ -70,8 +53,9 @@
     >
       <!-- 步骤1：基本信息 -->
       <div v-show="currentStep === 1" class="p-4 space-y-4">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <h2 class="text-lg font-medium text-gray-900 mb-4">基本信息</h2>
+        <section class="m3-form-card">
+          <h2 class="m3-section-title">基本信息</h2>
+          <p class="m3-section-description">请按身份证信息填写，联系电话用于接收学校通知。</p>
 
           <!-- 姓名 -->
           <a-form-item name="name" label="姓名" class="mb-4">
@@ -119,6 +103,18 @@
             />
           </a-form-item>
 
+          <a-form-item name="contactPhone" label="报名手机号" class="mb-4">
+            <a-input
+              v-model:value="formData.contactPhone"
+              placeholder="请输入用于接收报名通知的手机号"
+              inputmode="tel"
+              autocomplete="tel"
+              size="large"
+              class="rounded-lg"
+            />
+            <div class="m3-helper-text">无需短信验证码，学校将通过此号码联系您。</div>
+          </a-form-item>
+
           <!-- 民族 -->
           <a-form-item name="ethnicity" label="民族" class="mb-4">
             <a-select
@@ -131,7 +127,7 @@
           </a-form-item>
 
           <!-- 健康状况 -->
-          <a-form-item name="healthStatus" label="健康状况" class="mb-0">
+          <a-form-item name="healthStatus" label="健康状况" class="mb-4">
             <a-select
               v-model:value="formData.healthStatus"
               placeholder="请选择健康状况"
@@ -140,15 +136,7 @@
               :options="healthStatusOptions"
             />
           </a-form-item>
-        </div>
-      </div>
 
-      <!-- 步骤2：教育和工作信息 -->
-      <div v-show="currentStep === 2" class="p-4 space-y-4">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <h2 class="text-lg font-medium text-gray-900 mb-4">教育和工作信息</h2>
-
-          <!-- 文化程度 -->
           <a-form-item name="educationLevel" label="文化程度" class="mb-4">
             <a-select
               v-model:value="formData.educationLevel"
@@ -159,7 +147,6 @@
             />
           </a-form-item>
 
-          <!-- 政治面貌 -->
           <a-form-item name="politicalStatus" label="政治面貌" class="mb-4">
             <a-select
               v-model:value="formData.politicalStatus"
@@ -170,13 +157,20 @@
             />
           </a-form-item>
 
-          <!-- 是否在职 -->
-          <a-form-item name="isRetired" label="工作状态" class="mb-4">
+          <a-form-item name="isRetired" label="工作状态" class="mb-0">
             <a-radio-group v-model:value="formData.isRetired" size="large" class="w-full">
               <a-radio :value="false" class="block mb-2">在职</a-radio>
               <a-radio :value="true" class="block">退休</a-radio>
             </a-radio-group>
           </a-form-item>
+        </section>
+      </div>
+
+      <!-- 步骤2：保险信息 -->
+      <div v-show="currentStep === 2" class="p-4 space-y-4">
+        <section class="m3-form-card">
+          <h2 class="m3-section-title">保险信息</h2>
+          <p class="m3-section-description">请先填写保险资料；下一步选择学期后可核对对应保险年度。</p>
 
           <!-- 保险公司 -->
           <a-form-item name="insuranceCompany" label="保险公司" class="mb-4">
@@ -199,16 +193,61 @@
               :options="retirementCategoryOptions"
             />
           </a-form-item>
-        </div>
+
+          <div class="grid gap-3 sm:grid-cols-2 mt-5">
+            <a-form-item name="studyPeriodStart" label="保险开始日期" class="mb-4">
+              <a-date-picker
+                v-model:value="formData.studyPeriodStart"
+                placeholder="开始日期"
+                size="large"
+                format="YYYY-MM-DD"
+                class="w-full rounded-lg"
+              />
+            </a-form-item>
+            <a-form-item name="studyPeriodEnd" label="保险结束日期" class="mb-4">
+              <a-date-picker
+                v-model:value="formData.studyPeriodEnd"
+                placeholder="结束日期"
+                size="large"
+                format="YYYY-MM-DD"
+                class="w-full rounded-lg"
+              />
+            </a-form-item>
+          </div>
+
+          <a-form-item name="insuranceAttachmentFileId" label="保险凭证" class="mb-4">
+            <div class="m3-file-upload">
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                :disabled="loading.insuranceUpload"
+                @change="handleInsuranceFileChange"
+                class="block w-full text-sm text-gray-700"
+              />
+              <div v-if="loading.insuranceUpload" class="mt-2 text-sm text-blue-600">保险凭证上传中...</div>
+              <div v-if="formData.insuranceAttachmentName" class="mt-2 text-sm text-green-700">
+                已上传：{{ formData.insuranceAttachmentName }}
+              </div>
+              <div class="mt-2 text-xs text-gray-500">支持图片或 PDF，大小不超过 10MB。</div>
+            </div>
+          </a-form-item>
+
+          <a-form-item name="agreementSigned" label="超龄协议" class="mb-0">
+            <a-radio-group v-model:value="formData.agreementSigned" size="large">
+              <a-radio :value="true" class="block mb-2">已签订超龄协议</a-radio>
+              <a-radio :value="false" class="block">无需签订</a-radio>
+            </a-radio-group>
+          </a-form-item>
+        </section>
       </div>
 
       <!-- 步骤3：课程选择 -->
       <div v-show="currentStep === 3" class="p-4 space-y-4">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <h2 class="text-lg font-medium text-gray-900 mb-4">课程选择</h2>
+        <section class="m3-form-card">
+          <h2 class="m3-section-title">选择课程</h2>
+          <p class="m3-section-description">可选一至两门课程，课程时间不能冲突。</p>
 
-          <!-- 学期选择 -->
-          <a-form-item name="semester" label="学期" class="mb-4">
+          <a-form-item name="semester" label="报名学期" class="mb-4">
             <a-select
               v-model:value="formData.semester"
               placeholder="请选择学期"
@@ -219,6 +258,46 @@
               class="rounded-lg"
             />
           </a-form-item>
+
+          <div v-if="insuranceRequirement" class="m3-insurance-notice mb-4">
+            所填保险有效期需覆盖 {{ insuranceRequirement.requiredInsuranceStart }} 至 {{ insuranceRequirement.requiredInsuranceEnd }}；日期不符请返回上一步修改。
+          </div>
+
+          <div v-if="formData.semester" class="course-discovery mb-4" aria-label="选择课程大类或搜索课程">
+            <section class="m3-category-picker" aria-labelledby="course-category-title">
+              <h3 id="course-category-title" class="m3-choice-title">先选择课程大类</h3>
+              <p class="m3-filter-help">点选一个大类后，只会显示这一类课程。</p>
+              <div class="m3-category-grid" role="group" aria-label="课程大类">
+                <button
+                  v-for="filter in courseCategoryFilters"
+                  :key="filter.name"
+                  type="button"
+                  :aria-pressed="activeCourseCategory === filter.name"
+                  :class="['m3-category-tile', { 'is-selected': activeCourseCategory === filter.name }]"
+                  @click="selectCourseCategory(filter.name)"
+                >
+                  <span class="m3-category-tile-title">{{ filter.name }}</span>
+                  <span class="m3-category-tile-count">{{ filter.count }}门课程</span>
+                </button>
+              </div>
+            </section>
+
+            <div class="m3-direct-search">
+              <label class="m3-search-label" for="course-search">知道课程名称？可直接搜索</label>
+              <a-input
+                id="course-search"
+                v-model:value="courseSearchQuery"
+                placeholder="例如：手机、书法、摄影"
+                size="large"
+                allow-clear
+                class="m3-course-search"
+              >
+                <template #prefix>
+                  <i class="fas fa-search" aria-hidden="true"></i>
+                </template>
+              </a-input>
+            </div>
+          </div>
 
           <!-- 可用课程列表 -->
           <a-form-item name="selectedCourses" label="选择课程（最多2门）" class="mb-4">
@@ -231,29 +310,33 @@
               <p class="text-gray-500">请先选择学期</p>
             </div>
             <div v-else class="space-y-4">
-              <div class="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+              <div class="m3-selection-summary">
                 {{ selectedCourseSummary }}
               </div>
-              <div v-for="group in groupedAvailableCourses" :key="group.category" class="course-category space-y-2 rounded-lg border border-slate-200 bg-white p-3">
-                <div class="flex cursor-pointer items-center justify-between border-b border-gray-100 pb-2" @click="toggleCourseCategory(group.category)">
-                  <h3 class="text-base font-semibold text-gray-900">{{ group.category }}</h3>
-                  <span class="text-xs text-gray-500">{{ group.courses.length }}门课程</span>
-                </div>
-              <div
-                v-show="isCourseCategoryExpanded(group.category)"
-                v-for="course in group.courses"
-                :key="getCourseSelectionId(course)"
-                :class="[
-                  'course-card border-2 rounded-lg p-4 cursor-pointer transition-all',
-                  formData.selectedCourses.includes(getCourseSelectionId(course))
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                ]"
-                @click="handleCourseSelect(getCourseSelectionId(course))"
-              >
+              <p v-if="!courseSearchQuery.trim() && !activeCourseCategory" class="m3-course-guidance">
+                请先点选上方的一个课程大类。知道课程名称时，也可以直接搜索。
+              </p>
+              <template v-else>
+                <p class="m3-results-title">{{ courseResultTitle }}</p>
+                <button
+                  type="button"
+                  :aria-pressed="formData.selectedCourses.includes(getCourseSelectionId(course))"
+                  v-for="course in visibleCourses"
+                  :key="getCourseSelectionId(course)"
+                  :class="[
+                   'course-card',
+                   formData.selectedCourses.includes(getCourseSelectionId(course))
+                     ? 'is-selected'
+                     : ''
+                  ]"
+                  @click="handleCourseSelect(getCourseSelectionId(course))"
+                >
                 <div class="flex items-start justify-between">
                   <div class="flex-1">
-                    <h3 class="font-medium text-gray-900">{{ course.name }}</h3>
+                    <div class="flex items-start justify-between gap-2">
+                      <h3 class="font-medium text-gray-900">{{ course.name }}</h3>
+                      <span class="m3-course-category">{{ course.category || '未分类' }}</span>
+                    </div>
                     <p class="text-sm text-gray-600 mt-1">{{ course.description }}</p>
                     <div class="flex items-center mt-2 text-xs text-gray-500">
                       <span class="mr-3">
@@ -286,71 +369,22 @@
                     ></i>
                   </div>
                 </div>
-              </div>
-              </div>
-              <p v-if="availableCourses.length === 0" class="text-center text-gray-500 py-8">
-                暂无可报名课程
-              </p>
+                </button>
+                <p v-if="visibleCourses.length === 0" class="m3-empty-courses">
+                  没有找到相关课程，请换一个名称搜索，或重新选择课程大类。
+                </p>
+              </template>
             </div>
           </a-form-item>
 
-          <!-- 学习期间（保险有效期）-->
-          <div class="grid grid-cols-2 gap-3">
-            <a-form-item name="studyPeriodStart" label="保险开始日期" class="mb-4">
-              <a-date-picker
-                v-model:value="formData.studyPeriodStart"
-                placeholder="开始日期"
-                size="large"
-                format="YYYY-MM-DD"
-                class="w-full rounded-lg"
-              />
-            </a-form-item>
-            <a-form-item name="studyPeriodEnd" label="保险结束日期" class="mb-4">
-              <a-date-picker
-                v-model:value="formData.studyPeriodEnd"
-                placeholder="结束日期"
-                size="large"
-                format="YYYY-MM-DD"
-                class="w-full rounded-lg"
-              />
-            </a-form-item>
-          </div>
-
-          <div v-if="insuranceRequirement" class="mb-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            保险有效期需覆盖 {{ insuranceRequirement.requiredInsuranceStart }} 至 {{ insuranceRequirement.requiredInsuranceEnd }}
-          </div>
-
-          <a-form-item name="insuranceAttachmentFileId" label="保险凭证" class="mb-4">
-            <div class="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-3">
-              <input
-                type="file"
-                accept="image/*,.pdf"
-                :disabled="loading.insuranceUpload"
-                @change="handleInsuranceFileChange"
-                class="block w-full text-sm text-gray-700"
-              />
-              <div v-if="loading.insuranceUpload" class="mt-2 text-sm text-blue-600">保险凭证上传中...</div>
-              <div v-if="formData.insuranceAttachmentName" class="mt-2 text-sm text-green-700">
-                已上传：{{ formData.insuranceAttachmentName }}
-              </div>
-              <div class="mt-2 text-xs text-gray-500">支持图片或 PDF，大小不超过 10MB。</div>
-            </div>
-          </a-form-item>
-
-          <!-- 超龄协议 -->
-          <a-form-item name="agreementSigned" label="超龄协议" class="mb-0">
-            <a-radio-group v-model:value="formData.agreementSigned" size="large">
-              <a-radio :value="true" class="block mb-2">已签订超龄协议</a-radio>
-              <a-radio :value="false" class="block">无需签订</a-radio>
-            </a-radio-group>
-          </a-form-item>
-        </div>
+        </section>
       </div>
 
       <!-- 步骤4：联系信息 -->
       <div v-show="currentStep === 4" class="p-4 space-y-4">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <h2 class="text-lg font-medium text-gray-900 mb-4">联系信息</h2>
+        <section class="m3-form-card">
+          <h2 class="m3-section-title">联系信息</h2>
+          <p class="m3-section-description">填写一位方便联系的家人或紧急联系人。</p>
 
           <!-- 现居住地址 -->
           <a-form-item name="familyAddress" label="现居住地址" class="mb-4">
@@ -403,13 +437,13 @@
               class="rounded-lg"
             />
           </a-form-item>
-        </div>
+        </section>
       </div>
     </a-form>
 
     <!-- 底部操作按钮 -->
-    <div class="sticky-action-bar sticky bottom-0 z-40 border-t border-slate-200 bg-white/95 p-4 shadow-[0_-10px_30px_rgba(15,23,42,0.08)] backdrop-blur">
-      <div class="mb-3 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
+    <div class="sticky-action-bar fixed bottom-0 left-0 right-0 z-40">
+      <div class="m3-action-context">
         {{ currentStep === 3 ? selectedCourseSummary : currentStepMeta.description }}
       </div>
       <div class="flex gap-3">
@@ -417,7 +451,7 @@
           v-if="currentStep > 1"
           @click="prevStep"
           size="large"
-          class="flex-1 rounded-lg"
+          class="m3-secondary-action flex-1"
         >
           上一步
         </a-button>
@@ -426,7 +460,7 @@
           @click="nextStep"
           type="primary"
           size="large"
-          class="flex-1 rounded-lg"
+          class="m3-primary-action flex-1"
         >
           下一步
         </a-button>
@@ -436,7 +470,7 @@
           type="primary"
           size="large"
           :loading="loading.submit"
-          class="flex-1 rounded-lg"
+          class="m3-primary-action flex-1"
         >
           提交报名
         </a-button>
@@ -509,8 +543,8 @@ const currentStep = ref<number>(1)
 const totalSteps = ref<number>(4)
 const stepLabels = [
   { index: 1, shortTitle: '身份', title: '填写学员信息', description: '核对姓名、身份证号和基础健康信息' },
-  { index: 2, shortTitle: '保险', title: '完善保险信息', description: '选择保险公司、类别和退休状态' },
-  { index: 3, shortTitle: '选课', title: '选择报名课程', description: '按类别查看课程，最多选择2门' },
+  { index: 2, shortTitle: '保险', title: '填写保险信息', description: '填写保险资料并上传凭证' },
+  { index: 3, shortTitle: '选课', title: '选择报名课程', description: '先选择学期，再按类别选择课程' },
   { index: 4, shortTitle: '联系', title: '确认联系方式', description: '留下常用电话和紧急联系人' }
 ]
 const currentStepMeta = computed(() => {
@@ -530,7 +564,8 @@ const semesterOptions = ref<Array<{ label: string; value: string }>>([]);
 
 // 可用课程
 const availableCourses = ref<Course[]>([])
-const expandedCourseCategories = ref<string[]>([])
+const courseSearchQuery = ref('')
+const activeCourseCategory = ref('')
 
 const groupedAvailableCourses = computed(() => {
   const groups = new Map<string, Course[]>()
@@ -549,11 +584,61 @@ const groupedAvailableCourses = computed(() => {
   }))
 })
 
-// 当前学期保险要求
-const syncExpandedCourseCategories = (): void => {
+const courseCategoryFilters = computed(() => {
+  return groupedAvailableCourses.value.map(group => ({ name: group.category, count: group.courses.length }))
+})
+
+const courseMatchesSearch = (course: Course, keyword: string): boolean => {
+  if (!keyword) {
+    return true
+  }
+
+  const searchableText = [
+    course.name,
+    course.description,
+    course.category,
+    course.location,
+    course.teacher && typeof course.teacher === 'object' ? course.teacher.realName : course.teacher
+  ].filter(Boolean).join(' ').toLowerCase()
+
+  return searchableText.includes(keyword)
+}
+
+const visibleCourses = computed(() => {
+  const keyword = courseSearchQuery.value.trim().toLowerCase()
+  if (keyword) {
+    return availableCourses.value.filter(course => courseMatchesSearch(course, keyword))
+  }
+
+  if (!activeCourseCategory.value) {
+    return []
+  }
+
+  return availableCourses.value.filter(course => {
+    const category = String(course.category || '未分类').trim() || '未分类'
+    return category === activeCourseCategory.value
+  })
+})
+
+const courseResultTitle = computed(() => {
+  const keyword = courseSearchQuery.value.trim()
+  if (keyword) {
+    return `搜索“${keyword}”的课程`
+  }
+
+  return `${activeCourseCategory.value}课程`
+})
+
+const syncCourseCategorySelection = (): void => {
   const categories = groupedAvailableCourses.value.map(group => group.category)
-  const stillVisible = expandedCourseCategories.value.filter(category => categories.includes(category))
-  expandedCourseCategories.value = stillVisible.length > 0 ? stillVisible : categories.slice(0, 3)
+  if (activeCourseCategory.value && !categories.includes(activeCourseCategory.value)) {
+    activeCourseCategory.value = ''
+  }
+}
+
+const selectCourseCategory = (category: string): void => {
+  activeCourseCategory.value = category
+  courseSearchQuery.value = ''
 }
 
 const getCourseSelectionId = (course: Course): string => {
@@ -577,23 +662,6 @@ const getSelectedClassSectionIds = (): string[] => {
     .filter((classSectionId): classSectionId is string => Boolean(classSectionId))
 }
 
-const isCourseCategoryExpanded = (category: string): boolean => {
-  return expandedCourseCategories.value.includes(category)
-}
-
-const toggleCourseCategory = (category: string): void => {
-  if (isCourseCategoryExpanded(category)) {
-    expandedCourseCategories.value = expandedCourseCategories.value.filter(item => item !== category)
-    return
-  }
-
-  expandedCourseCategories.value = [...expandedCourseCategories.value, category]
-}
-
-const getCourseGroupSelectedCount = (courses: Course[]): number => {
-  return courses.filter(course => formData.selectedCourses.includes(getCourseSelectionId(course))).length
-}
-
 const insuranceRequirement = ref<any>(null)
 
 // 表单数据
@@ -603,6 +671,7 @@ const formData = reactive({
   gender: '',
   birthDate: null as Dayjs | null,
   idNumber: '',
+  contactPhone: '',
   ethnicity: '',
   healthStatus: '',
 
@@ -681,6 +750,10 @@ const formRules = {
   idNumber: [
     { required: true, message: '请输入身份证号', trigger: 'blur' },
     { pattern: /^[1-9]\d{5}(18|19|20)\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]$/, message: '身份证号格式不正确', trigger: 'blur' }
+  ],
+  contactPhone: [
+    { required: true, message: '请输入报名手机号', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
   ],
   isRetired: [
     { required: true, message: '请选择工作状态', trigger: 'change' }
@@ -935,20 +1008,38 @@ const validateCurrentStep = async (): Promise<void> => {
 
   switch (currentStep.value) {
     case 1:
-      fieldsToValidate.push('name', 'gender', 'birthDate', 'idNumber', 'ethnicity', 'healthStatus')
+      fieldsToValidate.push(
+        'name',
+        'gender',
+        'birthDate',
+        'idNumber',
+        'contactPhone',
+        'ethnicity',
+        'healthStatus',
+        'educationLevel',
+        'politicalStatus',
+        'isRetired'
+      )
       break
     case 2:
-      fieldsToValidate.push('educationLevel', 'politicalStatus', 'isRetired', 'insuranceCompany', 'retirementCategory')
+      fieldsToValidate.push(
+        'insuranceCompany',
+        'retirementCategory',
+        'studyPeriodStart',
+        'studyPeriodEnd',
+        'insuranceAttachmentFileId',
+        'agreementSigned'
+      )
       break
     case 3:
-      fieldsToValidate.push('semester', 'selectedCourses', 'studyPeriodStart', 'studyPeriodEnd', 'insuranceAttachmentFileId', 'agreementSigned')
+      fieldsToValidate.push('semester', 'selectedCourses')
       break
     case 4:
       fieldsToValidate.push('familyAddress', 'familyPhone', 'emergencyContact', 'emergencyPhone')
       break
   }
 
-  return formRef.value?.validateFields(fieldsToValidate)
+  await formRef.value?.validateFields(fieldsToValidate)
 }
 
 /**
@@ -967,6 +1058,7 @@ const handleSubmit = async (): Promise<void> => {
       gender: formData.gender,
       birthDate: formData.birthDate?.format('YYYY-MM-DD'),
       idNumber: formData.idNumber,
+      contactPhone: formData.contactPhone,
       ethnicity: formData.ethnicity,
       healthStatus: formData.healthStatus,
       educationLevel: formData.educationLevel,
@@ -1060,7 +1152,8 @@ const loadSemesters = async (): Promise<void> => {
 const handleSemesterChange = async (): Promise<void> => {
   // 清空已选课程
   formData.selectedCourses = []
-  expandedCourseCategories.value = []
+  activeCourseCategory.value = ''
+  courseSearchQuery.value = ''
   formData.insuranceAttachmentFileId = ''
   formData.insuranceAttachmentName = ''
 
@@ -1102,7 +1195,10 @@ const handleInsuranceFileChange = async (event: Event): Promise<void> => {
 
   try {
     loading.insuranceUpload = true
-    const response = await InsuranceService.uploadInsuranceAttachment(file)
+    const response = await InsuranceService.uploadInsuranceAttachment(
+      file,
+      formData.contactPhone
+    )
     if (response.code === 200 && response.data) {
       formData.insuranceAttachmentFileId = response.data.fileId
       formData.insuranceAttachmentName = response.data.originalName || response.data.fileName
@@ -1141,7 +1237,7 @@ const loadCourses = async (): Promise<void> => {
 
     if (response.code === 200) {
       availableCourses.value = response.data.list || []
-      syncExpandedCourseCategories()
+      syncCourseCategorySelection()
     }
   } catch (error: any) {
     console.error('加载课程失败:', error)
@@ -1176,6 +1272,19 @@ watch(() => formData.birthDate, () => {
       }).join('、')
       message.warning(`根据您的年龄，已自动移除不符合要求的课程：${courseNames}`)
     }
+  }
+})
+
+watch(() => formData.contactPhone, (phone, previousPhone) => {
+  if (phone === previousPhone) {
+    return
+  }
+
+  formData.insuranceAttachmentFileId = ''
+  formData.insuranceAttachmentName = ''
+
+  if (!formData.familyPhone) {
+    formData.familyPhone = phone
   }
 })
 
@@ -1256,9 +1365,9 @@ onMounted(() => {
 <style scoped>
 /* 移动端优化样式 */
 .mobile-registration {
-  max-width: 100vw;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
+  max-width: 100%;
+  overscroll-behavior: auto;
+  padding-bottom: calc(132px + env(safe-area-inset-bottom));
 }
 
 .mobile-registration-hero {
@@ -1370,6 +1479,426 @@ onMounted(() => {
   .mobile-registration :deep(.ant-modal) {
     max-width: 90vw !important;
     width: 90vw !important;
+  }
+}
+
+/* Material 3 surfaces and elder-friendly form controls. */
+.mobile-registration {
+  --m3-primary: #2a5f9e;
+  --m3-on-primary: #ffffff;
+  --m3-primary-container: #d8e7ff;
+  --m3-on-primary-container: #123253;
+  --m3-secondary-container: #c1f0e1;
+  --m3-surface: #ffffff;
+  --m3-outline: #747780;
+  --m3-on-surface: #1b1b20;
+  --m3-on-surface-variant: #484a52;
+  background: #f7f8fc;
+  color: var(--m3-on-surface);
+  font-family: "Microsoft YaHei", "PingFang SC", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0;
+}
+
+.mobile-app-bar {
+  background: var(--m3-surface);
+  border-bottom: 1px solid #dfe2eb;
+  box-shadow: 0 1px 2px rgba(27, 27, 32, 0.08);
+}
+
+.m3-back-button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--m3-on-surface);
+  display: inline-flex;
+  font-size: 17px;
+  font-weight: 700;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 6px;
+}
+
+.m3-app-title {
+  color: var(--m3-on-surface);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+  margin: 0;
+}
+
+.m3-app-bar-spacer {
+  min-width: 58px;
+}
+
+.m3-progress-card,
+.m3-form-card {
+  background: var(--m3-surface);
+  border: 1px solid #dfe2eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(27, 27, 32, 0.06);
+}
+
+.m3-progress-card,
+.m3-form-card {
+  padding: 20px;
+}
+
+.m3-overline {
+  color: var(--m3-primary);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.m3-page-title,
+.m3-section-title {
+  color: var(--m3-on-surface);
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 31px;
+  margin: 8px 0 0;
+}
+
+.m3-section-title {
+  margin: 0;
+}
+
+.m3-page-description,
+.m3-section-description,
+.m3-helper-text,
+.m3-filter-help {
+  color: var(--m3-on-surface-variant);
+  font-size: 16px;
+  line-height: 24px;
+  margin: 6px 0 0;
+}
+
+.m3-selection-count {
+  align-items: flex-end;
+  background: var(--m3-secondary-container);
+  border-radius: 8px;
+  color: #183f36;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 2px;
+  min-width: 76px;
+  padding: 10px 12px;
+}
+
+.m3-selection-count span {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.m3-selection-count strong {
+  font-size: 21px;
+  line-height: 26px;
+}
+
+.m3-stepper {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+}
+
+.m3-stepper-item {
+  align-items: center;
+  color: var(--m3-on-surface-variant);
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  font-weight: 700;
+  gap: 6px;
+  min-width: 0;
+}
+
+.m3-stepper-number {
+  align-items: center;
+  background: #e0e2ea;
+  border-radius: 50%;
+  color: #3e4149;
+  display: flex;
+  height: 32px;
+  justify-content: center;
+  width: 32px;
+}
+
+.m3-stepper-item.is-current,
+.m3-stepper-item.is-complete {
+  color: var(--m3-primary);
+}
+
+.m3-stepper-item.is-current .m3-stepper-number {
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
+}
+
+.m3-stepper-item.is-complete .m3-stepper-number {
+  background: var(--m3-primary-container);
+  color: var(--m3-on-primary-container);
+}
+
+.m3-stepper-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.course-discovery {
+  border-bottom: 1px solid #dfe2eb;
+  padding-bottom: 16px;
+}
+
+.m3-category-picker {
+  margin: 0;
+}
+
+.m3-choice-title,
+.m3-search-label,
+.m3-results-title {
+  color: var(--m3-on-surface);
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 24px;
+  margin: 0;
+}
+
+.m3-filter-help {
+  color: var(--m3-on-surface-variant);
+  font-size: 16px;
+  line-height: 24px;
+  margin: 6px 0 12px;
+}
+
+.m3-category-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.m3-category-tile {
+  align-items: flex-start;
+  background: #ffffff;
+  border: 1px solid #c5c7d0;
+  border-radius: 8px;
+  color: var(--m3-on-surface);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 76px;
+  padding: 12px;
+  text-align: left;
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.m3-category-tile-title {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.m3-category-tile-count {
+  color: var(--m3-on-surface-variant);
+  font-size: 15px;
+  line-height: 22px;
+  margin-top: 2px;
+}
+
+.m3-category-tile.is-selected {
+  background: var(--m3-primary-container);
+  border-color: var(--m3-primary);
+  box-shadow: inset 4px 0 0 var(--m3-primary);
+}
+
+.m3-category-tile.is-selected .m3-category-tile-count {
+  color: var(--m3-on-primary-container);
+}
+
+.m3-direct-search {
+  border-top: 1px solid #dfe2eb;
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+.m3-search-label {
+  margin-bottom: 8px;
+}
+
+.m3-selection-summary,
+.m3-insurance-notice,
+.m3-action-context {
+  background: var(--m3-primary-container);
+  border-left: 4px solid var(--m3-primary);
+  border-radius: 8px;
+  color: var(--m3-on-primary-container);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  padding: 12px 14px;
+}
+
+.m3-course-guidance {
+  color: var(--m3-on-surface-variant);
+  font-size: 17px;
+  line-height: 26px;
+  margin: 0;
+  padding: 20px 8px;
+  text-align: center;
+}
+
+.m3-results-title {
+  margin: 0 0 8px;
+}
+
+.m3-course-category {
+  background: #edf1f8;
+  border-radius: 6px;
+  color: #3f4655;
+  flex: 0 0 auto;
+  font-size: 14px;
+  line-height: 20px;
+  padding: 2px 6px;
+}
+
+.course-card {
+  background: #fff;
+  border: 0;
+  border-top: 1px solid #e4e6ee;
+  color: var(--m3-on-surface);
+  cursor: pointer;
+  display: block;
+  min-height: 144px;
+  padding: 16px 14px;
+  text-align: left;
+  transition: background-color 180ms ease, box-shadow 180ms ease;
+  width: 100%;
+}
+
+.course-card.is-selected {
+  background: #eaf2ff;
+  box-shadow: inset 4px 0 0 var(--m3-primary);
+}
+
+.m3-empty-courses {
+  color: var(--m3-on-surface-variant);
+  font-size: 17px;
+  line-height: 26px;
+  padding: 36px 16px;
+  text-align: center;
+}
+
+.sticky-action-bar {
+  background: rgba(255, 255, 255, 0.98);
+  border-top: 1px solid #dfe2eb;
+  box-shadow: 0 -2px 8px rgba(27, 27, 32, 0.08);
+  left: 0;
+  position: fixed;
+  right: 0;
+  padding: 12px 16px max(16px, env(safe-area-inset-bottom));
+}
+
+.m3-action-context {
+  margin-bottom: 12px;
+}
+
+.mobile-registration :deep(.ant-form-item) {
+  margin-bottom: 20px;
+}
+
+.mobile-registration :deep(.ant-form-item-label > label) {
+  color: var(--m3-on-surface);
+  font-size: 17px;
+  font-weight: 700;
+  height: auto;
+  line-height: 24px;
+}
+
+.mobile-registration :deep(.ant-form-item-explain-error) {
+  font-size: 15px;
+  line-height: 22px;
+  margin-top: 6px;
+}
+
+.mobile-registration :deep(.ant-radio-wrapper) {
+  border-color: #8c8f98;
+  font-size: 17px;
+  min-height: 52px;
+  padding: 13px 16px;
+}
+
+.mobile-registration :deep(.ant-radio-wrapper-checked) {
+  background-color: var(--m3-primary-container);
+  border-color: var(--m3-primary);
+}
+
+.mobile-registration :deep(.ant-select-selector),
+.mobile-registration :deep(.ant-picker),
+.mobile-registration :deep(.ant-input),
+.mobile-registration :deep(.ant-input-affix-wrapper) {
+  border-color: #8c8f98 !important;
+  font-size: 18px !important;
+  min-height: 56px;
+}
+
+.mobile-registration :deep(.ant-select-focused .ant-select-selector),
+.mobile-registration :deep(.ant-picker-focused),
+.mobile-registration :deep(.ant-input:focus),
+.mobile-registration :deep(.ant-input-affix-wrapper-focused) {
+  border-color: var(--m3-primary) !important;
+  box-shadow: 0 0 0 3px rgba(42, 95, 158, 0.18) !important;
+}
+
+.mobile-registration :deep(.ant-btn) {
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  min-height: 56px;
+}
+
+.mobile-registration :deep(.ant-btn-primary) {
+  background-color: var(--m3-primary);
+  border-color: var(--m3-primary);
+}
+
+.m3-file-upload {
+  background: #f8f9fc;
+  border: 2px dashed #8c8f98;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.m3-file-upload :deep(input[type='file']) {
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.m3-back-button:focus-visible,
+.m3-category-tile:focus-visible,
+.course-card:focus-visible {
+  outline: 3px solid #1f6feb;
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .m3-progress-card,
+  .m3-form-card {
+    border-radius: 8px;
+    padding: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-registration *,
+  .mobile-registration *::before,
+  .mobile-registration *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
 </style>

@@ -84,7 +84,7 @@ export const validateSmsData = (data: any) => {
   const schema = Joi.object({
     phone: phoneSchema,
     type: Joi.string()
-      .valid('register', 'login', 'reset_password', 'bind_phone')
+        .valid('register', 'login', 'reset_password', 'bind_phone', 'enrollment')
       .required()
       .messages({
         'any.only': '短信类型无效',

@@ -107,6 +107,24 @@ export class AuthService {
     return request.post<{ valid: boolean }>('/auth/sms-code/verify', data)
   }
 
+  static async sendEnrollmentVerificationCode(phone: string): Promise<ApiResponse<{ phone: string; expiresIn: number }>> {
+    return request.post<{ phone: string; expiresIn: number }>('/auth/send-sms', {
+      phone,
+      type: 'enrollment'
+    })
+  }
+
+  static async verifyEnrollmentVerificationCode(
+    phone: string,
+    code: string
+  ): Promise<ApiResponse<{ phone: string; verified: true; enrollmentVerificationToken: string }>> {
+    return request.post<{ phone: string; verified: true; enrollmentVerificationToken: string }>('/auth/verify-sms', {
+      phone,
+      code,
+      type: 'enrollment'
+    })
+  }
+
   /**
    * 发送密码重置短信
    * @param data 重置密码请求数据
