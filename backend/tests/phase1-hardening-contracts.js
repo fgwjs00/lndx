@@ -46,6 +46,7 @@ const roleRoutes = read('src/routes/role.ts')
 const gradeRoutes = read('src/routes/gradeManagement.ts')
 const applicationRoutes = read('src/routes/application.ts')
 const applicationV2Routes = read('src/routes/applicationV2.ts')
+const enrollmentApplicationService = read('src/services/enrollmentApplicationService.ts')
 const tsconfig = read('tsconfig.json')
 const imageUtils = fs.existsSync(path.join(root, '../frontend/src/utils/imageUtils.ts'))
   ? fs.readFileSync(path.join(root, '../frontend/src/utils/imageUtils.ts'), 'utf8')
@@ -114,6 +115,16 @@ assertIncludes(imageUtils, 'withAssetToken', 'frontend image URLs must append si
 assertIncludes(imageUtils, 'assetToken', 'frontend image URLs must use a distinct asset token')
 assertNotIncludes(imageUtils, "localStorage.getItem('token')", 'frontend image URLs must not append the login JWT')
 assertNotIncludes(imageUtils, 'token=', 'frontend image URLs must not use token= query parameters')
+assertIncludes(imageUtils, '/assets/placeholders/default-avatar.svg', 'default avatars must use a public frontend placeholder')
+assertNotIncludes(imageUtils, '/uploads/id-cards/default-avatar.svg', 'default avatars must not enter protected ID-card storage')
+for (const placeholder of ['default-avatar.svg', 'default-idcard-front.svg', 'default-idcard-back.svg']) {
+  if (!fs.existsSync(path.join(root, '..', 'frontend', 'public', 'assets', 'placeholders', placeholder))) {
+    throw new Error(`frontend placeholder is missing: ${placeholder}`)
+  }
+}
+for (const source of [applicationRoutes, analysisRoutes, studentRoutes, enrollmentApplicationService]) {
+  assertNotIncludes(source, '/uploads/id-cards/default-avatar', 'backend defaults must not point at protected ID-card storage')
+}
 assertIncludes(backendPackage, '"tslib"', 'backend runtime dependencies must include tslib for dist start')
 assertNotIncludes(tsconfig, '"importHelpers": true', 'backend dist must not require tslib at runtime')
 

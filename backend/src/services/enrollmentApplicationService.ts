@@ -851,7 +851,7 @@ export async function getPhase2PendingApplicationRows(
       },
       applicationDate: row.submittedAt.toISOString().split('T')[0],
       status: 'PENDING',
-      avatar: row.identityPhoto || row.photo || '/uploads/id-cards/default-avatar.jpg',
+      avatar: row.identityPhoto || row.photo || '/assets/placeholders/default-avatar.svg',
       idCardFront: row.identityIdCardFront || row.idCardFront,
       idCardBack: row.identityIdCardBack || row.idCardBack,
       insuranceStart: row.insuranceStart?.toISOString().split('T')[0] || null,

@@ -301,8 +301,8 @@ router.get('/', requireTeacher, asyncHandler(async (req: Request, res: Response)
       email: '', // Student模型没有email字段
       contactPhone: student.contactPhone,
       phone: student.contactPhone, // 兼容字段
-      photo: student.photo || '/default-avatar.png', // 修正：使用photo而非avatar
-      avatar: student.photo || '/default-avatar.png', // 兼容字段
+      photo: student.photo || '/assets/placeholders/default-avatar.svg', // 修正：使用photo而非avatar
+      avatar: student.photo || '/assets/placeholders/default-avatar.svg', // 兼容字段
       major: student.major || '未设置', // 修正：使用学生自己的major字段
       currentGrade: student.currentGrade || '未设置', // 修正：显示年级而非班级
       semester: student.semester || '未设置', // 修正：使用正确的学期字段

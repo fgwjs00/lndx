@@ -18,6 +18,12 @@ const getBackendBaseUrl = (): string => {
   return import.meta.env.VITE_BACKEND_URL || 'http://ln.tuojiayi.com'
 }
 
+const DEFAULT_AVATAR_URL = '/assets/placeholders/default-avatar.svg'
+const DEFAULT_ID_CARD_URLS = {
+  front: '/assets/placeholders/default-idcard-front.svg',
+  back: '/assets/placeholders/default-idcard-back.svg'
+} as const
+
 export function withAssetToken(url: string): string {
   if (!url || url.startsWith('data:') || !url.includes('/uploads/')) {
     return url
@@ -40,7 +46,7 @@ export function withAssetToken(url: string): string {
 export function getImageUrl(imagePath: string | null | undefined): string {
   // 空值处理
   if (!imagePath) {
-    return withAssetToken(`${getBackendBaseUrl()}/uploads/id-cards/default-avatar.svg`)
+    return DEFAULT_AVATAR_URL
   }
 
   // 如果已经是完整的URL（http开头），直接返回
@@ -50,6 +56,11 @@ export function getImageUrl(imagePath: string | null | undefined): string {
 
   // 如果是base64数据，直接返回
   if (imagePath.startsWith('data:')) {
+    return imagePath
+  }
+
+  // 占位图属于前端公开资源，不应进入身份证等敏感文件的鉴权链路。
+  if (imagePath.startsWith('/assets/placeholders/')) {
     return imagePath
   }
 
@@ -68,8 +79,7 @@ export function getImageUrl(imagePath: string | null | undefined): string {
  */
 export function getIdCardUrl(cardPath: string | null | undefined, type: 'front' | 'back' = 'front'): string {
   if (!cardPath) {
-    // 返回默认占位图
-    return withAssetToken(`${getBackendBaseUrl()}/uploads/id-cards/default-idcard-${type}.svg`)
+    return DEFAULT_ID_CARD_URLS[type]
   }
 
   return getImageUrl(cardPath)
@@ -82,7 +92,7 @@ export function getIdCardUrl(cardPath: string | null | undefined, type: 'front' 
  */
 export function getAvatarUrl(photoPath: string | null | undefined): string {
   if (!photoPath) {
-    return withAssetToken(`${getBackendBaseUrl()}/uploads/id-cards/default-avatar.svg`)
+    return DEFAULT_AVATAR_URL
   }
 
   return getImageUrl(photoPath)

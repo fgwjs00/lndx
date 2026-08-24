@@ -123,7 +123,7 @@ router.get('/', requireTeacher, asyncHandler(async (req: Request, res: Response)
       },
       applicationDate: enrollment.enrollmentDate.toISOString().split('T')[0],
       status: enrollment.status,
-      avatar: (enrollment.student as any).photo || '/uploads/id-cards/default-avatar.jpg',
+      avatar: (enrollment.student as any).photo || '/assets/placeholders/default-avatar.svg',
       idCardFront: enrollment.student.idCardFront,
       idCardBack: enrollment.student.idCardBack,
       insuranceStart: enrollment.insuranceStart?.toISOString().split('T')[0],

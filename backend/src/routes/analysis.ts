@@ -368,7 +368,7 @@ router.get('/recent-activities', requireTeacher, asyncHandler(async (req: Reques
       title: `${enrollment.student.name} 报名 ${enrollment.course.name}`,
       description: `课程分类：${enrollment.course.category}`,
       status: enrollment.status,
-      avatar: enrollment.student.photo || '/default-avatar.png',
+      avatar: enrollment.student.photo || '/assets/placeholders/default-avatar.svg',
       time: enrollment.createdAt,
       metadata: {
         studentName: enrollment.student.name,
