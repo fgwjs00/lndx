@@ -134,6 +134,17 @@
                 </span>
               </label>
               <div v-if="formData.photoFileName" class="m3-upload-success">已上传：{{ formData.photoFileName }}</div>
+              <div v-if="identityPreviewUrls.photo" class="m3-upload-preview">
+                <a-image
+                  :src="identityPreviewUrls.photo"
+                  alt="本人近期照片预览"
+                  class="m3-upload-preview-image is-profile-photo"
+                />
+                <div class="m3-upload-preview-caption">
+                  <i class="fas fa-magnifying-glass-plus" aria-hidden="true"></i>
+                  照片预览，点击图片可查看大图
+                </div>
+              </div>
               <div class="m3-helper-text">正面、免冠、近期照片，支持 JPG、PNG、WEBP，大小不超过 5MB。</div>
             </a-form-item>
 
@@ -152,6 +163,17 @@
                 </span>
               </label>
               <div v-if="formData.idCardFrontFileName" class="m3-upload-success">已上传：{{ formData.idCardFrontFileName }}</div>
+              <div v-if="identityPreviewUrls.idCardFront" class="m3-upload-preview">
+                <a-image
+                  :src="identityPreviewUrls.idCardFront"
+                  alt="身份证正面照片预览"
+                  class="m3-upload-preview-image"
+                />
+                <div class="m3-upload-preview-caption">
+                  <i class="fas fa-magnifying-glass-plus" aria-hidden="true"></i>
+                  正面照片预览，点击图片可查看大图
+                </div>
+              </div>
             </a-form-item>
 
             <a-form-item name="idCardBackFileId" label="身份证背面照片" class="mb-0">
@@ -169,6 +191,17 @@
                 </span>
               </label>
               <div v-if="formData.idCardBackFileName" class="m3-upload-success">已上传：{{ formData.idCardBackFileName }}</div>
+              <div v-if="identityPreviewUrls.idCardBack" class="m3-upload-preview">
+                <a-image
+                  :src="identityPreviewUrls.idCardBack"
+                  alt="身份证背面照片预览"
+                  class="m3-upload-preview-image"
+                />
+                <div class="m3-upload-preview-caption">
+                  <i class="fas fa-magnifying-glass-plus" aria-hidden="true"></i>
+                  背面照片预览，点击图片可查看大图
+                </div>
+              </div>
             </a-form-item>
           </section>
 
@@ -613,7 +646,7 @@
  * @component MobileRegistration
  * @description 为学员提供移动端优化的报名登记体验，采用分步表单设计
  */
-import { ref, reactive, onMounted, watch, computed } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import type { Dayjs } from 'dayjs'
@@ -1407,6 +1440,25 @@ const loadInsuranceRequirement = async (): Promise<void> => {
 
 type IdentityUploadTarget = 'photo' | 'idCardFront' | 'idCardBack'
 
+const identityPreviewUrls = reactive<Record<IdentityUploadTarget, string>>({
+  photo: '',
+  idCardFront: '',
+  idCardBack: ''
+})
+
+const clearIdentityPreview = (target: IdentityUploadTarget): void => {
+  const previewUrl = identityPreviewUrls[target]
+  if (previewUrl) {
+    URL.revokeObjectURL(previewUrl)
+    identityPreviewUrls[target] = ''
+  }
+}
+
+const setIdentityPreview = (target: IdentityUploadTarget, file: File): void => {
+  clearIdentityPreview(target)
+  identityPreviewUrls[target] = URL.createObjectURL(file)
+}
+
 const IDENTITY_IMAGE_MIME_TYPES = new Set([
   'image/jpeg',
   'image/png',
@@ -1444,6 +1496,9 @@ const resetIdentityDocuments = (): void => {
   formData.idCardFrontFileName = ''
   formData.idCardBackFileId = ''
   formData.idCardBackFileName = ''
+  clearIdentityPreview('photo')
+  clearIdentityPreview('idCardFront')
+  clearIdentityPreview('idCardBack')
 }
 
 const handleIdentityFileChange = async (event: Event, target: IdentityUploadTarget): Promise<void> => {
@@ -1485,6 +1540,8 @@ const handleIdentityFileChange = async (event: Event, target: IdentityUploadTarg
 
     formData[config.fileIdKey] = response.data.fileId
     formData[config.fileNameKey] = response.data.originalName || response.data.fileName
+    setIdentityPreview(target, file)
+    input.value = ''
     message.success(`${config.label}上传成功`)
     await formRef.value?.validateFields([config.fileIdKey]).catch(() => undefined)
   } catch (error: any) {
@@ -1698,6 +1755,12 @@ const handleIdNumberInput = (): void => {
 // 组件挂载时获取学期列表
 onMounted(() => {
   loadSemesters()
+})
+
+onBeforeUnmount(() => {
+  clearIdentityPreview('photo')
+  clearIdentityPreview('idCardFront')
+  clearIdentityPreview('idCardBack')
 })
 </script>
 
@@ -2321,6 +2384,43 @@ onMounted(() => {
   line-height: 24px;
   margin-top: 8px;
   overflow-wrap: anywhere;
+}
+
+.m3-upload-preview {
+  background: #f8f9fc;
+  border: 1px solid #c8ccd6;
+  border-radius: 8px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.m3-upload-preview :deep(.ant-image) {
+  background: #fff;
+  display: block;
+  width: 100%;
+}
+
+.m3-upload-preview :deep(.m3-upload-preview-image) {
+  display: block;
+  height: 190px;
+  object-fit: contain;
+  width: 100%;
+}
+
+.m3-upload-preview :deep(.m3-upload-preview-image.is-profile-photo) {
+  height: 240px;
+}
+
+.m3-upload-preview-caption {
+  align-items: center;
+  color: var(--m3-primary);
+  display: flex;
+  font-size: 16px;
+  font-weight: 700;
+  gap: 8px;
+  line-height: 24px;
+  min-height: 48px;
+  padding: 10px 12px;
 }
 
 .m3-file-upload {
