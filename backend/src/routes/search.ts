@@ -5,7 +5,7 @@
 
 import { Router } from 'express'
 import { asyncHandler, ValidationError } from '@/middleware/errorHandler'
-import { authMiddleware } from '@/middleware/auth'
+import { authMiddleware, requireTeacher } from '@/middleware/auth'
 import { createLimiter } from '@/middleware/rateLimiter'
 import { searchService } from '@/services/searchService'
 import { businessLogger } from '@/utils/logger'
@@ -121,7 +121,7 @@ const searchLimiter = createLimiter(
  *       429:
  *         $ref: '#/components/responses/TooManyRequestsError'
  */
-router.get('/global', authMiddleware, searchLimiter, asyncHandler(async (req, res) => {
+router.get('/global', authMiddleware, requireTeacher, searchLimiter, asyncHandler(async (req, res) => {
   // 参数验证
   const schema = Joi.object({
     q: Joi.string().min(2).max(50).required().messages({
@@ -221,7 +221,7 @@ router.get('/global', authMiddleware, searchLimiter, asyncHandler(async (req, re
  *                     type: string
  *                   example: ["舞蹈基础", "舞蹈进阶", "舞蹈表演"]
  */
-router.get('/suggestions', authMiddleware, searchLimiter, asyncHandler(async (req, res) => {
+router.get('/suggestions', authMiddleware, requireTeacher, searchLimiter, asyncHandler(async (req, res) => {
   const schema = Joi.object({
     q: Joi.string().min(1).max(20).required().messages({
       'string.min': '搜索前缀至少1个字符',
@@ -333,7 +333,7 @@ router.get('/hot-terms', authMiddleware, asyncHandler(async (req, res) => {
  *       200:
  *         description: 学生搜索成功
  */
-router.get('/students', authMiddleware, searchLimiter, asyncHandler(async (req, res) => {
+router.get('/students', authMiddleware, requireTeacher, searchLimiter, asyncHandler(async (req, res) => {
   const schema = Joi.object({
     q: Joi.string().min(2).required(),
     limit: Joi.number().integer().min(1).max(50).default(20)

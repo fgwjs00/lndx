@@ -74,7 +74,6 @@
               v-model:value="formData.role" 
               placeholder="请选择用户角色"
               size="large"
-              @change="handleRoleChange"
             >
               <a-select-option value="admin">
                 <div class="flex items-center">
@@ -172,7 +171,6 @@
  * @description 用于创建和编辑用户的表单组件
  */
 import { ref, reactive, watch } from 'vue'
-import { message } from 'ant-design-vue'
 
 // 用户数据类型定义
 interface UserFormData {
@@ -269,13 +267,6 @@ watch(() => props.user, (newUser) => {
     resetForm()
   }
 }, { immediate: true })
-
-/**
- * 处理角色变化
- */
-const handleRoleChange = (role: string): void => {
-  // 角色变化处理逻辑（暂时保留，可能有其他用途）
-}
 
 /**
  * 处理表单提交

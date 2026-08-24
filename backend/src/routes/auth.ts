@@ -3,7 +3,7 @@
  * @description 处理用户登录、注册、密码重置等认证相关功能
  */
 
-import { Router } from 'express'
+import { Router, RequestHandler } from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { UserRole } from '@prisma/client'
@@ -14,9 +14,24 @@ import { generateEnrollmentVerificationToken, generateToken, generateRefreshToke
 import { loginLimiter, smsLimiter } from '@/middleware/rateLimiter'
 import { logger, businessLogger, errorLogger } from '@/utils/logger'
 import { validateLoginData, validateSmsData, validateRegisterData } from '@/utils/validation'
-import { sendSms, generateSmsCode, verifySms as verifySmsCode } from '@/services/smsService'
+import { sendSms, verifySms as verifySmsCode } from '@/services/smsService'
 
 const router = Router()
+
+function ensureSmsEnabled(): void {
+  if (!config.sms.enabled) {
+    throw new BusinessError('短信服务暂未启用', 503, 'SMS_SERVICE_DISABLED')
+  }
+}
+
+const requireSmsEnabled: RequestHandler = (_req, _res, next) => {
+  try {
+    ensureSmsEnabled()
+    next()
+  } catch (error) {
+    next(error)
+  }
+}
 
 /**
  * @swagger
@@ -233,7 +248,7 @@ router.post('/login', loginLimiter, asyncHandler(async (req, res) => {
  * 发送短信验证码
  * POST /api/auth/send-sms
  */
-router.post('/send-sms', smsLimiter, asyncHandler(async (req, res) => {
+router.post('/send-sms', requireSmsEnabled, smsLimiter, asyncHandler(async (req, res) => {
   const { phone, type } = req.body
 
   // 参数验证
@@ -259,15 +274,10 @@ router.post('/send-sms', smsLimiter, asyncHandler(async (req, res) => {
     }
   }
 
-  // 生成验证码
-  const code = generateSmsCode()
-
   try {
     // 发送短信
-    await sendSms(value.phone, code, value.type)
+    await sendSms(value.phone, value.type)
 
-    // TODO: 将验证码存储到Redis中，设置过期时间
-    // 这里暂时记录日志，实际项目中应该存储到缓存
     businessLogger.systemAction('SMS_SENT', {
       phone: value.phone,
       type: value.type,
@@ -295,7 +305,7 @@ router.post('/send-sms', smsLimiter, asyncHandler(async (req, res) => {
  * 验证短信验证码
  * POST /api/auth/verify-sms
  */
-router.post('/verify-sms', asyncHandler(async (req, res) => {
+router.post('/verify-sms', requireSmsEnabled, asyncHandler(async (req, res) => {
   const { phone, code, type } = req.body
 
   const { error, value } = validateSmsData({ phone, type })
@@ -337,7 +347,7 @@ router.post('/verify-sms', asyncHandler(async (req, res) => {
  * 用户注册
  * POST /api/auth/register
  */
-router.post('/register', asyncHandler(async (req, res) => {
+router.post('/register', requireSmsEnabled, asyncHandler(async (req, res) => {
   const { phone, password, realName, email, smsCode } = req.body
 
   // 参数验证

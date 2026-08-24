@@ -188,7 +188,7 @@
             政治面貌分布
           </h3>
           <div class="text-xs text-gray-500">
-            共 {{ politicalStats.summary.totalCount }} 人
+            共 {{ politicalStats.summary.totalStudents }} 人
           </div>
         </div>
         
@@ -469,7 +469,7 @@
  * @component Analysis
  * @description 系统数据统计分析和报表展示
  */
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import AnalysisService from '@/api/analysis'
 import type { 
@@ -523,12 +523,7 @@ const comprehensiveStats = ref<ComprehensiveStats>({
 const fetchOverviewStats = async (): Promise<void> => {
   try {
     const response = await AnalysisService.getOverviewStats()
-    // 从嵌套的响应数据中提取raw对象
-    if (response.data && response.data.raw) {
-      overviewStats.value = response.data.raw
-    } else {
-      overviewStats.value = response.data
-    }
+    overviewStats.value = response.data.raw
     console.log('获取统计概览成功:', response.data)
   } catch (error) {
     console.error('获取统计概览失败:', error)

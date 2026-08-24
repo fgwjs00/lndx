@@ -32,6 +32,7 @@ pnpm --dir frontend install --frozen-lockfile
 - `20260606000000_student_academic_events`
 - `20260820000000_roster_and_insurance_snapshots`
 - `20260820010000_attendance_class_section_eligibility`
+- `20260824000000_registration_signatures`
 
 ## Required Safety Order
 
@@ -80,6 +81,7 @@ npx prisma migrate resolve --applied 20260605000000_enrollment_phase2_foundation
 npx prisma migrate resolve --applied 20260606000000_student_academic_events
 npx prisma migrate resolve --applied 20260820000000_roster_and_insurance_snapshots
 npx prisma migrate resolve --applied 20260820010000_attendance_class_section_eligibility
+npx prisma migrate resolve --applied 20260824000000_registration_signatures
 ```
 
 6. Apply migrations that are not already present in the rehearsal database.
@@ -132,6 +134,25 @@ Copy source and build output as separate categories. Do not copy local `.env`,
 logs, dependencies, uploaded files, backup dumps, `.git`, or the
 `local-db-backups/` review folder.
 
+9. After committing the verified source, create the release packages from a
+   clean worktree:
+
+```bash
+pnpm --dir backend run release:baota
+```
+
+The command creates a timestamped directory under
+`local-db-backups/releases/` containing:
+
+- `lndx-source-*.tar.gz`: source files from the exact Git commit.
+- `lndx-build-*.tar.gz`: the locally verified `backend/dist/` and
+  `frontend/dist/` output.
+- `release-manifest.json`: commit id, migration list, file sizes, and SHA-256
+  checksums.
+
+The packaging command refuses to run with uncommitted source changes. This
+prevents local-only edits from silently entering a Baota upload.
+
 ## Copy Boundary
 
 Use this as the practical Baota upload boundary:
@@ -156,19 +177,24 @@ the two `dist` directories deliberately.
 1. Confirm the latest `pg_dump` bundle exists and can be downloaded.
 2. Complete the local restore and migration rehearsal.
 3. Stop writes or open a short maintenance window.
-4. Copy reviewed source files and verified build output only.
-5. Run `pnpm --dir backend install --frozen-lockfile`; never copy local
+4. Keep the production `.env` on Baota and set `TRUST_PROXY_HOPS=1` when
+   exactly one trusted Nginx reverse proxy sits in front of Express. Do not use
+   an unbounded `trust proxy=true` setting. Keep `SMS_ENABLED=false` until a
+   real SMS provider has been integrated and acceptance-tested; disabled SMS
+   endpoints must return `503` with `SMS_SERVICE_DISABLED`.
+5. Copy reviewed source files and verified build output only.
+6. Run `pnpm --dir backend install --frozen-lockfile`; never copy local
    `node_modules` to Baota.
-6. Run the exact migration path rehearsed locally.
-7. Run `npx prisma generate` if Prisma schema changed, after stopping the old
+7. Run the exact migration path rehearsed locally.
+8. Run `npx prisma generate` if Prisma schema changed, after stopping the old
    Node process so Windows/Linux file locks cannot retain an old query engine.
-8. Restart PM2.
+9. Restart PM2.
 
 ```bash
 pm2 restart lndx-backend
 ```
 
-8. Verify:
+10. Verify:
 
 ```bash
 curl http://127.0.0.1:3000/api/health

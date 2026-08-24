@@ -16,6 +16,7 @@ export interface AppConfig {
   nodeEnv: string
   port: number
   apiPrefix: string
+  trustProxyHops: number
   
   // 数据库配置
   databaseUrl: string
@@ -30,6 +31,7 @@ export interface AppConfig {
   
   // 短信配置
   sms: {
+    enabled: boolean
     accessKeyId: string
     accessKeySecret: string
     signName: string
@@ -122,6 +124,7 @@ export const config: AppConfig = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: parseNumber(process.env.PORT, 3000),
   apiPrefix: process.env.API_PREFIX || '/api',
+  trustProxyHops: parseNumber(process.env.TRUST_PROXY_HOPS, 0),
   
   // 数据库配置
   databaseUrl: process.env.DATABASE_URL || '',
@@ -136,6 +139,7 @@ export const config: AppConfig = {
   
   // 短信配置
   sms: {
+    enabled: parseBoolean(process.env.SMS_ENABLED, false),
     accessKeyId: process.env.SMS_ACCESS_KEY_ID || '',
     accessKeySecret: process.env.SMS_ACCESS_KEY_SECRET || '',
     signName: process.env.SMS_SIGN_NAME || '学生管理系统',

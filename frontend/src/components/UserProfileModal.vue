@@ -5,7 +5,7 @@
     :width="800"
     @ok="handleSave"
     @cancel="handleCancel"
-    @update:open="(value) => emit('update:open', value)"
+    @update:open="handleOpenChange"
     :confirm-loading="loading"
     ok-text="保存"
     cancel-text="取消"
@@ -117,11 +117,11 @@
  * @component UserProfileModal
  * @description 用于查看和编辑用户个人资料信息
  */
-import { ref, reactive, watch, computed } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { useAuthStore } from '@/store/auth'
 import { getRoleName, getRoleColor } from '@/utils/auth'
-import type { UserInfo, UpdateProfileRequest } from '@/types/auth'
+import { UserRole, UserStatus, type UserInfo, type UpdateProfileRequest } from '@/types/auth'
 import { getAvatarUrl } from '@/utils/imageUtils'
 
 // 组件属性
@@ -137,6 +137,10 @@ const emit = defineEmits<{
   success: []
 }>()
 
+const handleOpenChange = (value: boolean): void => {
+  emit('update:open', value)
+}
+
 const authStore = useAuthStore()
 const formRef = ref()
 const loading = ref<boolean>(false)
@@ -146,8 +150,8 @@ const formData = reactive<UserInfo>({
   id: 0,
   phone: '',
   email: '',
-  role: 'student',
-  status: 'active',
+  role: UserRole.STUDENT,
+  status: UserStatus.ACTIVE,
   avatar: '',
   realName: '',
   department: '',
@@ -182,7 +186,7 @@ watch(() => props.open, (newValue) => {
 /**
  * 格式化日期
  */
-const formatDate = (dateString: string): string => {
+const formatDate = (dateString?: string): string => {
   if (!dateString) return ''
   
   try {
@@ -290,4 +294,4 @@ const handleCancel = (): void => {
 :deep(.ant-btn) {
   border-radius: 8px;
 }
-</style> 
+</style>

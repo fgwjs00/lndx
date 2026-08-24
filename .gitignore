@@ -24,3 +24,9 @@ lndx_backup_*/
 *.tar.gz
 *.log
 *.backup
+
+# Local generated documents and render caches
+deliverables/
+tmp_contract_render/
+__pycache__/
+*.pyc

@@ -10,23 +10,75 @@ import { uploadLimiter } from '@/middleware/rateLimiter'
 const router = Router()
 
 const INSURANCE_UPLOAD_TTL_MS = 24 * 60 * 60 * 1000
+const IDENTITY_UPLOAD_TTL_MS = 24 * 60 * 60 * 1000
+const SIGNATURE_UPLOAD_TTL_MS = 24 * 60 * 60 * 1000
 const ALLOWED_INSURANCE_MIME_TYPES = new Set([
   'image/jpeg',
   'image/png',
   'image/webp',
   'application/pdf'
 ])
+const ALLOWED_IDENTITY_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp'
+])
+const ALLOWED_SIGNATURE_MIME_TYPES = new Set(['image/png'])
+const IDENTITY_DOCUMENT_TYPES = new Set([
+  'PROFILE_PHOTO',
+  'ID_CARD_FRONT',
+  'ID_CARD_BACK'
+])
 
 function validateInsuranceUploadMimeType(file: Express.Multer.File): boolean {
   return ALLOWED_INSURANCE_MIME_TYPES.has(file.mimetype)
 }
 
-function discardRejectedInsuranceUpload(file?: Express.Multer.File): void {
+function validateIdentityUploadMimeType(file: Express.Multer.File): boolean {
+  return ALLOWED_IDENTITY_MIME_TYPES.has(file.mimetype)
+}
+
+function validateSignatureUploadMimeType(file: Express.Multer.File): boolean {
+  return ALLOWED_SIGNATURE_MIME_TYPES.has(file.mimetype)
+}
+
+function getImageExtension(mimeType: string): string {
+  switch (mimeType) {
+    case 'image/png':
+      return '.png'
+    case 'image/webp':
+      return '.webp'
+    default:
+      return '.jpg'
+  }
+}
+
+function discardRejectedUpload(file?: Express.Multer.File): void {
   if (!file?.path || !fs.existsSync(file.path)) {
     return
   }
 
   fs.unlinkSync(file.path)
+}
+
+function validateUploadedFileSignature(file: Express.Multer.File): boolean {
+  const bytes = fs.readFileSync(file.path)
+  if (file.mimetype === 'image/jpeg') {
+    return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
+  }
+  if (file.mimetype === 'image/png') {
+    const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+    return bytes.length >= pngSignature.length && bytes.subarray(0, pngSignature.length).equals(pngSignature)
+  }
+  if (file.mimetype === 'image/webp') {
+    return bytes.length >= 12
+      && bytes.subarray(0, 4).toString('ascii') === 'RIFF'
+      && bytes.subarray(8, 12).toString('ascii') === 'WEBP'
+  }
+  if (file.mimetype === 'application/pdf') {
+    return bytes.length >= 5 && bytes.subarray(0, 5).toString('ascii') === '%PDF-'
+  }
+  return false
 }
 
 const insuranceStorage = multer.diskStorage({
@@ -54,6 +106,60 @@ const insuranceUpload = multer({
     }
 
     return cb(new Error('只能上传 JPG、PNG、WEBP 或 PDF 格式的保险凭证'))
+  }
+})
+
+const identityStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    const uploadDir = path.join(process.cwd(), 'uploads', 'registration-identities')
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true })
+    }
+    cb(null, uploadDir)
+  },
+  filename: (_req, file, cb) => {
+    cb(null, `identity_${crypto.randomUUID()}${getImageExtension(file.mimetype)}`)
+  }
+})
+
+const identityUpload = multer({
+  storage: identityStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024
+  },
+  fileFilter: (_req, file, cb) => {
+    if (validateIdentityUploadMimeType(file)) {
+      return cb(null, true)
+    }
+
+    return cb(new Error('本人照片和身份证照片仅支持 JPG、PNG 或 WEBP 格式'))
+  }
+})
+
+const signatureStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    const uploadDir = path.join(process.cwd(), 'uploads', 'registration-signatures')
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true })
+    }
+    cb(null, uploadDir)
+  },
+  filename: (_req, _file, cb) => {
+    cb(null, `signature_${crypto.randomUUID()}.png`)
+  }
+})
+
+const signatureUpload = multer({
+  storage: signatureStorage,
+  limits: {
+    fileSize: 2 * 1024 * 1024
+  },
+  fileFilter: (_req, file, cb) => {
+    if (validateSignatureUploadMimeType(file)) {
+      return cb(null, true)
+    }
+
+    return cb(new Error('手写签名仅支持 PNG 格式'))
   }
 })
 
@@ -488,9 +594,14 @@ router.post('/insurance-upload', uploadLimiter, insuranceUpload.single('file'), 
     throw new ValidationError('请上传保险凭证文件')
   }
 
+  if (!validateUploadedFileSignature(req.file)) {
+    discardRejectedUpload(req.file)
+    throw new ValidationError('保险凭证文件内容与格式不一致，请重新选择原始文件')
+  }
+
   const contactPhone = String(req.body?.contactPhone || '').trim()
   if (!/^1[3-9]\d{9}$/.test(contactPhone)) {
-    discardRejectedInsuranceUpload(req.file)
+    discardRejectedUpload(req.file)
     throw new ValidationError('请填写正确的报名手机号后再上传保险凭证')
   }
 
@@ -519,6 +630,117 @@ router.post('/insurance-upload', uploadLimiter, insuranceUpload.single('file'), 
     data: {
       fileId: fileUpload.id,
       url: fileUpload.filePath,
+      fileName: fileUpload.fileName,
+      originalName: fileUpload.originalName,
+      fileSize: fileUpload.fileSize,
+      mimeType: fileUpload.mimeType
+    }
+  })
+}))
+
+/**
+ * 上传公开报名所需的本人照片或身份证照片。
+ * 文件先以报名手机号归属的临时文件保存，匿名报名提交成功后才转为正式材料。
+ */
+router.post('/identity-upload', uploadLimiter, identityUpload.single('file'), asyncHandler(async (req: Request, res: Response) => {
+  if (!req.file) {
+    throw new ValidationError('请先选择要上传的照片')
+  }
+
+  if (!validateUploadedFileSignature(req.file)) {
+    discardRejectedUpload(req.file)
+    throw new ValidationError('照片文件内容与格式不一致，请重新拍照或选择原始照片')
+  }
+
+  const contactPhone = String(req.body?.contactPhone || '').trim()
+  const documentType = String(req.body?.documentType || '').trim()
+
+  if (!/^1[3-9]\d{9}$/.test(contactPhone)) {
+    discardRejectedUpload(req.file)
+    throw new ValidationError('请填写正确的报名手机号后再上传照片')
+  }
+
+  if (!IDENTITY_DOCUMENT_TYPES.has(documentType)) {
+    discardRejectedUpload(req.file)
+    throw new ValidationError('上传材料类型无效，请重新选择本人照片或身份证照片')
+  }
+
+  const filePath = `/uploads/registration-identities/${req.file.filename}`
+  const fileUpload = await prisma.fileUpload.create({
+    data: {
+      originalName: req.file.originalname,
+      fileName: req.file.filename,
+      filePath,
+      fileSize: req.file.size,
+      mimeType: req.file.mimetype,
+      fileType: documentType,
+      uploadedBy: null,
+      isTemp: true,
+      expiresAt: new Date(Date.now() + IDENTITY_UPLOAD_TTL_MS),
+      metadata: {
+        source: 'public-registration-identity',
+        ownerPhone: contactPhone,
+        documentType
+      }
+    }
+  })
+
+  res.json({
+    code: 200,
+    message: '照片上传成功',
+    data: {
+      fileId: fileUpload.id,
+      fileName: fileUpload.fileName,
+      originalName: fileUpload.originalName,
+      fileSize: fileUpload.fileSize,
+      mimeType: fileUpload.mimeType
+    }
+  })
+}))
+
+/**
+ * 保存手机报名手写签名。签名仅能由相同报名手机号在一次匿名报名中认领。
+ */
+router.post('/signature-upload', uploadLimiter, signatureUpload.single('file'), asyncHandler(async (req: Request, res: Response) => {
+  if (!req.file) {
+    throw new ValidationError('请先完成本人手写签名')
+  }
+
+  if (!validateUploadedFileSignature(req.file)) {
+    discardRejectedUpload(req.file)
+    throw new ValidationError('签名图片内容与格式不一致，请清除后重新签名')
+  }
+
+  const contactPhone = String(req.body?.contactPhone || '').trim()
+  if (!/^1[3-9]\d{9}$/.test(contactPhone)) {
+    discardRejectedUpload(req.file)
+    throw new ValidationError('请填写正确的报名手机号后再签名')
+  }
+
+  const filePath = `/uploads/registration-signatures/${req.file.filename}`
+  const fileUpload = await prisma.fileUpload.create({
+    data: {
+      originalName: req.file.originalname,
+      fileName: req.file.filename,
+      filePath,
+      fileSize: req.file.size,
+      mimeType: req.file.mimetype,
+      fileType: 'REGISTRATION_SIGNATURE',
+      uploadedBy: null,
+      isTemp: true,
+      expiresAt: new Date(Date.now() + SIGNATURE_UPLOAD_TTL_MS),
+      metadata: {
+        source: 'public-registration-signature',
+        ownerPhone: contactPhone
+      }
+    }
+  })
+
+  res.json({
+    code: 200,
+    message: '手写签名保存成功',
+    data: {
+      fileId: fileUpload.id,
       fileName: fileUpload.fileName,
       originalName: fileUpload.originalName,
       fileSize: fileUpload.fileSize,

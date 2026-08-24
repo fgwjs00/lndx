@@ -16,7 +16,7 @@
               :src="getAvatarUrl(application.avatar)" 
               :alt="application.studentInfo?.name" 
               class="w-16 h-16 rounded-full mr-4 object-cover border border-gray-300"
-              @error="$event.target.src = getAvatarUrl(null)"
+              @error="handleAvatarError"
             />
             <div>
               <p class="font-medium text-gray-800">{{ application.studentInfo?.name }}</p>
@@ -123,6 +123,19 @@
           </div>
         </div>
       </div>
+
+      <!-- 本人手写签名 -->
+      <div class="mb-6" v-if="application.signature">
+        <h3 class="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">本人手写签名</h3>
+        <div class="bg-white border border-gray-300 rounded-lg p-3">
+          <img
+            :src="getImageUrl(application.signature)"
+            alt="本人手写签名"
+            class="w-full max-h-56 object-contain cursor-pointer"
+            @click="previewImage(getImageUrl(application.signature), '本人手写签名')"
+          />
+        </div>
+      </div>
       
       <!-- 备注信息 -->
       <div class="mb-6" v-if="application.remarks">
@@ -203,8 +216,7 @@
  * @description 展示申请的完整详细信息
  */
 import { ref, computed } from 'vue'
-import { message } from 'ant-design-vue'
-import { getImageUrl as getImageUrlUtil, getAvatarUrl, getIdCardUrl } from '@/utils/imageUtils'
+import { getImageUrl as getImageUrlUtil, getAvatarUrl } from '@/utils/imageUtils'
 import { formatClassSectionCode, formatGender } from '@/utils/displayFormatters'
 
 // Props定义
@@ -237,6 +249,13 @@ const reviewSnapshot = computed(() => {
   return props.application?.reviewSnapshot || props.application?.metadata?.reviewSnapshot || null
 })
 
+const handleAvatarError = (event: Event): void => {
+  const image = event.target as HTMLImageElement | null
+  if (image) {
+    image.src = getAvatarUrl(null)
+  }
+}
+
 /**
  * 获取图片URL
  */
@@ -249,20 +268,6 @@ const getImageUrl = (imagePath: string): string => {
   
   // 使用统一的图片URL工具函数
   return getImageUrlUtil(imagePath)
-}
-
-/**
- * 性别文本转换
- */
-const getGenderText = (gender?: string): string => {
-  switch (gender) {
-    case 'MALE':
-      return '男'
-    case 'FEMALE':  
-      return '女'
-    default:
-      return '未填写'
-  }
 }
 
 /**

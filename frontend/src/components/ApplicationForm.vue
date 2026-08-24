@@ -348,7 +348,12 @@ import IdCardReader from './IdCardReader.vue'
 const formRef = ref()
 
 // 表单数据
-const formData = reactive<Partial<StudentInfo> & { birthDate: string | Dayjs }>({
+type ApplicationFormData = Omit<Partial<StudentInfo>, 'birthDate'> & {
+  birthDate: string | Dayjs
+  studyPeriod: string | Dayjs
+}
+
+const formData = reactive<ApplicationFormData>({
   name: '',
   gender: '男',
   birthDate: '',

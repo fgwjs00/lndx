@@ -3,7 +3,7 @@
  * @description 提供缓存、防抖、节流等性能优化功能
  */
 
-import { ref, computed, watch, type Ref, type ComputedRef } from 'vue'
+import { ref, computed, onBeforeUnmount, type Ref, type ComputedRef } from 'vue'
 
 // 缓存管理器
 class CacheManager {
@@ -416,14 +416,9 @@ export class MemoryGuard {
 export function useMemoryGuard() {
   const guard = new MemoryGuard()
   
-  // 组件卸载时自动清理
-  if (typeof window !== 'undefined' && window.Vue) {
-    // Vue 3 组合式API中使用onBeforeUnmount
-    const { onBeforeUnmount } = require('vue')
-    onBeforeUnmount(() => {
-      guard.cleanup()
-    })
-  }
+  onBeforeUnmount(() => {
+    guard.cleanup()
+  })
   
   return {
     setTimeout: guard.setTimeout.bind(guard),

@@ -162,9 +162,8 @@ import { ref, reactive, computed, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { PhoneOutlined, LockOutlined } from '@ant-design/icons-vue'
 import { useAuthStore } from '@/store/auth'
-import { AuthService } from '@/api/auth'
 import { validatePhone } from '@/utils/auth'
-import { shouldSkipCaptcha, showDevModeInfo } from '@/utils/dev'
+import { showDevModeInfo } from '@/utils/dev'
 // 注册和忘记密码组件已屏蔽
 // import RegisterForm from '@/components/RegisterForm.vue'
 // import ForgotPasswordForm from '@/components/ForgotPasswordForm.vue'
@@ -175,8 +174,6 @@ const authStore = useAuthStore()
 
 // 响应式数据
 const loading = ref<boolean>(false)
-const captchaImage = ref<string>('')
-const captchaId = ref<string>('')
 // 注册和忘记密码功能已屏蔽
 // const showRegister = ref<boolean>(false)
 // const showForgotPassword = ref<boolean>(false)
@@ -211,39 +208,8 @@ const rules = computed(() => {
     ]
   }
 
-  // 只在非开发模式下添加验证码验证
-  if (!shouldSkipCaptcha()) {
-    baseRules.captcha = [
-      { required: true, message: '请输入验证码', trigger: 'blur' },
-      { len: 4, message: '验证码长度为4位', trigger: 'blur' }
-    ]
-  }
-
   return baseRules
 })
-
-/**
- * 获取验证码
- */
-const getCaptcha = async (): Promise<void> => {
-  try {
-    const response = await AuthService.getCaptcha()
-    if (response.code === 200) {
-      captchaImage.value = response.data.captchaImage
-      captchaId.value = response.data.captchaId
-    }
-  } catch (error) {
-    console.error('获取验证码失败:', error)
-  }
-}
-
-/**
- * 刷新验证码
- */
-const refreshCaptcha = (): void => {
-  formData.captcha = ''
-  getCaptcha()
-}
 
 /**
  * 处理表单提交
@@ -270,20 +236,9 @@ const handleLogin = async (values: LoginRequest): Promise<void> => {
   try {
     loading.value = true
 
-    let loginData: LoginRequest
-
-    // 开发模式下跳过验证码
-    if (shouldSkipCaptcha()) {
-      loginData = {
-        phone: values.phone,
-        password: values.password
-      }
-    } else {
-      // 生产模式添加验证码ID
-      loginData = {
-        ...values,
-        captchaId: captchaId.value
-      }
+    const loginData: LoginRequest = {
+      phone: values.phone,
+      password: values.password
     }
 
     console.log('🔄 调用 authStore.login...')
@@ -304,17 +259,10 @@ const handleLogin = async (values: LoginRequest): Promise<void> => {
         await router.push('/')
       }
     } else {
-      console.log('❌ 登录失败，刷新验证码')
-      // 登录失败，刷新验证码（非开发模式）
-      if (!shouldSkipCaptcha()) {
-        refreshCaptcha()
-      }
+      console.log('❌ 登录失败')
     }
   } catch (error) {
     console.error('❌ 登录异常:', error)
-    if (!shouldSkipCaptcha()) {
-      refreshCaptcha()
-    }
   } finally {
     loading.value = false
     console.log('🏁 登录流程结束')
@@ -337,15 +285,9 @@ const handleLogin = async (values: LoginRequest): Promise<void> => {
 //   message.success('密码重置短信已发送，请查收')
 // }
 
-// 组件挂载时获取验证码
+// 组件挂载时输出受控的开发模式提示
 onMounted(() => {
-  // 显示开发模式信息
   showDevModeInfo()
-  
-  // 只在非开发模式下获取验证码
-  if (!shouldSkipCaptcha()) {
-    getCaptcha()
-  }
 })
 </script>
 

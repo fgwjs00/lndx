@@ -4,11 +4,19 @@ import { UserRole } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { AuthError, PermissionError } from '@/middleware/errorHandler'
 
-const STAFF_ROLES = new Set<UserRole>([
+const ADMIN_ROLES = new Set<UserRole>([
   UserRole.SUPER_ADMIN,
-  UserRole.SCHOOL_ADMIN,
-  UserRole.TEACHER
+  UserRole.SCHOOL_ADMIN
 ])
+
+function getMetadataId(metadata: unknown, key: string): string | null {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return null
+  }
+
+  const value = (metadata as Record<string, unknown>)[key]
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
 
 function normalizeUploadPath(requestPath: string): string | null {
   try {
@@ -25,16 +33,70 @@ function normalizeUploadPath(requestPath: string): string | null {
   }
 }
 
+async function canTeacherAccessStudentResource(
+  userId: string,
+  studentIds: string[],
+  enrollmentApplicationId: string | null
+): Promise<boolean> {
+  const teacher = await prisma.teacher.findUnique({
+    where: { userId },
+    select: { id: true }
+  })
+
+  const resourceFilters: any[] = []
+  if (studentIds.length > 0) {
+    resourceFilters.push(
+      { rosterMembers: { some: { studentId: { in: studentIds } } } },
+      {
+        enrollmentChoices: {
+          some: { application: { studentId: { in: studentIds } } }
+        }
+      }
+    )
+  }
+  if (enrollmentApplicationId) {
+    resourceFilters.push({
+      enrollmentChoices: { some: { applicationId: enrollmentApplicationId } }
+    })
+  }
+
+  if (resourceFilters.length === 0) {
+    return false
+  }
+
+  const courseOwnershipFilters: any[] = [
+    { course: { createdBy: userId } }
+  ]
+  if (teacher) {
+    courseOwnershipFilters.push({
+      course: { teachers: { some: { teacherId: teacher.id } } }
+    })
+  }
+
+  const assignedClassSection = await prisma.classSection.findFirst({
+    where: {
+      AND: [
+        { OR: resourceFilters },
+        { OR: courseOwnershipFilters }
+      ]
+    },
+    select: { id: true }
+  })
+
+  return Boolean(assignedClassSection)
+}
+
 async function canAccessUpload(filePath: string, user: NonNullable<Request['user']>): Promise<boolean> {
   const [file, student] = await Promise.all([
     prisma.fileUpload.findFirst({
       where: { filePath },
       select: {
         uploadedBy: true,
+        metadata: true,
         insuranceAttachments: {
           select: {
             student: {
-              select: { userId: true }
+              select: { id: true, userId: true }
             }
           }
         }
@@ -48,7 +110,7 @@ async function canAccessUpload(filePath: string, user: NonNullable<Request['user
           { idCardBack: filePath }
         ]
       },
-      select: { userId: true }
+      select: { id: true, userId: true }
     })
   ])
 
@@ -57,7 +119,7 @@ async function canAccessUpload(filePath: string, user: NonNullable<Request['user
     return false
   }
 
-  if (STAFF_ROLES.has(user.role)) {
+  if (ADMIN_ROLES.has(user.role)) {
     return true
   }
 
@@ -65,7 +127,33 @@ async function canAccessUpload(filePath: string, user: NonNullable<Request['user
     return true
   }
 
-  return Boolean(file?.insuranceAttachments.some(item => item.student.userId === user.id))
+  if (file?.insuranceAttachments.some(item => item.student.userId === user.id)) {
+    return true
+  }
+
+  const metadataStudentId = getMetadataId(file?.metadata, 'studentId')
+  const enrollmentApplicationId = getMetadataId(file?.metadata, 'enrollmentApplicationId')
+  const studentIds = Array.from(new Set([
+    student?.id,
+    metadataStudentId,
+    ...(file?.insuranceAttachments.map(item => item.student.id) || [])
+  ].filter((id): id is string => Boolean(id))))
+
+  if (metadataStudentId) {
+    const ownStudent = await prisma.student.findFirst({
+      where: { id: metadataStudentId, userId: user.id },
+      select: { id: true }
+    })
+    if (ownStudent) {
+      return true
+    }
+  }
+
+  if (user.role !== UserRole.TEACHER) {
+    return false
+  }
+
+  return canTeacherAccessStudentResource(user.id, studentIds, enrollmentApplicationId)
 }
 
 /**

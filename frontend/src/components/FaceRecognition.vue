@@ -180,7 +180,7 @@
     (e: 'attendance-confirmed', data: { studentId: number, confidence: number }): void
   }
   
-  const props = defineProps<Props>()
+  defineProps<Props>()
   defineEmits<Emits>()
   
     // 响应式数据

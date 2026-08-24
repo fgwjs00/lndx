@@ -371,9 +371,18 @@
   import { ref, reactive, watch, onMounted } from 'vue'
   import { message } from 'ant-design-vue'
   import dayjs from 'dayjs'
-  import type { Course, CourseLevel, AgeRestriction, CourseCategory } from '@/types/index'
+  import type { Course, CourseStatus, CreateCourseRequest } from '@/api/course'
   import { getDepartmentCodes } from '@/config/departments'
   import { CourseService } from '@/api/course'
+
+  type CourseLevel = '' | '一年级' | '二年级' | '三年级'
+
+  interface AgeRestriction {
+    enabled: boolean
+    minAge?: number
+    maxAge?: number
+    description?: string
+  }
   
   // Props
   interface Props {
@@ -383,7 +392,7 @@
   
   // Emits
   interface Emits {
-    (e: 'success', course: Course): void
+    (e: 'success'): void
     (e: 'cancel'): void
   }
   
@@ -406,7 +415,7 @@ const formData = reactive({
   name: '',
   courseId: '',
   description: '',
-  category: '' as CourseCategory,
+  category: '',
   level: '' as CourseLevel,
   // teacher: '', // 已移除显示，数据库字段保留
   credits: 2,
@@ -415,8 +424,8 @@ const formData = reactive({
   // fee: 200, // 已移除，数据库保留
   // startDate: null as any, // 已移除，数据库保留
   // endDate: null as any, // 已移除，数据库保留
-  semester: '2024秋季',
-  status: 'DRAFT' as const,
+  semester: `${new Date().getFullYear()}年秋季`,
+  status: 'DRAFT' as CourseStatus,
   // 年级管理配置
   requiresGrades: true,
   gradeDescription: '',
@@ -493,7 +502,7 @@ const resetForm = (): void => {
     // fee: 200, // 已移除
     // startDate: null, // 已移除
     // endDate: null, // 已移除
-    semester: '2024秋季',
+    semester: `${new Date().getFullYear()}年秋季`,
     status: 'DRAFT',
     ageRestriction: {
       enabled: false,
@@ -551,7 +560,13 @@ watch(() => props.course, (newCourse) => {
     // 编辑模式，填充表单数据
     Object.assign(formData, {
       ...newCourse,
-      // startDate, endDate 字段已移除
+      capacity: newCourse.maxStudents || newCourse.capacity,
+      ageRestriction: {
+        enabled: Boolean(newCourse.hasAgeRestriction),
+        minAge: newCourse.minAge ?? undefined,
+        maxAge: newCourse.maxAge ?? undefined,
+        description: newCourse.ageDescription || ''
+      },
       timeSlots: Array.isArray(newCourse.timeSlots) 
         ? newCourse.timeSlots.map(slot => ({
             ...slot,
@@ -630,7 +645,7 @@ const addTimeSlot = (): void => {
       }
       
       // 构造符合后端API格式的课程数据
-      const courseData = {
+      const courseData: CreateCourseRequest = {
         courseCode: generateCourseCode(), // 🔧 修复：自动生成课程编号
         name: formData.name,
         description: formData.description || '',
@@ -667,15 +682,15 @@ const addTimeSlot = (): void => {
       let response
       if (props.course) {
         // 更新课程
-        response = await CourseService.updateCourse(props.course.id.toString(), courseData as any)
+        response = await CourseService.updateCourse(props.course.id, courseData)
       } else {
         // 创建课程  
-        response = await CourseService.createCourse(courseData as any)
+        response = await CourseService.createCourse(courseData)
       }
       
       if (response.code === 200) {
         message.success(props.course ? '课程更新成功' : '课程创建成功')
-        emit('success', response.data as any)
+        emit('success')
       } else {
         throw new Error(response.message || '操作失败')
       }

@@ -4,7 +4,7 @@
  */
 
 import request from './request'
-import type { ApiResponse } from '@/types/api'
+import type { ApiResponse } from '@/types'
 import type { UserRole } from '@/types/auth'
 
 // 角色接口定义

@@ -511,6 +511,8 @@
         </div>
       </div>
     </div>
+
+    </div>
   
     <!-- 统计分析视图 -->
       <div v-if="activeView === 'statistics'">
@@ -825,7 +827,6 @@
       </div>
     </div>
   </a-modal>
-  </div>
 </template>
 
 <script setup lang="ts">
@@ -838,7 +839,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 
 import { CourseService } from '@/api/course'
-import type { Course } from '@/types/models'
+import type { Course, CourseQuery } from '@/api/course'
 import { ApplicationService } from '@/api/application'
 import { StudentService } from '@/api/student'
 import { EnrollmentStatus } from '@/types/models'
@@ -1101,7 +1102,7 @@ const fetchCategories = async (): Promise<void> => {
 const fetchCourses = async (): Promise<void> => {
   try {
     loading.value = true
-    const params: any = {
+    const params: CourseQuery = {
       page: pagination.value.current,
       pageSize: pagination.value.pageSize,
     }
@@ -1155,9 +1156,13 @@ const fetchCourseStats = async (): Promise<void> => {
     const response = await CourseService.getCourseStats()
     if (response.data) {
       courseStats.value = {
-        ...courseStats.value,
-        ...response.data,
-        totalCourses: response.data.total || response.data.totalCourses || 0
+        total: response.data.totalCourses,
+        totalCourses: response.data.totalCourses,
+        published: response.data.statusStats.PUBLISHED || 0,
+        ongoing: 0,
+        completed: 0,
+        totalStudents: response.data.totalEnrollments,
+        averageRating: 0
       }
     }
   } catch (error) {
@@ -1212,17 +1217,6 @@ const handleFreezeRoster = (course: Course): void => {
       }
     }
   })
-}
-
-const changeCourseStatus = async (course: Course, status: Course['status']): Promise<void> => {
-  try {
-    await CourseService.changeCourseStatus(course.id, status)
-    message.success(`修改课程状态成功`)
-    await fetchCourses()
-  } catch (error) {
-    console.error('修改课程状态失败:', error)
-    message.error('修改课程状态失败')
-  }
 }
 
 // 计算属性
@@ -1469,7 +1463,7 @@ const closeCourseForm = (): void => {
 /**
  * 处理课程表单成功提交
  */
-const handleCourseSuccess = async (_courseData: Course): Promise<void> => {
+const handleCourseSuccess = async (): Promise<void> => {
   try {
     message.success(editingCourse.value ? '课程更新成功' : '课程创建成功')
     closeCourseForm()
@@ -1665,7 +1659,7 @@ const handleBatchDelete = (): void => {
 /**
  * 🔧 新增：执行批量删除
  */
-const executeBatchDelete = async (): void => {
+const executeBatchDelete = async (): Promise<void> => {
   try {
     await CourseService.batchDeleteCourses(selectedCourseIds.value)
     message.success(`成功删除${selectedCourseIds.value.length}门课程`)
@@ -1681,7 +1675,7 @@ const executeBatchDelete = async (): void => {
 /**
  * 格式化年龄限制显示
  */
-const formatAgeRestriction = (course: any): string => {
+const formatAgeRestriction = (course: Course): string => {
   const { minAge, maxAge, ageDescription, hasAgeRestriction } = course
   
   // 🔧 修复：如果没有年龄限制，直接返回

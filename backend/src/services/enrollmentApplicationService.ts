@@ -732,8 +732,12 @@ export async function getPhase2PendingApplicationRows(
     photo: string | null
     idCardFront: string | null
     idCardBack: string | null
+    identityPhoto: string | null
+    identityIdCardFront: string | null
+    identityIdCardBack: string | null
     insuranceStart: Date | null
     insuranceEnd: Date | null
+    signaturePath: string | null
     courseIds: string[]
     courseNames: string
   }>>`
@@ -755,8 +759,12 @@ export async function getPhase2PendingApplicationRows(
       s.photo,
       s."idCardFront",
       s."idCardBack",
+      identity_documents."identityPhoto",
+      identity_documents."identityIdCardFront",
+      identity_documents."identityIdCardBack",
       MIN(si."coverageStart") AS "insuranceStart",
       MAX(si."coverageEnd") AS "insuranceEnd",
+      signature_upload."filePath" AS "signaturePath",
       ARRAY_AGG(DISTINCT c.id) AS "courseIds",
       STRING_AGG(DISTINCT c.name, ' / ') AS "courseNames"
     FROM "enrollment_applications" ea
@@ -765,6 +773,15 @@ export async function getPhase2PendingApplicationRows(
     INNER JOIN "class_sections" cs ON cs.id = eac."classSectionId"
     INNER JOIN "courses" c ON c.id = cs."courseId"
     LEFT JOIN "student_insurances" si ON si.id = ea."insuranceId"
+    LEFT JOIN "file_uploads" signature_upload ON signature_upload.id = ea."signatureFileId"
+    LEFT JOIN LATERAL (
+      SELECT
+        MAX("filePath") FILTER (WHERE "fileType" = 'PROFILE_PHOTO') AS "identityPhoto",
+        MAX("filePath") FILTER (WHERE "fileType" = 'ID_CARD_FRONT') AS "identityIdCardFront",
+        MAX("filePath") FILTER (WHERE "fileType" = 'ID_CARD_BACK') AS "identityIdCardBack"
+      FROM "file_uploads"
+      WHERE metadata ->> 'enrollmentApplicationId' = ea.id
+    ) identity_documents ON TRUE
     WHERE ea.status = 'SUBMITTED'
       AND eac.status = 'PENDING'
       AND s."isActive" = TRUE
@@ -792,7 +809,11 @@ export async function getPhase2PendingApplicationRows(
       s."emergencyPhone",
       s.photo,
       s."idCardFront",
-      s."idCardBack"
+      s."idCardBack",
+      identity_documents."identityPhoto",
+      identity_documents."identityIdCardFront",
+      identity_documents."identityIdCardBack",
+      signature_upload."filePath"
     ORDER BY ea."submittedAt" DESC
   `
 
@@ -830,11 +851,12 @@ export async function getPhase2PendingApplicationRows(
       },
       applicationDate: row.submittedAt.toISOString().split('T')[0],
       status: 'PENDING',
-      avatar: row.photo || '/uploads/id-cards/default-avatar.jpg',
-      idCardFront: row.idCardFront,
-      idCardBack: row.idCardBack,
+      avatar: row.identityPhoto || row.photo || '/uploads/id-cards/default-avatar.jpg',
+      idCardFront: row.identityIdCardFront || row.idCardFront,
+      idCardBack: row.identityIdCardBack || row.idCardBack,
       insuranceStart: row.insuranceStart?.toISOString().split('T')[0] || null,
       insuranceEnd: row.insuranceEnd?.toISOString().split('T')[0] || null,
+      signature: row.signaturePath,
       remarks: row.remarks,
       enrollmentDate: row.submittedAt,
       isPhase2Only: true
@@ -846,7 +868,8 @@ export async function createEnrollmentApplicationWithChoices(
   studentId: string,
   applicationData: any,
   insuranceId: string | null,
-  source: string
+  source: string,
+  signatureFileId: string | null = null
 ): Promise<string | null> {
   if (!await hasPhase2ApplicationTables(tx)) {
     return null
@@ -882,6 +905,7 @@ export async function createEnrollmentApplicationWithChoices(
   const applicationId = randomUUID()
   const applicationCode = await generateApplicationCode()
   const insuranceSnapshot = await buildInsuranceSnapshot(tx, insuranceId)
+  const signatureSnapshot = await buildRegistrationSignatureSnapshot(tx, signatureFileId)
 
   await tx.$executeRaw`
     INSERT INTO "enrollment_applications" (
@@ -892,6 +916,8 @@ export async function createEnrollmentApplicationWithChoices(
       "semesterId",
       "insuranceId",
       "insuranceSnapshot",
+      "signatureFileId",
+      "signatureSnapshot",
       status,
       source,
       "submittedAt",
@@ -907,6 +933,8 @@ export async function createEnrollmentApplicationWithChoices(
       ${semester.id},
       ${insuranceId},
       ${insuranceSnapshot ? JSON.stringify(insuranceSnapshot) : null}::jsonb,
+      ${signatureFileId},
+      ${signatureSnapshot ? JSON.stringify(signatureSnapshot) : null}::jsonb,
       'SUBMITTED'::"EnrollmentApplicationStatus",
       ${source},
       NOW(),
@@ -942,6 +970,44 @@ export async function createEnrollmentApplicationWithChoices(
   }
 
   return applicationId
+}
+
+async function buildRegistrationSignatureSnapshot(
+  tx: any,
+  signatureFileId: string | null
+): Promise<Record<string, unknown> | null> {
+  if (!signatureFileId) {
+    return null
+  }
+
+  const rows = await tx.$queryRaw<Array<{
+    id: string
+    originalName: string
+    filePath: string
+    fileSize: number
+    mimeType: string
+    createdAt: Date
+  }>>`
+    SELECT id, "originalName", "filePath", "fileSize", "mimeType", "createdAt"
+    FROM "file_uploads"
+    WHERE id = ${signatureFileId}
+      AND "fileType" = 'REGISTRATION_SIGNATURE'
+    LIMIT 1
+  `
+
+  const signature = rows[0]
+  if (!signature) {
+    throw new ValidationError('手写签名文件不存在，请重新签名')
+  }
+
+  return {
+    id: signature.id,
+    filePath: signature.filePath,
+    originalName: signature.originalName,
+    fileSize: signature.fileSize,
+    mimeType: signature.mimeType,
+    capturedAt: signature.createdAt.toISOString()
+  }
 }
 
 async function buildInsuranceSnapshot(tx: any, insuranceId: string | null): Promise<Record<string, any> | null> {

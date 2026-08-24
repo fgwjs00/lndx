@@ -5,7 +5,7 @@
     :width="600"
     @ok="handleSubmit"
     @cancel="handleCancel"
-    @update:open="(value) => emit('update:open', value)"
+    @update:open="handleOpenChange"
     :confirm-loading="loading"
     ok-text="修改密码"
     cancel-text="取消"
@@ -162,6 +162,10 @@ const emit = defineEmits<{
   'update:open': [open: boolean]
   success: []
 }>()
+
+const handleOpenChange = (value: boolean): void => {
+  emit('update:open', value)
+}
 
 const authStore = useAuthStore()
 const formRef = ref()
@@ -365,4 +369,4 @@ const handleCancel = (): void => {
 .bg-red-400, .bg-yellow-400, .bg-green-400 {
   transition: all 0.3s ease;
 }
-</style> 
+</style>

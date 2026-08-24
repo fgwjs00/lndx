@@ -59,6 +59,8 @@ export interface StudentInfo {
   studyPeriodStart: string // 保险有效期开始日期
   studyPeriodEnd: string   // 保险有效期结束日期
   studentId?: string       // 学员证号
+  studentCode?: string     // 报名列表返回的学号字段
+  phone?: string           // 报名列表返回的联系电话字段
   agreementSigned: boolean  // 是否签订超龄协议
   familyAddress: string    // 家庭住址
   familyPhone: string      // 联系电话
@@ -70,39 +72,6 @@ export interface StudentInfo {
   remarks?: string         // 备注
   createdAt: string
   updatedAt: string
-}
-
-// 课程状态类型 - 与后端Prisma schema保持一致
-export type CourseStatus = 'DRAFT' | 'PUBLISHED' | 'SUSPENDED' | 'CANCELLED'
-
-// 院系类型 - 根据实际院系更新
-export type CourseCategory = 
-  | '书画系'
-  | '书画非遗系' 
-  | '电子信息系'
-  | '声乐戏曲系'
-  | '器乐演奏系'
-  | '语言文学系'
-  | '舞蹈体育系'
-  | '家政保健系'
-
-// 年级类型
-export type CourseLevel = '一年级' | '二年级' | '三年级' | ''
-
-// 时间段类型
-export interface TimeSlot {
-  dayOfWeek: 1 | 2 | 3 | 4 | 5 | 6 | 7  // 1-7 对应周一到周日
-  startTime: string                       // 格式: "08:30"
-  endTime: string                         // 格式: "10:30"
-  period: 'morning' | 'afternoon' // 时段
-}
-
-// 年龄限制类型
-export interface AgeRestriction {
-  enabled: boolean         // 是否启用年龄限制
-  minAge?: number         // 最小年龄（可选）
-  maxAge?: number         // 最大年龄（可选）
-  description?: string    // 年龄限制说明
 }
 
 // 签到状态类型
@@ -159,30 +128,9 @@ export interface FaceRecognitionResult {
   error?: string           // 错误信息
 }
 
-// 课程信息类型
-export interface Course {
-  id: number
-  name: string             // 课程名称
-  courseId?: string        // 课程编号（可选，后期可能需要）
-  description: string      // 课程描述
-  category: CourseCategory // 院系
-  level: CourseLevel      // 年级
-  teacher: string          // 授课教师
-  teacherId?: number       // 教师ID
-  credits?: number         // 学分（可选，后期可能需要）
-  capacity: number         // 容量
-  enrolled: number         // 已报名人数
-  timeSlots: TimeSlot[]    // 上课时间段（支持多个时间段）
-  location: string         // 上课地点
-  startDate?: string       // 开课日期（可选，后期可能需要）
-  endDate?: string         // 结课日期（可选，后期可能需要）
-  status: CourseStatus     // 课程状态
-  requirements?: string    // 报名要求
-  materials?: string       // 教材信息
-  semester: string         // 学期（如2024秋季）
-  ageRestriction: AgeRestriction // 年龄限制
-  createdAt: string
-  updatedAt: string
+export interface CourseSummary {
+  id: string | number
+  name: string
 }
 
 // 报名申请状态类型
@@ -195,13 +143,14 @@ export interface Application {
   courseId: number         // 课程ID
   applicationId: string    // 申请编号
   studentInfo: StudentInfo // 学员信息
-  courseInfo: Course       // 课程信息
+  courseInfo: CourseSummary // 课程摘要
   applicationDate: string  // 申请时间
   status: ApplicationStatus // 申请状态
   reviewerId?: number      // 审核人ID
   reviewerName?: string    // 审核人姓名
   reviewDate?: string      // 审核时间
   reviewComments?: string  // 审核意见
+  signature?: string       // 手机端报名本人手写签名
   paymentStatus: 'unpaid' | 'paid' | 'refunded' // 缴费状态
   paymentDate?: string     // 缴费时间
   createdAt: string
@@ -219,7 +168,7 @@ export interface Teacher {
   title: string            // 职称
   specialization: string   // 专业领域
   experience: number       // 教学经验（年）
-  courses: Course[]        // 所授课程
+  courses: CourseSummary[] // 所授课程
   students: StudentInfo[]  // 所带学员
   status: UserStatus       // 状态
   avatar?: string          // 头像

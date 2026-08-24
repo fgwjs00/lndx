@@ -69,8 +69,8 @@
           </template>
 
           <template v-else-if="column.key === 'reviewStatus'">
-            <a-tag :color="statusColor[record.reviewStatus]">
-              {{ statusText[record.reviewStatus] }}
+            <a-tag :color="getStatusColor(record.reviewStatus)">
+              {{ getStatusText(record.reviewStatus) }}
             </a-tag>
           </template>
 
@@ -159,6 +159,18 @@ const statusColor: Record<ReviewStatus, string> = {
   APPROVED: 'green',
   REJECTED: 'red',
   EXPIRED: 'default'
+}
+
+const isReviewStatus = (value: unknown): value is ReviewStatus => {
+  return typeof value === 'string' && value in statusText
+}
+
+const getStatusText = (value: unknown): string => {
+  return isReviewStatus(value) ? statusText[value] : '未知状态'
+}
+
+const getStatusColor = (value: unknown): string => {
+  return isReviewStatus(value) ? statusColor[value] : 'default'
 }
 
 const columns = [

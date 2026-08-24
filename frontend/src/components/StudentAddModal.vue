@@ -436,7 +436,6 @@
  */
 import { ref, reactive, computed, watch } from 'vue'
 import { message } from 'ant-design-vue'
-import { useAuthStore } from '@/store/auth'
 import dayjs, { type Dayjs } from 'dayjs'
 import type { IdCardData } from '@/types'
 import IdCardReader from '@/components/IdCardReader.vue'
@@ -464,7 +463,6 @@ const modalVisible = computed({
   set: (value) => emit('update:open', value)
 })
 
-const authStore = useAuthStore()
 const formRef = ref()
 const submitting = ref<boolean>(false)
 const semestersLoading = ref<boolean>(false)
@@ -773,9 +771,9 @@ const handleIdCardDataRead = async (idCardData: IdCardData): Promise<void> => {
     formData.gender = genderMap[idCardData.sex.toUpperCase()] || '男'
   }
   
-  formData.idNumber = idCardData.cardno || ''
+  formData.idNumber = idCardData.certNo || ''
   formData.idCardAddress = idCardData.address || ''
-  formData.ethnicity = idCardData.folk || ''
+  formData.ethnicity = idCardData.nation || ''
   
   // 出生日期处理 - 优先使用身份证号码提取，其次使用读卡器数据
   if (formData.idNumber) {
@@ -784,11 +782,12 @@ const handleIdCardDataRead = async (idCardData: IdCardData): Promise<void> => {
       formData.birthDate = extractedBirthDate
       console.log('✅ 从身份证号码提取出生日期:', extractedBirthDate.format('YYYY-MM-DD'))
     }
-  } else if (idCardData.born) {
+  } else if (idCardData.birth) {
     try {
-      const birthYear = idCardData.born.substring(0, 4)
-      const birthMonth = idCardData.born.substring(4, 6)
-      const birthDay = idCardData.born.substring(6, 8)
+      const normalizedBirth = idCardData.birth.replace(/[^0-9]/g, '')
+      const birthYear = normalizedBirth.substring(0, 4)
+      const birthMonth = normalizedBirth.substring(4, 6)
+      const birthDay = normalizedBirth.substring(6, 8)
       formData.birthDate = dayjs(`${birthYear}-${birthMonth}-${birthDay}`)
       console.log('✅ 从读卡器数据获取出生日期:', `${birthYear}-${birthMonth}-${birthDay}`)
     } catch (error) {
@@ -834,15 +833,12 @@ const handlePhotoUpload = async (file: File): Promise<boolean> => {
 // 处理身份证照片上传
 const handleIdCardUpload = async (file: File, type: 'front' | 'back'): Promise<boolean> => {
   try {
-    const formData = new FormData()
-    formData.append('image', file)
-    
     const uploadingMessage = message.loading(
       `正在上传${type === 'front' ? '身份证正面' : '身份证反面'}...`, 
       0
     )
 
-    const response = await ApplicationService.uploadImage(formData)
+    const response = await ApplicationService.uploadIdCardImage(file)
     uploadingMessage()
     
     if (response.code === 200) {
@@ -905,10 +901,7 @@ const uploadPendingPhotos = async (): Promise<void> => {
       const blob = await response.blob()
       const file = new File([blob], `${type}_${Date.now()}.jpg`, { type: 'image/jpeg' })
       
-      const formData = new FormData()
-      formData.append('image', file)
-      
-      const uploadResponse = await ApplicationService.uploadImage(formData)
+      const uploadResponse = await ApplicationService.uploadIdCardImage(file)
       return uploadResponse.code === 200 ? uploadResponse.data.url : null
     } catch (error) {
       console.error(`上传${type}失败:`, error)

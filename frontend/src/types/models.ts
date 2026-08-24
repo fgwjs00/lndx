@@ -3,6 +3,8 @@
  * @description 与后端Prisma模型完全匹配的类型定义
  */
 
+import type { Course } from './course'
+
 // 用户角色枚举 - 匹配后端
 export enum UserRole {
   SUPER_ADMIN = 'SUPER_ADMIN',
@@ -139,56 +141,6 @@ export interface Teacher {
   courses?: Course[]
 }
 
-// 课程模型 - 匹配后端实际返回格式
-export interface Course {
-  id: string
-  courseCode?: string          // 课程代码（可选，因为批量导入时可能没有）
-  code?: string               // 课程代码别名（兼容性）
-  name: string                 // 课程名称 (匹配后端字段)
-  description?: string | null
-  category: string             // 课程分类
-  level: string               // 课程级别
-  duration?: number           // 课程时长(分钟)（可选）
-  maxStudents: number         // 最大学员数
-  hasAgeRestriction?: boolean // 是否有年龄限制
-  minAge?: number | null      // 最小年龄
-  maxAge?: number | null      // 最大年龄
-  ageDescription?: string | null // 年龄限制说明
-  // 年级管理字段
-  requiresGrades?: boolean    // 是否需要年级管理
-  gradeDescription?: string | null // 年级说明
-  tags?: string[]             // 课程标签
-  timeSlots: any[]            // 上课时间安排（必需，数组格式）
-  status: CourseStatus        // 课程状态
-  enrolled?: number           // 已报名人数
-  capacity?: number           // 容量 (maxStudents的别名)
-  createdAt: string
-  updatedAt?: string | null
-
-  // 必需字段
-  semester: string            // 学期（必需）
-  teacher?: string | null     // 主讲老师
-  location: string            // 上课地点（必需）
-
-  // 兼容字段
-  credits?: number            // 学分（兼容旧接口）
-  hours?: number             // 学时（兼容旧接口）
-  schedule?: string          // 时间安排（兼容旧接口）
-  teacherId?: string         // 教师ID（兼容旧接口）
-
-  // 关联字段 - 匹配后端返回格式
-  teachers?: Array<{
-    id: string
-    name: string
-    isMain: boolean
-    specialties?: any
-    experience?: number
-  }>
-  createdBy?: User | null
-  enrollments?: Enrollment[]
-  students?: any[]            // 学生列表
-}
-
 // 报名模型 - 匹配后端实际返回数据
 export interface Enrollment {
   id: string
@@ -274,16 +226,6 @@ export interface StudentQuery {
   sortOrder?: 'asc' | 'desc'
 }
 
-export interface CourseQuery {
-  page?: number
-  pageSize?: number
-  keyword?: string
-  status?: CourseStatus
-  teacherId?: string
-  sortField?: string
-  sortOrder?: 'asc' | 'desc'
-}
-
 export interface EnrollmentQuery {
   page?: number
   pageSize?: number
@@ -312,18 +254,42 @@ export interface UpdateUserRequest {
 }
 
 export interface CreateStudentRequest {
-  studentId: string
-  realName: string
+  name: string
+  contactPhone: string
+  idNumber: string
+  studentId?: string
+  realName?: string
   gender: string
   birthDate?: string
   idCard?: string
   phone?: string
   email?: string
   address?: string
+  currentAddress?: string
+  idCardAddress?: string
+  idCardFront?: string
+  idCardBack?: string
+  ethnicity?: string
+  healthStatus?: string
+  educationLevel?: string
+  politicalStatus?: string
+  insuranceCompany?: string
+  retirementCategory?: string
+  studyPeriodStart?: string
+  studyPeriodEnd?: string
+  familyAddress?: string
+  familyPhone?: string
   emergencyContact?: string
   emergencyPhone?: string
+  emergencyRelation?: string
+  semester?: string
+  major?: string
+  selectedCourses?: string[]
+  photo?: string
+  status?: string
   enrollmentDate?: string
   notes?: string
+  remarks?: string
 }
 
 export interface UpdateStudentRequest {
@@ -339,30 +305,6 @@ export interface UpdateStudentRequest {
   status?: StudentStatus
   graduationDate?: string
   notes?: string
-}
-
-export interface CreateCourseRequest {
-  courseCode?: string      // 课程编号（可选，后期可能需要）
-  courseName: string
-  description?: string
-  credits?: number         // 学分（可选，后期可能需要）
-  maxStudents?: number
-  teacherId?: string
-  startDate?: string       // 开课日期（可选，后期可能需要）
-  endDate?: string         // 结课日期（可选，后期可能需要）
-  schedule?: any
-}
-
-export interface UpdateCourseRequest {
-  courseName?: string
-  description?: string
-  credits?: number         // 学分（可选，后期可能需要）
-  maxStudents?: number
-  teacherId?: string
-  startDate?: string       // 开课日期（可选，后期可能需要）
-  endDate?: string         // 结课日期（可选，后期可能需要）
-  schedule?: any
-  status?: CourseStatus
 }
 
 // 统计信息类型
@@ -381,14 +323,6 @@ export interface StudentStatistics {
   recentEnrollments: number
 }
 
-export interface CourseStatistics {
-  totalCourses: number
-  publishedCourses: number
-  draftCourses: number
-  archivedCourses: number
-  averageEnrollment: number
-}
-
 // 角色权限相关
 export const ROLE_HIERARCHY = {
   [UserRole.SUPER_ADMIN]: 4,
@@ -405,25 +339,26 @@ export const ROLE_LABELS = {
 }
 
 export const STATUS_LABELS = {
-  // 用户状态
-  active: '正常',
-  inactive: '禁用',
-
-  // 学生状态
-  [StudentStatus.ACTIVE]: '在读',
-  [StudentStatus.INACTIVE]: '暂停',
-  [StudentStatus.GRADUATED]: '毕业',
-  [StudentStatus.SUSPENDED]: '退学',
-
-  // 课程状态
-  [CourseStatus.DRAFT]: '草稿',
-  [CourseStatus.PUBLISHED]: '已发布',
-  [CourseStatus.SUSPENDED]: '暂停',
-  [CourseStatus.CANCELLED]: '已取消',
-
-  // 报名状态
-  [EnrollmentStatus.PENDING]: '待审核',
-  [EnrollmentStatus.APPROVED]: '已通过',
-  [EnrollmentStatus.REJECTED]: '已拒绝',
-  [EnrollmentStatus.CANCELLED]: '已取消'
+  user: {
+    active: '正常',
+    inactive: '禁用'
+  },
+  student: {
+    [StudentStatus.ACTIVE]: '在读',
+    [StudentStatus.INACTIVE]: '暂停',
+    [StudentStatus.GRADUATED]: '毕业',
+    [StudentStatus.SUSPENDED]: '退学'
+  },
+  course: {
+    [CourseStatus.DRAFT]: '草稿',
+    [CourseStatus.PUBLISHED]: '已发布',
+    [CourseStatus.SUSPENDED]: '暂停',
+    [CourseStatus.CANCELLED]: '已取消'
+  },
+  enrollment: {
+    [EnrollmentStatus.PENDING]: '待审核',
+    [EnrollmentStatus.APPROVED]: '已通过',
+    [EnrollmentStatus.REJECTED]: '已拒绝',
+    [EnrollmentStatus.CANCELLED]: '已取消'
+  }
 }

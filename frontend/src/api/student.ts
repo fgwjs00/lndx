@@ -8,8 +8,7 @@ import type { ApiResponse, PaginatedResponse } from '@/types'
 import type { 
   Student, 
   StudentQuery, 
-  CreateStudentRequest,
-  UpdateStudentRequest
+  CreateStudentRequest
 } from '@/types/models'
 
 // Re-export the types for convenience
@@ -176,4 +175,3 @@ export class StudentService {
     return request.put(`/students/${studentId}/courses`, { selectedCourses })
   }
 }
-

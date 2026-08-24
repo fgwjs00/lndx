@@ -5,55 +5,44 @@
 
 import request from './request'
 import type { ApiResponse, PaginatedResponse } from '@/types'
+import type { Course, CourseStatus, CourseTimeSlot } from '@/types/course'
 
-export interface Course {
+export type { Course, CourseStatus, CourseTimeSlot } from '@/types/course'
+
+export interface PublicCourseTimeSlot {
+  dayOfWeek: number
+  startTime: string
+  endTime: string
+  period?: string
+  classroom?: string
+}
+
+export interface PublicRegistrationCourse {
   id: string
   classSectionId?: string | null
   classSectionCode?: string | null
   classSectionName?: string | null
-  rosterId?: string | null
-  rosterStatus?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | null
+  courseCode?: string | null
   name: string
-  code: string
-  description?: string
-  category: string // 院系
-  level: '一年级' | '二年级' | '三年级' // 年级
-  credits: number
-  hours: number
-  capacity: number
-  enrolled: number
-  teacherId?: string
-  teacher?: {
-    id: string
-    realName: string
-  }
-  startDate: string
-  endDate: string
-  schedule: {
-    dayOfWeek: number
-    startTime: string
-    endTime: string
-    classroom?: string
-  }[]
-  status: 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
-  requirements?: string[]
-  materials?: string[]
-  createdAt: string
-  updatedAt?: string
-  // 年龄限制相关字段
+  description?: string | null
+  category?: string | null
+  level?: string | null
+  duration?: number
+  maxStudents?: number
+  capacity?: number
+  enrolled?: number
+  remaining?: number
+  timeSlots?: PublicCourseTimeSlot[]
+  semester?: string | null
+  semesterCode?: string | null
+  teacher?: string | null
+  location?: string | null
   hasAgeRestriction?: boolean
   minAge?: number | null
   maxAge?: number | null
   ageDescription?: string | null
-  // 年级管理字段
-  requiresGrades?: boolean // 是否需要年级管理
-  gradeDescription?: string | null // 年级说明
-  ageRestriction?: {
-    enabled: boolean
-    minAge?: number | null
-    maxAge?: number | null
-    description?: string | null
-  }
+  requiresGrades?: boolean
+  gradeDescription?: string | null
 }
 
 export interface CourseQuery {
@@ -65,6 +54,7 @@ export interface CourseQuery {
   status?: string
   semester?: string
   teacherId?: string
+  requiresGrades?: boolean | string
   sortField?: string
   sortOrder?: 'asc' | 'desc'
 }
@@ -153,52 +143,36 @@ export interface CreateSemesterRequest {
 }
 
 export interface CreateCourseRequest {
+  courseCode?: string
   name: string
-  code: string
   description?: string
-  category: string // 院系
-  level: '一年级' | '二年级' | '三年级' // 年级
-  credits: number
-  hours: number
-  capacity: number
-  teacherId?: string
-  startDate: string
-  endDate: string
-  schedule: {
-    dayOfWeek: number
-    startTime: string
-    endTime: string
-    classroom?: string
-  }[]
-  requirements?: string[]
-  materials?: string[]
-  // 年龄限制相关字段
+  category: string
+  level: string
+  duration?: number
+  maxStudents: number
+  price?: number
+  teacher?: string
+  location: string
+  semester: string
+  status?: CourseStatus
+  timeSlots: CourseTimeSlot[]
+  tags?: string[]
+  teacherIds?: string[]
   hasAgeRestriction?: boolean
   minAge?: number | null
   maxAge?: number | null
   ageDescription?: string | null
+  requiresGrades?: boolean
+  gradeDescription?: string | null
 }
 
-export interface UpdateCourseRequest {
-  name?: string
-  description?: string
-  category?: string // 院系
-  level?: '一年级' | '二年级' | '三年级' // 年级
-  credits?: number
-  hours?: number
-  capacity?: number
-  teacherId?: string
-  startDate?: string
-  endDate?: string
-  schedule?: {
-    dayOfWeek: number
-    startTime: string
-    endTime: string
-    classroom?: string
-  }[]
-  status?: 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
-  requirements?: string[]
-  materials?: string[]
+export type UpdateCourseRequest = Partial<CreateCourseRequest>
+
+export interface CourseMutationResult {
+  id: string
+  name: string
+  courseCode?: string | null
+  updatedAt?: string | null
 }
 
 export class CourseService {
@@ -216,8 +190,8 @@ export class CourseService {
    * @param params 鏌ヨ鍙傛暟
    * @returns 璇剧▼鍒楄〃
    */
-  static async getPublicCourses(params: CourseQuery = {}): Promise<ApiResponse<PaginatedResponse<Course>>> {
-    return request.get<PaginatedResponse<Course>>('/public-registration/courses', params)
+  static async getPublicCourses(params: CourseQuery = {}): Promise<ApiResponse<PaginatedResponse<PublicRegistrationCourse>>> {
+    return request.get<PaginatedResponse<PublicRegistrationCourse>>('/public-registration/courses', params)
   }
 
   /**
@@ -234,8 +208,8 @@ export class CourseService {
    * @param courseData 课程数据
    * @returns 创建结果
    */
-  static async createCourse(courseData: CreateCourseRequest): Promise<ApiResponse<Course>> {
-    return request.post<Course>('/courses', courseData)
+  static async createCourse(courseData: CreateCourseRequest): Promise<ApiResponse<CourseMutationResult>> {
+    return request.post<CourseMutationResult>('/courses', courseData)
   }
 
   /**
@@ -244,8 +218,8 @@ export class CourseService {
    * @param courseData 课程数据
    * @returns 更新结果
    */
-  static async updateCourse(id: string, courseData: UpdateCourseRequest): Promise<ApiResponse<Course>> {
-    return request.put<Course>(`/courses/${id}`, courseData)
+  static async updateCourse(id: string, courseData: UpdateCourseRequest): Promise<ApiResponse<CourseMutationResult>> {
+    return request.put<CourseMutationResult>(`/courses/${id}`, courseData)
   }
 
   /**
@@ -321,12 +295,10 @@ export class CourseService {
    * @returns 统计信息
    */
   static async getCourseStats(): Promise<ApiResponse<{
-    total: number
-    published: number
-    ongoing: number
-    completed: number
-    totalStudents: number
-    averageRating: number
+    totalCourses: number
+    totalEnrollments: number
+    activeTeachersCount: number
+    statusStats: Partial<Record<CourseStatus, number>>
   }>> {
     return request.get('/courses/stats')
   }

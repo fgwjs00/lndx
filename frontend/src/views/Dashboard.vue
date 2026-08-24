@@ -354,7 +354,7 @@
  * @component Dashboard
  * @description 显示系统概览、统计数据和最近活动  
  */
-import { ref, onMounted, computed, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import DashboardService, { 

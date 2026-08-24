@@ -5,7 +5,7 @@
     :width="800"
     @ok="handleSave"
     @cancel="handleCancel"
-    @update:open="(value) => emit('update:open', value)"
+    @update:open="handleOpenChange"
     :confirm-loading="loading"
     ok-text="保存设置"
     cancel-text="取消"
@@ -279,6 +279,10 @@ const emit = defineEmits<{
   success: []
 }>()
 
+const handleOpenChange = (value: boolean): void => {
+  emit('update:open', value)
+}
+
 const authStore = useAuthStore()
 const activeTab = ref<string>('basic')
 const loading = ref<boolean>(false)
@@ -507,4 +511,4 @@ const handleCancel = (): void => {
 :deep(.ant-select) {
   border-radius: 8px;
 }
-</style> 
+</style>

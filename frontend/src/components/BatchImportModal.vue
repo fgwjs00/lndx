@@ -220,7 +220,7 @@
  * @description 支持Excel和CSV文件的批量导入功能
  */
 import { ref, computed } from 'vue'
-import { message, Modal } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
 import { CourseService } from '@/api/course'
 
 // Props
@@ -234,7 +234,7 @@ interface Emits {
   (e: 'success'): void
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 // Reactive data
@@ -361,7 +361,7 @@ const parseFile = async (): Promise<void> => {
         }
         
         // 处理预览数据并进行基本验证
-        const processedData = rawData.map((row: any, index: number) => {
+        const processedData = rawData.map((row: any) => {
           const errors: string[] = []
           
           // 🔧 修复：基本验证 - 使用新的字段名称

@@ -20,6 +20,18 @@ export interface ApplicationReviewTarget {
   targetType?: ReviewTargetType
 }
 
+export type PublicIdentityDocumentType = 'PROFILE_PHOTO' | 'ID_CARD_FRONT' | 'ID_CARD_BACK'
+
+export interface PublicIdentityUploadResult {
+  fileId: string
+  fileName: string
+  originalName: string
+  fileSize: number
+  mimeType: string
+}
+
+export type PublicRegistrationSignatureUploadResult = PublicIdentityUploadResult
+
 /**
  * 报名申请API服务
  */
@@ -76,6 +88,39 @@ export class ApplicationService {
    */
   static async submitAnonymousApplicationV2(applicationData: any): Promise<ApiResponse<Application>> {
     return request.post<Application>('/applications-v2/anonymous', applicationData)
+  }
+
+  /**
+   * 上传手机端报名的本人照片或身份证照片。
+   * 上传结果只可由同一报名手机号在本次报名中使用。
+   */
+  static async uploadPublicIdentityDocument(
+    file: File,
+    contactPhone: string,
+    documentType: PublicIdentityDocumentType
+  ): Promise<ApiResponse<PublicIdentityUploadResult>> {
+    return request.upload<PublicIdentityUploadResult>(
+      '/public-registration/identity-upload',
+      file,
+      undefined,
+      { contactPhone, documentType }
+    )
+  }
+
+  /**
+   * 上传手机端报名的本人手写签名。
+   * 文件会在匿名报名事务成功后才转为正式报名材料。
+   */
+  static async uploadPublicRegistrationSignature(
+    file: File,
+    contactPhone: string
+  ): Promise<ApiResponse<PublicRegistrationSignatureUploadResult>> {
+    return request.upload<PublicRegistrationSignatureUploadResult>(
+      '/public-registration/signature-upload',
+      file,
+      undefined,
+      { contactPhone }
+    )
   }
 
   /**
@@ -295,7 +340,13 @@ export class ApplicationService {
       }>
     }
   }>> {
-    return request.get<{ exists: boolean, studentInfo?: any, activeEnrollmentsCount?: number, maxCoursesAllowed?: number, remainingCourseSlots?: number }>(`/applications/check-id/${idNumber}`)
+    return request.get<{
+      exists: boolean
+      studentInfo?: any
+      activeEnrollmentsCount: number
+      maxCoursesAllowed: number
+      remainingCourseSlots: number
+    }>(`/applications/check-id/${idNumber}`)
   }
 
   /**

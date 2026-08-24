@@ -215,7 +215,6 @@
   import { message } from 'ant-design-vue'
   import RoleForm from '@/components/RoleForm.vue'
   import { RoleService } from '@/api/role'
-  import type { UserRole } from '@/types/auth'
   import type { Role } from '@/api/role'
   
   // 使用从API导入的Role接口类型

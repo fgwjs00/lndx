@@ -48,6 +48,10 @@ dotenv.config()
  */
 const app = express()
 
+if (config.trustProxyHops > 0) {
+  app.set('trust proxy', config.trustProxyHops)
+}
+
 const sanitizeMorganMessage = (message: string): string => sanitizeAuthUrl(message.trim())
 
 /**
@@ -112,9 +116,6 @@ const handleHealthCheck = async (_req: Request, res: Response) => {
  * 健康检查接口
  */
 app.get('/health', handleHealthCheck)
-app.get(`${apiPrefix}/health`, handleHealthCheck)
-
-// API前缀下的健康检查
 app.get(`${apiPrefix}/health`, handleHealthCheck)
 
 /**

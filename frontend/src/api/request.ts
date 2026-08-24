@@ -26,6 +26,11 @@ interface RequestInterceptor {
 // 基础配置
 const BASE_URL = '/api'
 const DEFAULT_TIMEOUT = 10000
+const PUBLIC_API_PREFIXES = ['/auth/', '/public-registration/', '/health']
+
+function isPublicApiPath(url: string): boolean {
+  return PUBLIC_API_PREFIXES.some(prefix => url === prefix || url.startsWith(prefix))
+}
 
 /**
  * HTTP请求类
@@ -50,18 +55,13 @@ class HttpRequest {
     this.interceptors.onRequest = (config: RequestConfig) => {
       // 添加认证token
       const token = localStorage.getItem('token')
-      console.log('📤 请求拦截器:', { 
-        url: config.url, 
-        method: config.method, 
-        hasToken: !!token
-      })
       
       if (token) {
         config.headers = {
           ...config.headers,
           Authorization: `Bearer ${token}`
         }
-      } else {
+      } else if (!isPublicApiPath(config.url)) {
         console.warn('⚠️ 请求时未找到token')
       }
 
@@ -126,15 +126,9 @@ class HttpRequest {
           console.warn('⚠️ API调用收到401错误:', requestUrl)
           
           // 检查是否真的是认证问题，还是网络问题
-          const authErrorData = error.response?.data
           const hasAuthError = error.response?.status === 401
           
           // 检查是否是明确的认证错误
-          const isTokenExpired = authErrorData?.code === 401 || 
-                                authErrorData?.message?.includes('token') || 
-                                authErrorData?.message?.includes('未授权') ||
-                                authErrorData?.message?.includes('Unauthorized')
-          
           // 401状态码通常表示认证问题，应该清除认证信息
           if (hasAuthError) {
             console.log('🔑 收到401状态码，清除认证信息并跳转到登录页')

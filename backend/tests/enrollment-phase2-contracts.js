@@ -105,7 +105,7 @@ assertIncludes(index, "app.use(`${apiPrefix}/public-registration`, publicRegistr
 assertIncludes(courseApi, 'getPublicSemesters', 'course API must expose public semester loader')
 assertIncludes(courseApi, "request.get('/public-registration/semesters')", 'public semester loader must use public route')
 assertIncludes(courseApi, 'getPublicCourses', 'course API must expose public course loader')
-assertIncludes(courseApi, "request.get<PaginatedResponse<Course>>('/public-registration/courses'", 'public course loader must use public route')
+assertIncludes(courseApi, "request.get<PaginatedResponse<PublicRegistrationCourse>>('/public-registration/courses'", 'public course loader must use public route')
 assertIncludes(mobileRegistration, 'CourseService.getPublicSemesters()', 'mobile registration must load semesters without auth-only course route')
 assertIncludes(mobileRegistration, 'CourseService.getPublicCourses', 'mobile registration must load courses without auth-only course route')
 assertIncludes(mobileRegistration, 'semester: formData.semester', 'mobile registration must query courses for the selected semester')

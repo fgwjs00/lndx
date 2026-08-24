@@ -73,7 +73,6 @@
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { message as antMessage } from 'ant-design-vue'
 import type { IdCardData, IdCardReaderMessage, IdCardReaderConfig, IdCardReaderState } from '@/types'
-import dayjs from 'dayjs'
 
 // 定义事件
 const emit = defineEmits<{
@@ -84,7 +83,6 @@ const emit = defineEmits<{
 
 // 响应式数据
 const socket = ref<WebSocket | null>(null)
-const idCardData = ref<IdCardData | null>(null)
 
 // 读卡器状态
 const readerState = reactive<IdCardReaderState>({
@@ -235,22 +233,6 @@ const getVersion = (): void => {
   if (socket.value?.readyState === WebSocket.OPEN) {
     socket.value.send('EST_GetVersion#')
   }
-}
-
-
-
-/**
- * 格式化日期
- */
-const formatDate = (dateStr: string): string => {
-  if (!dateStr) return ''
-  
-  // 身份证日期格式通常是YYYYMMDD
-  if (dateStr.length === 8) {
-    return `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`
-  }
-  
-  return dateStr
 }
 
 

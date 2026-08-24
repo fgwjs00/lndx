@@ -115,6 +115,63 @@
             <div class="m3-helper-text">无需短信验证码，学校将通过此号码联系您。</div>
           </a-form-item>
 
+          <section class="m3-identity-materials" aria-labelledby="identity-materials-title">
+            <h3 id="identity-materials-title" class="m3-subsection-title">身份材料</h3>
+            <p class="m3-subsection-description">请拍摄清晰照片。身份证四角、姓名和号码都要完整可见。</p>
+
+            <a-form-item name="photoFileId" label="本人近期照片" class="mb-4">
+              <label class="m3-document-upload" :class="{ 'is-uploading': loading.profilePhotoUpload }">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  capture="user"
+                  :disabled="loading.profilePhotoUpload"
+                  @change="handleProfilePhotoChange"
+                />
+                <span class="m3-document-upload-action">
+                  <i class="fas fa-camera" aria-hidden="true"></i>
+                  {{ loading.profilePhotoUpload ? '本人照片上传中...' : '拍照或选择本人照片' }}
+                </span>
+              </label>
+              <div v-if="formData.photoFileName" class="m3-upload-success">已上传：{{ formData.photoFileName }}</div>
+              <div class="m3-helper-text">正面、免冠、近期照片，支持 JPG、PNG、WEBP，大小不超过 5MB。</div>
+            </a-form-item>
+
+            <a-form-item name="idCardFrontFileId" label="身份证正面照片" class="mb-4">
+              <label class="m3-document-upload" :class="{ 'is-uploading': loading.idCardFrontUpload }">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  capture="environment"
+                  :disabled="loading.idCardFrontUpload"
+                  @change="handleIdCardFrontChange"
+                />
+                <span class="m3-document-upload-action">
+                  <i class="fas fa-id-card" aria-hidden="true"></i>
+                  {{ loading.idCardFrontUpload ? '身份证正面上传中...' : '拍照或选择身份证正面' }}
+                </span>
+              </label>
+              <div v-if="formData.idCardFrontFileName" class="m3-upload-success">已上传：{{ formData.idCardFrontFileName }}</div>
+            </a-form-item>
+
+            <a-form-item name="idCardBackFileId" label="身份证背面照片" class="mb-0">
+              <label class="m3-document-upload" :class="{ 'is-uploading': loading.idCardBackUpload }">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  capture="environment"
+                  :disabled="loading.idCardBackUpload"
+                  @change="handleIdCardBackChange"
+                />
+                <span class="m3-document-upload-action">
+                  <i class="fas fa-id-card" aria-hidden="true"></i>
+                  {{ loading.idCardBackUpload ? '身份证背面上传中...' : '拍照或选择身份证背面' }}
+                </span>
+              </label>
+              <div v-if="formData.idCardBackFileName" class="m3-upload-success">已上传：{{ formData.idCardBackFileName }}</div>
+            </a-form-item>
+          </section>
+
           <!-- 民族 -->
           <a-form-item name="ethnicity" label="民族" class="mb-4">
             <a-select
@@ -340,10 +397,10 @@
                     <p class="text-sm text-gray-600 mt-1">{{ course.description }}</p>
                     <div class="flex items-center mt-2 text-xs text-gray-500">
                       <span class="mr-3">
-                        <i class="fas fa-clock mr-1"></i>{{ course.hours || 0 }}学时
+                        <i class="fas fa-clock mr-1"></i>{{ getCourseDuration(course) }}学时
                       </span>
                       <span class="mr-3">
-                        <i class="fas fa-calendar mr-1"></i>{{ course.startDate || '待定' }}
+                        <i class="fas fa-calendar mr-1"></i>{{ formatCourseTimeSlots(course) }}
                       </span>
                       <span>
                         <i class="fas fa-users mr-1"></i>{{ course.enrolled || 0 }}/{{ course.capacity || 0 }}
@@ -439,6 +496,41 @@
           </a-form-item>
         </section>
       </div>
+
+      <!-- 步骤5：本人确认与手写签名 -->
+      <div v-show="currentStep === 5" class="p-4 space-y-4">
+        <section class="m3-form-card">
+          <h2 class="m3-section-title">本人确认与签名</h2>
+          <p class="m3-section-description">请核对报名信息，再由学员本人用手指签写姓名。</p>
+
+          <div class="m3-signature-summary" aria-label="待确认报名信息">
+            <div>
+              <span>报名学员</span>
+              <strong>{{ formData.name || '未填写' }}</strong>
+            </div>
+            <div>
+              <span>报名学期</span>
+              <strong>{{ formData.semester || '未选择' }}</strong>
+            </div>
+            <div class="is-full-width">
+              <span>所选课程</span>
+              <strong>{{ selectedCourseNames || '未选择' }}</strong>
+            </div>
+          </div>
+
+          <div class="m3-signature-declaration">
+            本人确认以上资料真实、准确，并同意学校按照报名和学籍管理需要使用所提交的资料。
+          </div>
+
+          <a-form-item name="signatureCaptured" label="本人手写签名" class="mb-0">
+            <HandwrittenSignaturePad
+              ref="signaturePadRef"
+              @change="handleSignatureChange"
+            />
+            <div class="m3-helper-text">请本人在框内签写姓名；写错可点击“清除重签”。</div>
+          </a-form-item>
+        </section>
+      </div>
     </a-form>
 
     <!-- 底部操作按钮 -->
@@ -529,23 +621,27 @@ import dayjs from 'dayjs'
 import { ApplicationService } from '@/api/application'
 import { CourseService } from '@/api/course'
 import { InsuranceService } from '@/api/insurance'
-import type { Course } from '@/api/course'
+import type { PublicRegistrationCourse } from '@/api/course'
 import { calculateAge, checkAgeRestriction, getAgeRestrictionHint } from '@/utils/ageUtils'
+import HandwrittenSignaturePad from '@/components/HandwrittenSignaturePad.vue'
 
 // 路由实例
 const router = useRouter()
 
 // 表单引用
 const formRef = ref()
+const signaturePadRef = ref<{ clear: () => void } | null>(null)
+const signatureBlob = ref<Blob | null>(null)
 
 // 步骤控制
 const currentStep = ref<number>(1)
-const totalSteps = ref<number>(4)
+const totalSteps = ref<number>(5)
 const stepLabels = [
   { index: 1, shortTitle: '身份', title: '填写学员信息', description: '核对姓名、身份证号和基础健康信息' },
   { index: 2, shortTitle: '保险', title: '填写保险信息', description: '填写保险资料并上传凭证' },
   { index: 3, shortTitle: '选课', title: '选择报名课程', description: '先选择学期，再按类别选择课程' },
-  { index: 4, shortTitle: '联系', title: '确认联系方式', description: '留下常用电话和紧急联系人' }
+  { index: 4, shortTitle: '联系', title: '确认联系方式', description: '留下常用电话和紧急联系人' },
+  { index: 5, shortTitle: '签名', title: '本人确认签名', description: '请学员本人核对资料并手写签名' }
 ]
 const currentStepMeta = computed(() => {
   return stepLabels.find(step => step.index === currentStep.value) || stepLabels[0]
@@ -556,6 +652,10 @@ const loading = reactive({
   semesters: false,
   courses: false,
   insuranceUpload: false,
+  profilePhotoUpload: false,
+  idCardFrontUpload: false,
+  idCardBackUpload: false,
+  signatureUpload: false,
   submit: false
 })
 
@@ -563,12 +663,12 @@ const loading = reactive({
 const semesterOptions = ref<Array<{ label: string; value: string }>>([]);
 
 // 可用课程
-const availableCourses = ref<Course[]>([])
+const availableCourses = ref<PublicRegistrationCourse[]>([])
 const courseSearchQuery = ref('')
 const activeCourseCategory = ref('')
 
 const groupedAvailableCourses = computed(() => {
-  const groups = new Map<string, Course[]>()
+  const groups = new Map<string, PublicRegistrationCourse[]>()
 
   availableCourses.value.forEach(course => {
     const category = String(course.category || '未分类').trim() || '未分类'
@@ -588,7 +688,7 @@ const courseCategoryFilters = computed(() => {
   return groupedAvailableCourses.value.map(group => ({ name: group.category, count: group.courses.length }))
 })
 
-const courseMatchesSearch = (course: Course, keyword: string): boolean => {
+const courseMatchesSearch = (course: PublicRegistrationCourse, keyword: string): boolean => {
   if (!keyword) {
     return true
   }
@@ -598,10 +698,42 @@ const courseMatchesSearch = (course: Course, keyword: string): boolean => {
     course.description,
     course.category,
     course.location,
-    course.teacher && typeof course.teacher === 'object' ? course.teacher.realName : course.teacher
+    course.teacher
   ].filter(Boolean).join(' ').toLowerCase()
 
   return searchableText.includes(keyword)
+}
+
+const WEEKDAY_LABELS: Record<number, string> = {
+  0: '周日',
+  1: '周一',
+  2: '周二',
+  3: '周三',
+  4: '周四',
+  5: '周五',
+  6: '周六',
+  7: '周日'
+}
+
+const getCourseDuration = (course: PublicRegistrationCourse): number => {
+  return Number.isFinite(course.duration) ? Number(course.duration) : 0
+}
+
+const formatCourseTimeSlots = (course: PublicRegistrationCourse): string => {
+  if (!Array.isArray(course.timeSlots) || course.timeSlots.length === 0) {
+    return '时间待定'
+  }
+
+  return course.timeSlots
+    .slice(0, 2)
+    .map(slot => {
+      const weekday = WEEKDAY_LABELS[Number(slot.dayOfWeek)] || '时间待定'
+      if (!slot.startTime || !slot.endTime) {
+        return weekday
+      }
+      return `${weekday} ${slot.startTime}-${slot.endTime}`
+    })
+    .join('；')
 }
 
 const visibleCourses = computed(() => {
@@ -641,11 +773,11 @@ const selectCourseCategory = (category: string): void => {
   courseSearchQuery.value = ''
 }
 
-const getCourseSelectionId = (course: Course): string => {
+const getCourseSelectionId = (course: PublicRegistrationCourse): string => {
   return String(course.classSectionId || course.id)
 }
 
-const findCourseBySelectionId = (selectionId: string): Course | undefined => {
+const findCourseBySelectionId = (selectionId: string): PublicRegistrationCourse | undefined => {
   return availableCourses.value.find(course => getCourseSelectionId(course) === selectionId)
 }
 
@@ -674,6 +806,12 @@ const formData = reactive({
   contactPhone: '',
   ethnicity: '',
   healthStatus: '',
+  photoFileId: '',
+  photoFileName: '',
+  idCardFrontFileId: '',
+  idCardFrontFileName: '',
+  idCardBackFileId: '',
+  idCardBackFileName: '',
 
   // 教育和工作信息
   educationLevel: '',
@@ -692,6 +830,8 @@ const formData = reactive({
   insuranceAttachmentFileId: '',
   insuranceAttachmentName: '',
   agreementSigned: false,
+  signatureFileId: '',
+  signatureCaptured: false,
 
   // 联系信息
   familyAddress: '',
@@ -711,7 +851,7 @@ const successModal = reactive({
 const selectedCourseObjects = computed(() => {
   return formData.selectedCourses
     .map(selectionId => findCourseBySelectionId(selectionId))
-    .filter((course): course is Course => Boolean(course))
+    .filter((course): course is PublicRegistrationCourse => Boolean(course))
 })
 
 const selectedCourseSummary = computed(() => {
@@ -721,6 +861,10 @@ const selectedCourseSummary = computed(() => {
 
   const names = selectedCourseObjects.value.map(course => course.name).join('、')
   return `已选 ${selectedCourseObjects.value.length}/2 门：${names}`
+})
+
+const selectedCourseNames = computed(() => {
+  return selectedCourseObjects.value.map(course => course.name).join('、')
 })
 
 // 表单验证规则
@@ -754,6 +898,15 @@ const formRules = {
   contactPhone: [
     { required: true, message: '请输入报名手机号', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
+  ],
+  photoFileId: [
+    { required: true, message: '请上传本人近期照片', trigger: 'change' }
+  ],
+  idCardFrontFileId: [
+    { required: true, message: '请上传身份证正面照片', trigger: 'change' }
+  ],
+  idCardBackFileId: [
+    { required: true, message: '请上传身份证背面照片', trigger: 'change' }
   ],
   isRetired: [
     { required: true, message: '请选择工作状态', trigger: 'change' }
@@ -798,6 +951,16 @@ const formRules = {
   emergencyPhone: [
     { required: true, message: '请输入紧急联系电话', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '紧急联系电话格式不正确', trigger: 'blur' }
+  ],
+  signatureCaptured: [
+    {
+      validator: async (_rule: unknown, value: boolean) => {
+        if (!value) {
+          throw new Error('请由学员本人完成手写签名')
+        }
+      },
+      trigger: 'change'
+    }
   ]
 }
 
@@ -919,7 +1082,7 @@ const retirementCategoryOptions = [
  * @param course 课程对象
  * @returns 是否符合年龄要求
  */
-const isCourseAgeEligible = (course: Course): boolean => {
+const isCourseAgeEligible = (course: PublicRegistrationCourse): boolean => {
   if (!formData.birthDate) return true // 未填写出生日期时不限制
 
   const studentAge = calculateAge(formData.birthDate)
@@ -1014,6 +1177,9 @@ const validateCurrentStep = async (): Promise<void> => {
         'birthDate',
         'idNumber',
         'contactPhone',
+        'photoFileId',
+        'idCardFrontFileId',
+        'idCardBackFileId',
         'ethnicity',
         'healthStatus',
         'educationLevel',
@@ -1037,9 +1203,61 @@ const validateCurrentStep = async (): Promise<void> => {
     case 4:
       fieldsToValidate.push('familyAddress', 'familyPhone', 'emergencyContact', 'emergencyPhone')
       break
+    case 5:
+      fieldsToValidate.push('signatureCaptured')
+      break
   }
 
   await formRef.value?.validateFields(fieldsToValidate)
+}
+
+const handleSignatureChange = (blob: Blob | null): void => {
+  signatureBlob.value = blob
+  formData.signatureCaptured = Boolean(blob)
+  formData.signatureFileId = ''
+  void formRef.value?.validateFields(['signatureCaptured']).catch(() => undefined)
+}
+
+const resetSignature = (): void => {
+  signatureBlob.value = null
+  formData.signatureFileId = ''
+  formData.signatureCaptured = false
+  signaturePadRef.value?.clear()
+}
+
+const ensureSignatureUploaded = async (): Promise<string> => {
+  if (formData.signatureFileId) {
+    return formData.signatureFileId
+  }
+
+  if (!signatureBlob.value) {
+    throw new Error('请由学员本人完成手写签名')
+  }
+
+  if (!/^1[3-9]\d{9}$/.test(formData.contactPhone)) {
+    throw new Error('请先填写正确的报名手机号')
+  }
+
+  try {
+    loading.signatureUpload = true
+    const signatureFile = new File(
+      [signatureBlob.value],
+      `registration-signature-${Date.now()}.png`,
+      { type: 'image/png' }
+    )
+    const response = await ApplicationService.uploadPublicRegistrationSignature(
+      signatureFile,
+      formData.contactPhone
+    )
+    if (response.code !== 200 || !response.data?.fileId) {
+      throw new Error(response.message || '手写签名保存失败')
+    }
+
+    formData.signatureFileId = response.data.fileId
+    return formData.signatureFileId
+  } finally {
+    loading.signatureUpload = false
+  }
 }
 
 /**
@@ -1064,6 +1282,9 @@ const handleSubmit = async (): Promise<void> => {
       educationLevel: formData.educationLevel,
       politicalStatus: formData.politicalStatus,
       isRetired: formData.isRetired,
+      photoFileId: formData.photoFileId,
+      idCardFrontFileId: formData.idCardFrontFileId,
+      idCardBackFileId: formData.idCardBackFileId,
       insuranceCompany: formData.insuranceCompany,
       retirementCategory: formData.retirementCategory,
       semester: formData.semester,
@@ -1072,6 +1293,7 @@ const handleSubmit = async (): Promise<void> => {
       studyPeriodStart: formData.studyPeriodStart?.format('YYYY-MM-DD'),
       studyPeriodEnd: formData.studyPeriodEnd?.format('YYYY-MM-DD'),
       insuranceAttachmentFileId: formData.insuranceAttachmentFileId,
+      signatureFileId: await ensureSignatureUploaded(),
       agreementSigned: formData.agreementSigned,
       idCardAddress: formData.familyAddress, // 使用前端字段名
       familyPhone: formData.familyPhone,
@@ -1183,6 +1405,102 @@ const loadInsuranceRequirement = async (): Promise<void> => {
   }
 }
 
+type IdentityUploadTarget = 'photo' | 'idCardFront' | 'idCardBack'
+
+const IDENTITY_IMAGE_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp'
+])
+
+const identityUploadConfig = {
+  photo: {
+    documentType: 'PROFILE_PHOTO' as const,
+    label: '本人照片',
+    loadingKey: 'profilePhotoUpload' as const,
+    fileIdKey: 'photoFileId' as const,
+    fileNameKey: 'photoFileName' as const
+  },
+  idCardFront: {
+    documentType: 'ID_CARD_FRONT' as const,
+    label: '身份证正面照片',
+    loadingKey: 'idCardFrontUpload' as const,
+    fileIdKey: 'idCardFrontFileId' as const,
+    fileNameKey: 'idCardFrontFileName' as const
+  },
+  idCardBack: {
+    documentType: 'ID_CARD_BACK' as const,
+    label: '身份证背面照片',
+    loadingKey: 'idCardBackUpload' as const,
+    fileIdKey: 'idCardBackFileId' as const,
+    fileNameKey: 'idCardBackFileName' as const
+  }
+}
+
+const resetIdentityDocuments = (): void => {
+  formData.photoFileId = ''
+  formData.photoFileName = ''
+  formData.idCardFrontFileId = ''
+  formData.idCardFrontFileName = ''
+  formData.idCardBackFileId = ''
+  formData.idCardBackFileName = ''
+}
+
+const handleIdentityFileChange = async (event: Event, target: IdentityUploadTarget): Promise<void> => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) {
+    return
+  }
+
+  const config = identityUploadConfig[target]
+  if (!/^1[3-9]\d{9}$/.test(formData.contactPhone)) {
+    input.value = ''
+    message.warning('请先填写正确的报名手机号，再上传照片')
+    return
+  }
+
+  if (!IDENTITY_IMAGE_MIME_TYPES.has(file.type)) {
+    input.value = ''
+    message.error('仅支持 JPG、PNG 或 WEBP 格式的照片')
+    return
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    input.value = ''
+    message.error('照片大小不能超过 5MB')
+    return
+  }
+
+  try {
+    loading[config.loadingKey] = true
+    const response = await ApplicationService.uploadPublicIdentityDocument(
+      file,
+      formData.contactPhone,
+      config.documentType
+    )
+    if (response.code !== 200 || !response.data) {
+      throw new Error(response.message || `${config.label}上传失败`)
+    }
+
+    formData[config.fileIdKey] = response.data.fileId
+    formData[config.fileNameKey] = response.data.originalName || response.data.fileName
+    message.success(`${config.label}上传成功`)
+    await formRef.value?.validateFields([config.fileIdKey]).catch(() => undefined)
+  } catch (error: any) {
+    formData[config.fileIdKey] = ''
+    formData[config.fileNameKey] = ''
+    input.value = ''
+    message.error(error?.message || `${config.label}上传失败`)
+  } finally {
+    loading[config.loadingKey] = false
+  }
+}
+
+const handleProfilePhotoChange = (event: Event): Promise<void> => handleIdentityFileChange(event, 'photo')
+const handleIdCardFrontChange = (event: Event): Promise<void> => handleIdentityFileChange(event, 'idCardFront')
+const handleIdCardBackChange = (event: Event): Promise<void> => handleIdentityFileChange(event, 'idCardBack')
+
 /**
  * 上传保险凭证
  */
@@ -1253,7 +1571,6 @@ const loadCourses = async (): Promise<void> => {
 watch(() => formData.birthDate, () => {
   // 检查已选课程是否仍符合年龄要求
   if (formData.selectedCourses.length > 0 && formData.birthDate) {
-    const studentAge = calculateAge(formData.birthDate)
     const invalidCourses: string[] = []
 
     formData.selectedCourses.forEach(courseId => {
@@ -1282,9 +1599,31 @@ watch(() => formData.contactPhone, (phone, previousPhone) => {
 
   formData.insuranceAttachmentFileId = ''
   formData.insuranceAttachmentName = ''
+  resetIdentityDocuments()
+  if (formData.signatureCaptured || formData.signatureFileId) {
+    resetSignature()
+  }
 
   if (!formData.familyPhone) {
     formData.familyPhone = phone
+  }
+})
+
+const signatureContext = computed(() => JSON.stringify({
+  name: formData.name,
+  idNumber: formData.idNumber,
+  semester: formData.semester,
+  selectedCourses: formData.selectedCourses,
+  familyAddress: formData.familyAddress,
+  familyPhone: formData.familyPhone,
+  emergencyContact: formData.emergencyContact,
+  emergencyPhone: formData.emergencyPhone
+}))
+
+watch(signatureContext, (value, previousValue) => {
+  if (previousValue && value !== previousValue && formData.signatureCaptured) {
+    resetSignature()
+    message.info('报名信息已修改，请在最后一步重新签名')
   }
 })
 
@@ -1599,7 +1938,7 @@ onMounted(() => {
 .m3-stepper {
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   list-style: none;
   margin: 20px 0 0;
   padding: 0;
@@ -1866,6 +2205,124 @@ onMounted(() => {
   border-color: var(--m3-primary);
 }
 
+.m3-identity-materials {
+  border-top: 1px solid #e2e4ec;
+  margin: 4px 0 20px;
+  padding-top: 20px;
+}
+
+.m3-signature-summary {
+  background: #f3f5fa;
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 20px 0 16px;
+  padding: 16px;
+}
+
+.m3-signature-summary div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.m3-signature-summary .is-full-width {
+  grid-column: 1 / -1;
+}
+
+.m3-signature-summary span {
+  color: var(--m3-on-surface-variant);
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.m3-signature-summary strong {
+  color: var(--m3-on-surface);
+  font-size: 18px;
+  line-height: 26px;
+  overflow-wrap: anywhere;
+}
+
+.m3-signature-declaration {
+  background: var(--m3-primary-container);
+  border-left: 4px solid var(--m3-primary);
+  border-radius: 8px;
+  color: var(--m3-on-primary-container);
+  font-size: 17px;
+  line-height: 27px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+}
+
+.m3-subsection-title {
+  color: var(--m3-on-surface);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 28px;
+  margin: 0 0 4px;
+}
+
+.m3-subsection-description {
+  color: var(--m3-on-surface-variant);
+  font-size: 16px;
+  line-height: 24px;
+  margin: 0 0 16px;
+}
+
+.m3-document-upload {
+  align-items: center;
+  background: #f8f9fc;
+  border: 2px dashed #7d8595;
+  border-radius: 8px;
+  color: var(--m3-primary);
+  cursor: pointer;
+  display: flex;
+  min-height: 68px;
+  padding: 10px 14px;
+}
+
+.m3-document-upload:hover,
+.m3-document-upload:focus-within {
+  background: #eef4ff;
+  border-color: var(--m3-primary);
+}
+
+.m3-document-upload.is-uploading {
+  color: #52606f;
+  cursor: wait;
+}
+
+.m3-document-upload input[type='file'] {
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
+}
+
+.m3-document-upload-action {
+  align-items: center;
+  display: flex;
+  font-size: 17px;
+  font-weight: 700;
+  gap: 12px;
+  line-height: 24px;
+}
+
+.m3-document-upload-action i {
+  font-size: 22px;
+}
+
+.m3-upload-success {
+  color: #166534;
+  font-size: 16px;
+  line-height: 24px;
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+}
+
 .m3-file-upload {
   background: #f8f9fc;
   border: 2px dashed #8c8f98;
@@ -1880,7 +2337,8 @@ onMounted(() => {
 
 .m3-back-button:focus-visible,
 .m3-category-tile:focus-visible,
-.course-card:focus-visible {
+.course-card:focus-visible,
+.m3-document-upload:focus-within {
   outline: 3px solid #1f6feb;
   outline-offset: 2px;
 }

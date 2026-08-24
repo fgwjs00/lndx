@@ -22,6 +22,33 @@ export interface OverviewStats {
   activeTeachers: number     // 活跃教师数
 }
 
+export interface OverviewStatsResponse {
+  students: {
+    total: number
+    active: number
+    thisMonth: number
+    thisWeek: number
+  }
+  courses: {
+    total: number
+    active: number
+    thisMonth: number
+  }
+  applications: {
+    total: number
+    pending: number
+    approved: number
+    rejected: number
+    thisWeek: number
+    thisMonth: number
+  }
+  teachers: {
+    total: number
+    active: number
+  }
+  raw: OverviewStats
+}
+
 /**
  * 热门课程数据类型
  */
@@ -126,7 +153,7 @@ export class AnalysisService {
    * 获取系统统计概览
    * @returns 统计概览数据
    */
-  static async getOverviewStats(): Promise<ApiResponse<OverviewStats>> {
+  static async getOverviewStats(): Promise<ApiResponse<OverviewStatsResponse>> {
     return request.get('/analysis/overview')
   }
 

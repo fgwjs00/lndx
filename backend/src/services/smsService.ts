@@ -66,13 +66,12 @@ class AliyunSmsProvider implements SmsProvider {
 
   async sendSms(phone: string, code: string, type: SmsType): Promise<boolean> {
     try {
-      if (!this.accessKeyId || !this.accessKeySecret) {
-        if (config.nodeEnv === 'production') {
-          throw new Error('SMS_PROVIDER_NOT_CONFIGURED')
-        }
+      if (!config.sms.enabled) {
+        throw new Error('SMS_SERVICE_DISABLED')
+      }
 
-        logger.warn('阿里云短信配置不完整，使用模拟发送')
-        return this.simulateSms(phone, code, type)
+      if (!this.accessKeyId || !this.accessKeySecret) {
+        throw new Error('SMS_PROVIDER_NOT_CONFIGURED')
       }
 
       const template = SMS_TEMPLATES[type]
@@ -84,9 +83,7 @@ class AliyunSmsProvider implements SmsProvider {
         code: code.substring(0, 2) + '****' // 不记录完整验证码
       })
 
-      await new Promise(resolve => setTimeout(resolve, 100))
-
-      return true
+      throw new Error('SMS_PROVIDER_NOT_IMPLEMENTED')
     } catch (error) {
       errorLogger.external('ALIYUN_SMS', error as Error, {
         phone,
@@ -97,27 +94,6 @@ class AliyunSmsProvider implements SmsProvider {
     }
   }
 
-  /**
-   * 模拟短信发送（开发环境使用）
-   */
-  private async simulateSms(phone: string, code: string, type: SmsType): Promise<boolean> {
-    const template = SMS_TEMPLATES[type]
-    const content = template.content.replace('{code}', code)
-    
-    logger.info('📱 模拟短信发送', {
-      phone,
-      content,
-      type,
-      templateCode: template.templateCode
-    })
-
-    // 在开发环境下，可以将验证码输出到控制台
-    if (config.nodeEnv === 'development') {
-      console.log(`\n📱 短信验证码 [${phone}]: ${code}\n`)
-    }
-
-    return true
-  }
 }
 
 /**
@@ -147,6 +123,10 @@ class SmsService {
    */
   async sendSms(phone: string, type: SmsType): Promise<boolean> {
     try {
+      if (!config.sms.enabled) {
+        return false
+      }
+
       // 检查发送频率限制
       const cacheKey = `${phone}:${type}`
       const cached = this.codeCache.get(cacheKey)
@@ -200,6 +180,10 @@ class SmsService {
    * @returns 是否验证成功
    */
   verifySms(phone: string, code: string, type: SmsType): { success: boolean; message: string } {
+    if (!config.sms.enabled) {
+      return { success: false, message: '短信服务暂未启用' }
+    }
+
     const cacheKey = `${phone}:${type}`
     const cached = this.codeCache.get(cacheKey)
 
@@ -294,10 +278,9 @@ const smsService = new SmsService()
 /**
  * 发送短信验证码
  * @param phone 手机号
- * @param code 验证码（兼容旧版本，如果不传则自动生成）
  * @param type 短信类型
  */
-export const sendSms = async (phone: string, code: string, type: string): Promise<void> => {
+export const sendSms = async (phone: string, type: string): Promise<void> => {
   const smsType = type as SmsType
   const success = await smsService.sendSms(phone, smsType)
   
@@ -312,13 +295,6 @@ export const sendSms = async (phone: string, code: string, type: string): Promis
 export const verifySms = (phone: string, code: string, type: string) => {
   const smsType = type as SmsType
   return smsService.verifySms(phone, code, smsType)
-}
-
-/**
- * 生成短信验证码
- */
-export const generateSmsCode = (): string => {
-  return Math.floor(100000 + Math.random() * 900000).toString()
 }
 
 /**

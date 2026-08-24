@@ -126,6 +126,18 @@ const applicationV2Schema = Joi.object({
   insuranceAttachmentFileId: Joi.string().allow('', null).optional().messages({
     'string.base': '保险凭证文件ID必须是字符串'
   }),
+  photoFileId: Joi.string().allow('', null).optional().messages({
+    'string.base': '本人照片文件ID必须是字符串'
+  }),
+  idCardFrontFileId: Joi.string().allow('', null).optional().messages({
+    'string.base': '身份证正面照片文件ID必须是字符串'
+  }),
+  idCardBackFileId: Joi.string().allow('', null).optional().messages({
+    'string.base': '身份证背面照片文件ID必须是字符串'
+  }),
+  signatureFileId: Joi.string().allow('', null).optional().messages({
+    'string.base': '手写签名文件ID必须是字符串'
+  }),
   enrollmentVerificationToken: Joi.string().allow('', null).optional().messages({
     'string.base': '报名验证令牌必须是字符串'
   }),
@@ -200,7 +212,17 @@ const applicationV2Schema = Joi.object({
 })
 
 function getStudentWritableApplicationData(applicationData: any): any {
-  const { insuranceAttachmentFileId, enrollmentVerificationToken, ...studentData } = applicationData
+  const {
+    insuranceAttachmentFileId,
+    photoFileId,
+    idCardFrontFileId,
+    idCardBackFileId,
+    signatureFileId,
+    enrollmentVerificationToken,
+    selectedClassSections,
+    classSectionIds,
+    ...studentData
+  } = applicationData
   return studentData
 }
 
@@ -263,6 +285,162 @@ async function getInsuranceRequirementForSemester(tx: any, semester: string): Pr
   return rows[0] || null
 }
 
+type PublicIdentityDocumentField = 'photo' | 'idCardFront' | 'idCardBack'
+
+interface ResolvedPublicIdentityDocuments {
+  studentFields: Record<PublicIdentityDocumentField, string>
+  fileIds: string[]
+}
+
+const PUBLIC_IDENTITY_DOCUMENTS: Array<{
+  requestField: string
+  studentField: PublicIdentityDocumentField
+  fileType: string
+  label: string
+}> = [
+  {
+    requestField: 'photoFileId',
+    studentField: 'photo',
+    fileType: 'PROFILE_PHOTO',
+    label: '本人近期照片'
+  },
+  {
+    requestField: 'idCardFrontFileId',
+    studentField: 'idCardFront',
+    fileType: 'ID_CARD_FRONT',
+    label: '身份证正面照片'
+  },
+  {
+    requestField: 'idCardBackFileId',
+    studentField: 'idCardBack',
+    fileType: 'ID_CARD_BACK',
+    label: '身份证背面照片'
+  }
+]
+
+/**
+ * Resolves and locks the three temporary identity uploads for a public registration.
+ * The files are only finalized after the application has been written, so a
+ * failed transaction leaves every upload temporary and subject to expiry.
+ */
+async function resolvePublicIdentityDocuments(
+  tx: any,
+  applicationData: any,
+  options: { requireMatchingOwner?: boolean } = {}
+): Promise<ResolvedPublicIdentityDocuments> {
+  const studentFields = {
+    photo: '',
+    idCardFront: '',
+    idCardBack: ''
+  }
+  const fileIds: string[] = []
+  const applicantPhone = normalizeApplicantPhone(applicationData.contactPhone)
+  const requireMatchingOwner = options.requireMatchingOwner === true
+
+  for (const document of PUBLIC_IDENTITY_DOCUMENTS) {
+    const fileId = String(applicationData[document.requestField] || '').trim()
+    if (!fileId) {
+      throw new ValidationError(`请上传${document.label}`)
+    }
+
+    const fileRows = await tx.$queryRaw<Array<{ id: string, filePath: string }>>`
+      SELECT id, "filePath"
+      FROM "file_uploads"
+      WHERE id = ${fileId}
+        AND "fileType" = ${document.fileType}
+        AND "isTemp" = TRUE
+        AND "expiresAt" > NOW()
+        AND (
+          ${requireMatchingOwner} = FALSE
+          OR metadata ->> 'ownerPhone' = ${applicantPhone}
+        )
+      LIMIT 1
+      FOR UPDATE
+    `
+
+    const file = fileRows[0]
+    if (!file) {
+      throw new ValidationError(`${document.label}不存在、已失效或不属于当前报名手机号，请重新上传`)
+    }
+
+    studentFields[document.studentField] = file.filePath
+    fileIds.push(file.id)
+  }
+
+  return { studentFields, fileIds }
+}
+
+async function finalizePublicIdentityDocuments(
+  tx: any,
+  identityDocuments: ResolvedPublicIdentityDocuments,
+  studentId: string,
+  enrollmentApplicationId: string | null
+): Promise<void> {
+  await tx.$executeRaw`
+    UPDATE "file_uploads"
+    SET
+      "isTemp" = FALSE,
+      "expiresAt" = NULL,
+      metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
+        'studentId', ${studentId},
+        'enrollmentApplicationId', ${enrollmentApplicationId}
+      )
+    WHERE id = ANY(${identityDocuments.fileIds}::text[])
+  `
+}
+
+interface ResolvedPublicRegistrationSignature {
+  fileId: string
+}
+
+async function resolvePublicRegistrationSignature(
+  tx: any,
+  applicationData: any
+): Promise<ResolvedPublicRegistrationSignature> {
+  const signatureFileId = String(applicationData.signatureFileId || '').trim()
+  if (!signatureFileId) {
+    throw new ValidationError('请完成本人手写签名')
+  }
+
+  const applicantPhone = normalizeApplicantPhone(applicationData.contactPhone)
+  const rows = await tx.$queryRaw<Array<{ id: string }>>`
+    SELECT id
+    FROM "file_uploads"
+    WHERE id = ${signatureFileId}
+      AND "fileType" = 'REGISTRATION_SIGNATURE'
+      AND "isTemp" = TRUE
+      AND "expiresAt" > NOW()
+      AND metadata ->> 'ownerPhone' = ${applicantPhone}
+    LIMIT 1
+    FOR UPDATE
+  `
+
+  if (!rows[0]) {
+    throw new ValidationError('手写签名不存在、已失效或不属于当前报名手机号，请重新签名')
+  }
+
+  return { fileId: rows[0].id }
+}
+
+async function finalizePublicRegistrationSignature(
+  tx: any,
+  signature: ResolvedPublicRegistrationSignature,
+  studentId: string,
+  enrollmentApplicationId: string
+): Promise<void> {
+  await tx.$executeRaw`
+    UPDATE "file_uploads"
+    SET
+      "isTemp" = FALSE,
+      "expiresAt" = NULL,
+      metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
+        'studentId', ${studentId},
+        'enrollmentApplicationId', ${enrollmentApplicationId}
+      )
+    WHERE id = ${signature.fileId}
+  `
+}
+
 async function upsertStudentInsuranceForApplication(
   tx: any,
   studentId: string,
@@ -303,6 +481,8 @@ async function upsertStudentInsuranceForApplication(
     FROM "file_uploads"
     WHERE id = ${attachmentFileId}
       AND "fileType" = 'INSURANCE'
+      AND "isTemp" = TRUE
+      AND "expiresAt" > NOW()
       AND (
         ${options.requireMatchingOwner} = FALSE
         OR metadata ->> 'ownerPhone' = ${normalizeApplicantPhone(applicationData.contactPhone)}
@@ -1217,6 +1397,10 @@ router.post('/anonymous', async (req, res, next) => {
       let student: any
       let isNewStudent = false
       let isRecoveredStudent = false
+      const resolvedIdentityDocuments = await resolvePublicIdentityDocuments(tx, applicationData, {
+        requireMatchingOwner: true
+      })
+      const resolvedSignature = await resolvePublicRegistrationSignature(tx, applicationData)
 
       if (existingStudent) {
         assertStudentPhoneMatchesRecord(existingStudent, applicantPhone)
@@ -1393,6 +1577,7 @@ router.post('/anonymous', async (req, res, next) => {
         // 直接使用前端字段名（无需映射）
         const recoveryData = {
           ...getStudentWritableApplicationData(applicationData),
+          ...resolvedIdentityDocuments.studentFields,
           major: studentMajor, // 根据课程设置院系
           gender: applicationData.gender === '男' ? 'MALE' as const : 'FEMALE' as const,
           birthDate: new Date(applicationData.birthDate),
@@ -1434,6 +1619,7 @@ router.post('/anonymous', async (req, res, next) => {
         // 直接使用前端字段名（无需映射）
         const newStudentData = {
           ...getStudentWritableApplicationData(applicationData),
+          ...resolvedIdentityDocuments.studentFields,
           currentAddress: applicationData.familyAddress || applicationData.idCardAddress,
           emergencyRelation: applicationData.emergencyRelation || '紧急联系人',
           gender: applicationData.gender === '男' ? 'MALE' as const : 'FEMALE' as const,
@@ -1466,7 +1652,23 @@ router.post('/anonymous', async (req, res, next) => {
         student.id,
         applicationData,
         insuranceId,
-        'SELF_SERVICE'
+        'SELF_SERVICE',
+        resolvedSignature.fileId
+      )
+      if (!enrollmentApplicationId) {
+        throw new BusinessError('报名签名功能尚未完成数据库升级，请联系学校工作人员', 503, 'REGISTRATION_SIGNATURE_SCHEMA_REQUIRED')
+      }
+      await finalizePublicIdentityDocuments(
+        tx,
+        resolvedIdentityDocuments,
+        student.id,
+        enrollmentApplicationId
+      )
+      await finalizePublicRegistrationSignature(
+        tx,
+        resolvedSignature,
+        student.id,
+        enrollmentApplicationId
       )
 
       if (enrollmentApplicationId) {

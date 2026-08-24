@@ -6,10 +6,9 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import { AuthService } from '@/api/auth'
-import { shouldMockAuth, mockLogin, mockSendSms, mockVerifySms } from '@/utils/dev'
+import { shouldMockAuth, mockLogin } from '@/utils/dev'
 import { UserRole } from '@/types/auth'
 import type { 
-  AuthState, 
   LoginRequest, 
   RegisterRequest, 
   UserInfo, 

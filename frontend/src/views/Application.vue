@@ -479,7 +479,7 @@ const handlePageChange = async (page: number, pageSize: number): Promise<void> =
 /**
  * 处理每页条数变化
  */
-const handlePageSizeChange = async (current: number, size: number): Promise<void> => {
+const handlePageSizeChange = async (_current: number, size: number): Promise<void> => {
   pagination.value.current = 1 // 重置到第一页
   pagination.value.pageSize = size
   await fetchApplications()

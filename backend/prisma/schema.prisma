@@ -283,6 +283,7 @@ model FileUpload {
   expiresAt    DateTime?
   createdAt    DateTime  @default(now())
   insuranceAttachments StudentInsurance[] @relation("InsuranceAttachment")
+  registrationSignature EnrollmentApplication? @relation("EnrollmentApplicationSignature")
 
   @@index([uploadedBy, createdAt])
   @@index([isTemp, expiresAt])
@@ -412,6 +413,8 @@ model EnrollmentApplication {
   semesterId      String
   insuranceId     String?
   insuranceSnapshot Json?
+  signatureFileId String?                     @unique
+  signatureSnapshot Json?
   status          EnrollmentApplicationStatus @default(SUBMITTED)
   source          String                       @default("SELF_SERVICE")
   submittedAt     DateTime                     @default(now())
@@ -424,6 +427,7 @@ model EnrollmentApplication {
   academicYear    AcademicYear                 @relation(fields: [academicYearId], references: [id])
   semester        Semester                     @relation(fields: [semesterId], references: [id])
   insurance       StudentInsurance?            @relation(fields: [insuranceId], references: [id])
+  signature       FileUpload?                   @relation("EnrollmentApplicationSignature", fields: [signatureFileId], references: [id], onDelete: SetNull)
   choices         EnrollmentApplicationChoice[]
 
   @@index([studentId, academicYearId])

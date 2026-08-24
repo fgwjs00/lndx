@@ -354,7 +354,6 @@ export function withRetry<T extends (...args: any[]) => Promise<any>>(
   const retryFunction = ErrorHandler.createRetryHandler(apiFunction, maxRetries, delay)
   
   return withErrorHandling(retryFunction, context, {
-    showRetryButton: true,
-    retryable: true
+    showRetryButton: true
   })
 }

@@ -129,6 +129,7 @@ export function useLoading(key?: string) {
       showSuccessMessage?: boolean
       successMessage?: string
       showErrorMessage?: boolean
+      errorMessage?: string
       onError?: (error: any) => void
       onSuccess?: (result: any) => void
     } = {}
@@ -150,7 +151,7 @@ export function useLoading(key?: string) {
         
         return result
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : '操作失败'
+        const errorMessage = options.errorMessage || (error instanceof Error ? error.message : '操作失败')
         setError(errorMessage)
         
         if (options.showErrorMessage) {
@@ -198,6 +199,7 @@ export function createApiLoader<T extends (...args: any[]) => Promise<any>>(
     showSuccessMessage: showMessages && !!successMessage,
     successMessage,
     showErrorMessage: showMessages,
+    errorMessage,
     onError: (err) => {
       console.error(`API调用失败 [${key || 'Unknown'}]:`, err)
     }
@@ -309,7 +311,7 @@ export function useButtonLoading() {
   
   return {
     setButtonLoading,
-    isButtonLoading: computed(() => (key: string) => buttonStates.value.get(key) || false),
+    isButtonLoading,
     clearButtonStates,
     buttonStates: computed(() => buttonStates.value)
   }

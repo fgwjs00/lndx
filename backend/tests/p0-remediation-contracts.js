@@ -78,12 +78,14 @@ assertIncludes(
 assertIncludes(publicRegistration, 'isTemp: true', 'public insurance uploads must be temporary until bound to an application')
 assertIncludes(publicRegistration, 'validateInsuranceUploadMimeType', 'public insurance upload must validate MIME type explicitly')
 
-assertIncludes(smsService, "config.nodeEnv === 'production'", 'SMS provider must distinguish production from development')
-assertIncludes(smsService, 'SMS_PROVIDER_NOT_CONFIGURED', 'production SMS must fail closed when provider configuration is incomplete')
+assertIncludes(smsService, 'config.sms.enabled', 'SMS provider must enforce the explicit enabled flag')
+assertIncludes(smsService, 'SMS_SERVICE_DISABLED', 'disabled SMS must fail closed in every environment')
+assertIncludes(smsService, 'SMS_PROVIDER_NOT_CONFIGURED', 'enabled SMS must fail closed when provider configuration is incomplete')
+assertIncludes(smsService, 'SMS_PROVIDER_NOT_IMPLEMENTED', 'SMS must not report success before a real provider is integrated')
 assertRegex(
   smsService,
   /if \(!this\.accessKeyId \|\| !this\.accessKeySecret\)[\s\S]*throw new Error\('SMS_PROVIDER_NOT_CONFIGURED'\)/,
-  'production SMS must not silently simulate success without provider credentials'
+  'SMS must not silently simulate success without provider credentials'
 )
 
 console.log('p0 remediation contracts passed')
