@@ -42,9 +42,9 @@ export const useAuthStore = defineStore('auth', () => {
   const userAvatar = computed<string>(() => user.value?.avatar || '')
   const userPhone = computed<string>(() => user.value?.phone || '')
 
-  const refreshAssetToken = async (): Promise<void> => {
+  const refreshAssetToken = async (skipAuthRedirect: boolean = false): Promise<void> => {
     try {
-      const response = await AuthService.getAssetToken()
+      const response = await AuthService.getAssetToken(skipAuthRedirect)
       if (response.code === 200 && response.data?.assetToken) {
         localStorage.setItem('assetToken', response.data.assetToken)
       }
@@ -160,7 +160,7 @@ export const useAuthStore = defineStore('auth', () => {
         permissions.value = savedPermissions ? JSON.parse(savedPermissions) : []
         mustChangePassword.value = savedMustChangePassword ? JSON.parse(savedMustChangePassword) : false
         isAuthenticated.value = true
-        await refreshAssetToken()
+        await refreshAssetToken(true)
 
         console.log('✅ 认证状态已恢复:', {
           userId: user.value?.id,
@@ -406,7 +406,7 @@ export const useAuthStore = defineStore('auth', () => {
    */
   const getCurrentUser = async (forceLogoutOnError: boolean = true): Promise<void> => {
     try {
-      const response = await AuthService.getCurrentUser()
+      const response = await AuthService.getCurrentUser(!forceLogoutOnError)
       
       if (response.code === 200) {
         let userInfo = response.data
@@ -451,6 +451,22 @@ export const useAuthStore = defineStore('auth', () => {
       }
     } catch (error) {
       console.error('获取用户信息失败:', error)
+
+      if (!forceLogoutOnError && (error as Error & { status?: number }).status === 401) {
+        isAuthenticated.value = false
+        user.value = null
+        token.value = null
+        refreshToken.value = null
+        permissions.value = []
+        mustChangePassword.value = false
+        localStorage.removeItem('token')
+        localStorage.removeItem('refreshToken')
+        localStorage.removeItem('user')
+        localStorage.removeItem('permissions')
+        localStorage.removeItem('mustChangePassword')
+        localStorage.removeItem('assetToken')
+        return
+      }
       
       // 在开发模式下，如果API调用失败，不要自动登出用户
       if (shouldMockAuth()) {

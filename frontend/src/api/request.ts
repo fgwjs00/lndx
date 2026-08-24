@@ -14,6 +14,7 @@ interface RequestConfig {
   params?: any
   headers?: Record<string, string>
   timeout?: number
+  skipAuthRedirect?: boolean
 }
 
 // 请求拦截器配置
@@ -120,6 +121,13 @@ class HttpRequest {
             const errorData = error.response?.data
             const errorMessage = errorData?.message || '登录失败'
             return Promise.reject(new Error(errorMessage))
+          }
+
+          if (error.config?.skipAuthRedirect) {
+            const errorData = error.response?.data
+            const authError = new Error(errorData?.message || '登录状态已失效') as Error & { status?: number }
+            authError.status = 401
+            return Promise.reject(authError)
           }
           
           // 对于其他API的401错误，需要谨慎处理

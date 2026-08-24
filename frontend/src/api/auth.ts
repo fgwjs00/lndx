@@ -64,12 +64,12 @@ export class AuthService {
    * 获取当前用户信息
    * @returns 用户信息
    */
-  static async getCurrentUser(): Promise<ApiResponse<UserInfo>> {
-    return request.get<UserInfo>('/auth/me')
+  static async getCurrentUser(skipAuthRedirect: boolean = false): Promise<ApiResponse<UserInfo>> {
+    return request.get<UserInfo>('/auth/me', undefined, { skipAuthRedirect })
   }
 
-  static async getAssetToken(): Promise<ApiResponse<{ assetToken: string; expiresInSeconds: number }>> {
-    return request.get<{ assetToken: string; expiresInSeconds: number }>('/assets/token')
+  static async getAssetToken(skipAuthRedirect: boolean = false): Promise<ApiResponse<{ assetToken: string; expiresInSeconds: number }>> {
+    return request.get<{ assetToken: string; expiresInSeconds: number }>('/assets/token', undefined, { skipAuthRedirect })
   }
 
   /**
